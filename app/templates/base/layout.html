@@ -79,7 +79,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}">
                                 <i class="ti ti-layout-dashboard me-1"></i>
-                                <span>Dashboard</span>
+                                <span>Műszerfal</span>
                             </a>
                         </li>
 
@@ -88,14 +88,14 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'administrator' in request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}" href="{{ url_for('administrator.dashboard') }}">
                                     <i class="ti ti-shield me-1"></i>
-                                    <span>Admin Panel</span>
+                                    <span>Admin panel</span>
                                 </a>
                             </li>
                             <!-- Also show technician tools for admin/owner -->
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'technician' in request.endpoint and 'current' in request.endpoint %}active{% endif %}" href="{{ url_for('technician.current_jobs') }}">
                                     <i class="ti ti-clipboard-list me-1"></i>
-                                    <span>Current Jobs</span>
+                                    <span>Aktuális munkák</span>
                                 </a>
                             </li>
                         {% elif session.current_role in ('manager', 'technician') %}
@@ -103,7 +103,7 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'technician' in request.endpoint and 'current' in request.endpoint %}active{% endif %}" href="{{ url_for('technician.current_jobs') }}">
                                     <i class="ti ti-clipboard-list me-1"></i>
-                                    <span>Current Jobs</span>
+                                    <span>Aktuális munkák</span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -130,7 +130,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.customers' %}active{% endif %}" href="{{ url_for('main.customers') }}">
                                 <i class="ti ti-address-book me-1"></i>
-                                <span>All Customers</span>
+                                <span>Összes ügyfél</span>
                             </a>
                         </li>
                     {% endif %}
@@ -142,7 +142,7 @@
                         <!-- Search -->
                         <li class="nav-item me-3">
                             <div style="position: relative;">
-                                <input type="text" class="form-control form-control-sm" placeholder="Search customers..." id="globalSearch" autocomplete="off" style="min-width: 180px;">
+                                <input type="text" class="form-control form-control-sm" placeholder="Ügyfél keresése..." id="globalSearch" autocomplete="off" style="min-width: 180px;">
                                 <div class="search-results-dropdown" id="searchResultsDropdown"></div>
                             </div>
                         </li>
@@ -198,13 +198,13 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">
-                                    <i class="ti ti-layout-dashboard me-2"></i>Dashboard
+                                    <i class="ti ti-layout-dashboard me-2"></i>Műszerfal
                                 </a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">
-                                    <i class="ti ti-user me-2"></i>Profile
+                                    <i class="ti ti-user me-2"></i>Profil
                                 </a></li>
                                 <li><a class="dropdown-item" href="{% if session.current_role in ('owner', 'admin') %}{{ url_for('administrator.org_settings') }}{% else %}{{ url_for('main.dashboard') }}{% endif %}">
-                                    <i class="ti ti-settings me-2"></i>Settings
+                                    <i class="ti ti-settings me-2"></i>Beállítások
                                 </a></li>
                                 {% if user_tenants and user_tenants|length > 1 %}
                                 <li><hr class="dropdown-divider"></li>
@@ -219,7 +219,7 @@
                                 <li></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="{{ url_for('main.logout') }}">
-                                    <i class="ti ti-logout me-2"></i>Sign Out
+                                    <i class="ti ti-logout me-2"></i>Kijelentkezés
                                 </a></li>
                             </ul>
                         </li>
@@ -228,7 +228,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('auth.login') }}">
                                 <i class="ti ti-login me-1"></i>
-                                <span>Sign In</span>
+                                <span>Bejelentkezés</span>
                             </a>
                         </li>
                     {% endif %}
@@ -362,7 +362,7 @@
                             dropdown.classList.add('show');
                         })
                         .catch(() => {
-                            dropdown.innerHTML = '<div class="search-no-results">Search unavailable</div>';
+                            dropdown.innerHTML = '<div class="search-no-results">Keresés nem elérhető</div>';
                             dropdown.classList.add('show');
                         });
                 }, 300);

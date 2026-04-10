@@ -43,21 +43,27 @@ def current_jobs(page=1, per_page=10):
         jobs, total, total_pages = job_service.get_current_jobs(page, per_page)
 
         return render_template('technician/current_jobs.html',
+                             data=jobs,
                              jobs=jobs,
                              page=page,
                              per_page=per_page,
                              total=total,
-                             total_pages=total_pages)
+                             total_pages=total_pages,
+                             prev_page=max(1, page-1),
+                             next_page=page+1)
 
     except Exception as e:
         logger.error(f"Failed to get current work orders: {e}")
         flash('Failed to load work orders', 'error')
         return render_template('technician/current_jobs.html',
+                             data=[],
                              jobs=[],
                              page=1,
                              per_page=per_page,
                              total=0,
-                             total_pages=0)
+                             total_pages=0,
+                             prev_page=1,
+                             next_page=2)
 
 
 @technician_bp.route('/jobs/<int:job_id>')

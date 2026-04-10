@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Select Organization - RepairOS{% endblock %}
+{% block title %}Szervezet kiválasztása{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -61,9 +61,9 @@
             <div class="col-lg-8 col-xl-7">
                 <!-- Header -->
                 <div class="text-center mb-5">
-                    <img src="{{ url_for('static', filename='images/RepairOS-logo.svg') }}" alt="RepairOS" style="height: 64px; width: auto;" class="mb-3">
-                    <h1 class="h2 fw-bold mb-2">Select Organization</h1>
-                    <p class="text-muted">Choose which organization you want to work in</p>
+                    <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt="RepairOS" style="height: 64px; width: auto;" class="mb-3">
+                    <h1 class="h2 fw-bold mb-2">Szervezet kiválasztása</h1>
+                    <p class="text-muted">Válassza ki, melyik szervezetben szeretne dolgozni</p>
                 </div>
 
                 <!-- Tenant Cards -->
@@ -91,7 +91,7 @@
                                 <div class="mt-auto">
                                     <a href="/org/{{ tenant.tenant_slug }}/dashboard" class="btn btn-accent w-100">
                                         <i class="ti ti-login me-2"></i>
-                                        Enter
+                                        Belépés
                                     </a>
                                 </div>
                             </div>
@@ -103,11 +103,11 @@
                 {% if not tenants %}
                 <div class="text-center py-5">
                     <i class="ti ti-inbox text-muted mb-3" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted">No Organizations Found</h5>
-                    <p class="text-muted mb-4">You are not a member of any organization yet.</p>
+                    <h5 class="text-muted">Nincs szervezet</h5>
+                    <p class="text-muted mb-4">Még nem tagja egyetlen szervezetnek sem.</p>
                     <a href="{{ url_for('main.index') }}" class="btn btn-accent">
                         <i class="ti ti-plus me-2"></i>
-                        Create Organization
+                        Szervezet létrehozása
                     </a>
                 </div>
                 {% endif %}

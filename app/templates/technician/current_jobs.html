@@ -10,21 +10,21 @@
 {% endblock %}
 
 {% block content %}
-<!-- Page Header -->
+<!-- Oldal Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-clipboard-list text-primary"></i>
-            Current Work Orders
+            Aktuális munkamegrendelések
         </h1>
-        <p class="text-muted mb-0">Manage ongoing repair jobs and track progress</p>
+        <p class="text-muted mb-0">Folyamatban lévő munkák kezelése és nyomon követése</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ url_for('technician.new_job') }}" class="btn btn-accent">
-            <i class="ti ti-plus me-2"></i>New Job
+            <i class="ti ti-plus me-2"></i>Új munka
         </a>
         <button type="button" class="btn btn-outline-secondary" onclick="refreshJobs()">
-            <i class="ti ti-refresh me-2"></i>Refresh
+            <i class="ti ti-refresh me-2"></i>Frissítés
         </button>
     </div>
 </div>
@@ -69,7 +69,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-danger-lt me-2"><i class="ti ti-alert-triangle"></i></span>
-                    <div class="subheader">Unpaid</div>
+                    <div class="subheader">Kifizetetlen</div>
                 </div>
                 <div class="h1 mb-0">{{ data|selectattr('paid')|list|length if data else 0 }}</div>
             </div>
@@ -83,21 +83,21 @@
         <div class="row g-3 align-items-end">
             <div class="col-auto">
                 <label class="form-label">Search:</label>
-                <input type="text" class="form-control" id="searchInput" placeholder="Search by customer name or job ID...">
+                <input type="text" class="form-control" id="searchInput" placeholder="Keresés ügyfélnév alapján or job ID...">
             </div>
             <div class="col-auto">
                 <label class="form-label">Status:</label>
                 <select class="form-select" id="statusFilter">
-                    <option value="">All Jobs</option>
-                    <option value="unpaid">Unpaid Only</option>
+                    <option value="">Összes munka</option>
+                    <option value="unpaid">Kifizetetlen Only</option>
                     <option value="recent">Recent Jobs</option>
                 </select>
             </div>
             <div class="col-auto">
                 <label class="form-label">Sort by:</label>
                 <select class="form-select" id="sortFilter">
-                    <option value="date_desc">Date (Newest)</option>
-                    <option value="date_asc">Date (Oldest)</option>
+                    <option value="date_desc">Dátum (legújabb)</option>
+                    <option value="date_asc">Dátum (legrégebbi)</option>
                     <option value="customer">Customer Name</option>
                     <option value="amount_desc">Amount (High to Low)</option>
                     <option value="amount_asc">Amount (Low to High)</option>
@@ -114,14 +114,14 @@
         <div class="card-header">
             <h3 class="card-title">
                 <i class="ti ti-file-text me-2"></i>
-                Work Orders
+                Munkamegrendelések
             </h3>
             <div class="card-actions">
                 <button type="submit" class="btn btn-success" id="modifyBtn" disabled>
-                    <i class="ti ti-pencil me-2"></i>Modify Selected
+                    <i class="ti ti-pencil me-2"></i>Kijelöltek módosítása
                 </button>
                 <button type="button" class="btn btn-outline-primary" onclick="toggleSelectAll()">
-                    <i class="ti ti-square-check me-2"></i>Select All
+                    <i class="ti ti-square-check me-2"></i>Összes kijelölése
                 </button>
             </div>
         </div>
@@ -182,12 +182,12 @@
                                 {% if record.paid == 1 %}
                                     <span class="badge bg-success">
                                         <i class="ti ti-circle-check me-1"></i>
-                                        Paid
+                                        Fizetve
                                     </span>
                                 {% else %}
                                     <span class="badge bg-warning">
                                         <i class="ti ti-clock me-1"></i>
-                                        Unpaid
+                                        Kifizetetlen
                                     </span>
                                 {% endif %}
                             </td>
@@ -203,7 +203,7 @@
                                     </button>
                                     {% if session.current_role in ('owner', 'admin') and record.paid == 0 %}
                                         <button type="button" class="btn btn-sm btn-outline-success"
-                                                onclick="markAsPaid({{ record.job_id }})" title="Mark as Paid">
+                                                onclick="markAsFizetve({{ record.job_id }})" title="Mark as Fizetve">
                                             <i class="ti ti-credit-card"></i>
                                         </button>
                                     {% endif %}
@@ -223,17 +223,17 @@
 
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
                         <a class="page-link" href="{{ url_for('technician.current_jobs', page=prev_page) }}">
-                            <i class="ti ti-chevron-left"></i> Previous
+                            <i class="ti ti-chevron-left"></i> Előző
                         </a>
                     </li>
 
                     <li class="page-item active">
-                        <span class="page-link">Page {{ page }}</span>
+                        <span class="page-link">Oldal {{ page }}</span>
                     </li>
 
                     <li class="page-item">
                         <a class="page-link" href="{{ url_for('technician.current_jobs', page=next_page) }}">
-                            Next <i class="ti ti-chevron-right"></i>
+                            Következő <i class="ti ti-chevron-right"></i>
                         </a>
                     </li>
                 </ul>
@@ -242,13 +242,13 @@
             <!-- Empty State -->
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-inbox"></i></div>
-                <p class="empty-title">No Active Jobs</p>
+                <p class="empty-title">Nincs aktív munka</p>
                 <p class="empty-subtitle text-secondary">
-                    There are no active work orders at the moment. Create a new job to get started.
+                    Jelenleg nincs aktív munkamegrendelés. Hozzon létre egy új munkát!
                 </p>
                 <div class="empty-action">
                     <a href="{{ url_for('technician.new_job') }}" class="btn btn-accent">
-                        <i class="ti ti-plus me-2"></i>Create New Job
+                        <i class="ti ti-plus me-2"></i>Create Új munka
                     </a>
                 </div>
             </div>
@@ -446,7 +446,7 @@ function viewJobDetails(jobId) {
                 <div class="col-md-6">
                     <h6>Job Information</h6>
                     <p><strong>Job ID:</strong> #${jobId}</p>
-                    <p><strong>Status:</strong> <span class="badge bg-warning">In Progress</span></p>
+                    <p><strong>Status:</strong> <span class="badge bg-warning">Folyamatban</span></p>
                     <p><strong>Created:</strong> Today</p>
                 </div>
                 <div class="col-md-6">
@@ -463,7 +463,7 @@ function viewJobDetails(jobId) {
     }, 1000);
 }
 
-function markAsPaid(jobId) {
+function markAsFizetve(jobId) {
     if (confirm('Mark this job as paid?')) {
         // Implementation for marking as paid
         console.log('Marking job', jobId, 'as paid');

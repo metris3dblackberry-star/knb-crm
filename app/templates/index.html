@@ -79,7 +79,7 @@
     <div class="col-12">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
-                <h1 class="h2 fw-bold mb-1">Welcome back, {{ session.user_id }}</h1>
+                <h1 class="h2 fw-bold mb-1">Üdv vissza, {{ session.user_id }}</h1>
                 <p class="text-secondary mb-0">
                     <i class="ti ti-calendar me-1"></i>
                     {{ current_date.strftime('%A, %B %d, %Y') if current_date else '' }}
@@ -94,7 +94,7 @@
                 </a>
                 {% endif %}
                 <a href="{{ url_for('main.new_customer') }}" class="btn btn-outline-primary">
-                    <i class="ti ti-user-plus me-1"></i>Add Customer
+                    <i class="ti ti-user-plus me-1"></i>Ügyfél hozzáadása
                 </a>
             </div>
         </div>
@@ -108,10 +108,10 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-primary-lt me-2"><i class="ti ti-clipboard-list"></i></span>
-                    <div class="subheader">Total Work Orders</div>
+                    <div class="subheader">Összes munka</div>
                 </div>
                 <div class="h1 mb-0">{{ job_stats.get('total_jobs', 0) }}</div>
-                <small class="text-warning">{{ job_stats.get('pending_jobs', 0) }} pending</small>
+                <small class="text-warning">{{ job_stats.get('függőben_jobs', 0) }} függőben</small>
             </div>
         </div>
     </div>
@@ -120,10 +120,10 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-success-lt me-2"><i class="ti ti-currency-dollar"></i></span>
-                    <div class="subheader">Total Revenue</div>
+                    <div class="subheader">Összes bevétel</div>
                 </div>
                 <div class="h1 mb-0">${{ "%.0f"|format(billing_stats.get('total_revenue', 0)) }}</div>
-                <small class="text-warning">${{ "%.0f"|format(billing_stats.get('unpaid_amount', 0)) }} unpaid</small>
+                <small class="text-warning">${{ "%.0f"|format(billing_stats.get('kifizetetlen_amount', 0)) }} kifizetetlen</small>
             </div>
         </div>
     </div>
@@ -132,10 +132,10 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-info-lt me-2"><i class="ti ti-users"></i></span>
-                    <div class="subheader">Active Customers</div>
+                    <div class="subheader">Aktív ügyfelek</div>
                 </div>
                 <div class="h1 mb-0">{{ billing_stats.get('total_customers', 0) }}</div>
-                <small class="text-success">+{{ billing_stats.get('new_customers_month', 0) }} this month</small>
+                <small class="text-success">+{{ billing_stats.get('new_customers_month', 0) }} ebben a hónapban</small>
             </div>
         </div>
     </div>
@@ -144,10 +144,10 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-warning-lt me-2"><i class="ti ti-alert-triangle"></i></span>
-                    <div class="subheader">Overdue Bills</div>
+                    <div class="subheader">Lejárt számlák</div>
                 </div>
                 <div class="h1 mb-0">{{ (overdue_bills|length) if overdue_bills else 0 }}</div>
-                <small class="text-danger">Needs attention</small>
+                <small class="text-danger">Figyelmet igényel</small>
             </div>
         </div>
     </div>
@@ -158,17 +158,17 @@
     <div class="col-sm-6 col-lg-3 mb-3">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-user-plus me-2"></i>Customer Management</h3>
+                <h3 class="card-title"><i class="ti ti-user-plus me-2"></i>Ügyfélkezelés</h3>
             </div>
             <div class="card-body">
-                <p class="text-secondary">View customer database, add new customers, or search existing records.</p>
+                <p class="text-secondary">Ügyféladatbázis megtekintése, új ügyfelek hozzáadása, keresés.</p>
             </div>
             <div class="card-footer d-flex gap-2">
                 <a href="{{ url_for('main.customers') }}" class="btn btn-outline-primary">
-                    <i class="ti ti-users me-1"></i>View All
+                    <i class="ti ti-users me-1"></i>Összes
                 </a>
                 <a href="{{ url_for('main.new_customer') }}" class="btn btn-accent">
-                    <i class="ti ti-plus me-1"></i>Add New
+                    <i class="ti ti-plus me-1"></i>Hozzáadás
                 </a>
             </div>
         </div>
@@ -176,10 +176,10 @@
     <div class="col-sm-6 col-lg-3 mb-3">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-tool me-2"></i>Work Orders</h3>
+                <h3 class="card-title"><i class="ti ti-tool me-2"></i>Munkamegrendelések</h3>
             </div>
             <div class="card-body">
-                <p class="text-secondary">Manage repair work orders, track progress, and create new service requests.</p>
+                <p class="text-secondary">Javítási munkák kezelése, állapotkövetés, új feladat rögzítése.</p>
             </div>
             <div class="card-footer d-flex gap-2">
                 {% if session.current_role == 'technician' %}
@@ -191,7 +191,7 @@
                 </a>
                 {% else %}
                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-success">
-                    <i class="ti ti-layout-dashboard me-1"></i>View Dashboard
+                    <i class="ti ti-layout-dashboard me-1"></i>Műszerfal
                 </a>
                 {% endif %}
             </div>
@@ -203,7 +203,7 @@
                 <h3 class="card-title"><i class="ti ti-credit-card me-2"></i>Billing & Payments</h3>
             </div>
             <div class="card-body">
-                <p class="text-secondary">Process payments, manage billing records, and track outstanding balances.</p>
+                <p class="text-secondary">Fizetések kezelése, számlák nyilvántartása.</p>
             </div>
             <div class="card-footer d-flex gap-2">
                 {% if session.current_role in ('owner', 'admin') %}
@@ -215,7 +215,7 @@
                 </a>
                 {% else %}
                 <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-info">
-                    <i class="ti ti-info-circle me-1"></i>View Info
+                    <i class="ti ti-info-circle me-1"></i>Megtekintés
                 </a>
                 {% endif %}
             </div>
@@ -227,7 +227,7 @@
                 <h3 class="card-title"><i class="ti ti-trending-up me-2"></i>Reports & Analytics</h3>
             </div>
             <div class="card-body">
-                <p class="text-secondary">Generate detailed reports, view business analytics, and performance metrics.</p>
+                <p class="text-secondary">Részletes riportok, üzleti elemzések, teljesítménymutatók.</p>
             </div>
             <div class="card-footer d-flex gap-2">
                 {% if session.current_role in ('owner', 'admin') %}
@@ -236,7 +236,7 @@
                 </a>
                 {% endif %}
                 <a href="#" class="btn btn-secondary">
-                    <i class="ti ti-download me-1"></i>Export Data
+                    <i class="ti ti-download me-1"></i>Exportálás
                 </a>
             </div>
         </div>
@@ -248,7 +248,7 @@
     <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-chart-line me-2"></i>Monthly Revenue</h3>
+                <h3 class="card-title"><i class="ti ti-chart-line me-2"></i>Havi bevétel</h3>
             </div>
             <div class="card-body">
                 <canvas id="monthlyRevenueChart"></canvas>
@@ -258,7 +258,7 @@
     <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-chart-pie me-2"></i>Job Status Distribution</h3>
+                <h3 class="card-title"><i class="ti ti-chart-pie me-2"></i>Munkák státusza</h3>
             </div>
             <div class="card-body">
                 <canvas id="jobStatusChart"></canvas>
@@ -267,16 +267,16 @@
     </div>
 </div>
 
-<!-- Recent Activity -->
+<!-- Legutóbbi tevékenység -->
 <div class="row">
-    <!-- Recent Work Orders -->
+    <!-- Recent Munkamegrendelések -->
     <div class="col-lg-8 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-clock me-2"></i>Recent Work Orders</h3>
+                <h3 class="card-title"><i class="ti ti-clock me-2"></i>Recent Munkamegrendelések</h3>
                 <div class="card-actions">
                     <a href="{{ url_for('technician.current_jobs') if session.current_role == 'technician' else url_for('main.dashboard') }}" class="btn btn-sm btn-outline-primary">
-                        View All
+                        Összes
                     </a>
                 </div>
             </div>
@@ -308,9 +308,9 @@
                             <td><span class="text-secondary">{{ job.job_date }}</span></td>
                             <td>
                                 {% if job.completed %}
-                                <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Completed</span>
+                                <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Befejezett</span>
                                 {% else %}
-                                <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>In Progress</span>
+                                <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>Folyamatban</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -335,7 +335,7 @@
             {% else %}
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-inbox"></i></div>
-                <p class="empty-title">No Recent Work Orders</p>
+                <p class="empty-title">No Recent Munkamegrendelések</p>
                 <p class="empty-subtitle text-secondary">Create a new work order to get started.</p>
                 {% if session.current_role == 'technician' %}
                 <div class="empty-action">
@@ -347,14 +347,14 @@
         </div>
     </div>
 
-    <!-- Overdue Bills -->
+    <!-- Lejárt számlák -->
     <div class="col-lg-4 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="ti ti-alert-triangle text-warning me-2"></i>Overdue Bills</h3>
+                <h3 class="card-title"><i class="ti ti-alert-triangle text-warning me-2"></i>Lejárt számlák</h3>
                 <div class="card-actions">
                     {% if session.current_role in ('owner', 'admin') %}
-                    <a href="{{ url_for('administrator.overdue_bills') }}" class="btn btn-sm btn-outline-warning">View All</a>
+                    <a href="{{ url_for('administrator.overdue_bills') }}" class="btn btn-sm btn-outline-warning">Összes</a>
                     {% endif %}
                 </div>
             </div>
@@ -364,7 +364,7 @@
                 <div class="d-flex justify-content-between align-items-center py-3 {% if not loop.last %}border-bottom{% endif %}">
                     <div>
                         <div class="fw-semibold">{{ bill.get('first_name', '') }} {{ bill.get('family_name', '') }}</div>
-                        <small class="text-secondary">Job #{{ bill.get('job_id', '') }}</small>
+                        <small class="text-secondary">Munka #{{ bill.get('job_id', '') }}</small>
                         <br>
                         <small class="text-warning d-flex align-items-center gap-1">
                             <i class="ti ti-clock"></i>{{ bill.get('days_overdue', 0) }} days overdue
@@ -383,7 +383,7 @@
             <div class="empty py-4">
                 <div class="empty-icon"><i class="ti ti-circle-check text-success"></i></div>
                 <p class="empty-title">All Bills Current</p>
-                <p class="empty-subtitle text-secondary">No overdue bills at this time.</p>
+                <p class="empty-subtitle text-secondary">Nincs lejárt számla at this time.</p>
             </div>
             {% endif %}
         </div>

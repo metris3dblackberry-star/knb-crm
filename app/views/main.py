@@ -427,3 +427,37 @@ def debug_tenant():
     import sqlalchemy as sa
     tenants = db.session.execute(sa.text('SELECT tenant_id, name FROM tenant')).fetchall()
     return f'Session tenant_id: {session.get("current_tenant_id")} | Tenants in DB: {list(tenants)}'
+
+
+@main_bp.route('/create-tenant-xk9p2')
+def create_tenant():
+    from app.extensions import db
+    from flask import session
+    import sqlalchemy as sa
+
+    user_id = session.get('user_id')
+    if not user_id:
+        return 'Nincs bejelentkezve!'
+
+    try:
+        db.session.execute(sa.text("""
+            INSERT INTO tenant (name, slug, business_type, email, phone, address, status, settings, trial_ends_at, created_at, updated_at)
+            VALUES ('K&B Autojavito', 'kb-autojavito', 'auto_repair', 'info@autoszerelo.com', '+36304298811', 'Budapest, Szinesfem u.', 'active', '{}', NOW() + INTERVAL '365 days', NOW(), NOW())
+        """))
+        db.session.commit()
+
+        tenant = db.session.execute(sa.text("SELECT tenant_id FROM tenant WHERE slug='kb-autojavito'")).fetchone()
+        tenant_id = tenant[0]
+
+        db.session.execute(sa.text("""
+            INSERT INTO tenant_membership (user_id, tenant_id, role, is_default, status, accepted_at, created_at, updated_at)
+            VALUES (:uid, :tid, 'owner', true, 'active', NOW(), NOW(), NOW())
+        """), {'uid': user_id, 'tid': tenant_id})
+        db.session.commit()
+
+        session['current_tenant_id'] = tenant_id
+        session['current_role'] = 'owner'
+        return f'Tenant létrehozva! tenant_id={tenant_id}, user_id={user_id}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

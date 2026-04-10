@@ -369,13 +369,3 @@ def internal_error(error):
     """500 error handler"""
     return render_template('errors/500.html'), 500 
 
-@main_bp.route('/run-migration-xk9p2')
-def run_migration():
-    """One-time migration route - DELETE AFTER USE"""
-    try:
-        from app.extensions import db
-        db.session.execute(db.text('ALTER TABLE customer ALTER COLUMN phone TYPE VARCHAR(30)'))
-        db.session.commit()
-        return 'Migration OK - phone column updated!'
-    except Exception as e:
-        return f'Error: {str(e)}'

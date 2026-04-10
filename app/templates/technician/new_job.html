@@ -1,15 +1,15 @@
 {% extends "base/layout.html" %}
 
-{% block title %}New Job - RepairOS{% endblock %}
+{% block title %}Új munka{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
     <li class="breadcrumb-item">
-        <a href="{{ url_for('technician.current_jobs') }}">Current Jobs</a>
+        <a href="{{ url_for('technician.current_jobs') }}">Aktuális munkák</a>
     </li>
-    <li class="breadcrumb-item active">New Job</li>
+    <li class="breadcrumb-item active">Új munka</li>
 {% endblock %}
 
 {% block content %}
@@ -18,37 +18,37 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-circle-plus text-primary"></i>
-            Create New Job
+            Create Új munka
         </h1>
-        <p class="text-muted mb-0">Start a new work order for a customer</p>
+        <p class="text-muted mb-0">Új munkamegrendelés indítása egy ügyfélnek</p>
     </div>
     <div>
         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-2"></i>Back to Jobs
+            <i class="ti ti-arrow-left me-2"></i>Vissza a munkákhoz
         </a>
     </div>
 </div>
 
-<!-- New Job Form -->
+<!-- Új munka Form -->
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-file-plus me-2"></i>
-                    Job Details
+                    Munka adatai
                 </h3>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('technician.new_job') }}" id="newJobForm">
-                    <!-- Customer Selection -->
+                    <!-- Ügyfél Selection -->
                     <div class="mb-4">
                         <label for="customer_id" class="form-label fw-semibold">
                             <i class="ti ti-user me-1"></i>
-                            Customer
+                            Ügyfél
                         </label>
                         <select class="form-select" id="customer_id" name="customer_id" required>
-                            <option value="">Select a customer...</option>
+                            <option value="">Válasszon ügyfelet...</option>
                             {% for customer in customers %}
                             <option value="{{ customer.customer_id }}">
                                 {{ customer.first_name }} {{ customer.family_name }}
@@ -58,31 +58,31 @@
                         </select>
                         <div class="form-text">
                             <i class="ti ti-info-circle me-1"></i>
-                            Choose the customer for this work order.
+                            Válassza ki az ügyfelet ehhez a munkához.
                         </div>
                     </div>
 
-                    <!-- Job Date -->
+                    <!-- Munka dátuma -->
                     <div class="mb-4">
                         <label for="job_date" class="form-label fw-semibold">
                             <i class="ti ti-calendar me-1"></i>
-                            Job Date
+                            Munka dátuma
                         </label>
                         <input type="date" class="form-control" id="job_date" name="job_date"
                                min="{{ min_date }}" required>
                         <div class="form-text">
                             <i class="ti ti-info-circle me-1"></i>
-                            Select the date for this work order.
+                            Válassza ki a munka dátumát.
                         </div>
                     </div>
 
                     <!-- Form Actions -->
                     <div class="d-flex justify-content-end gap-2 pt-3 border-top">
                         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
-                            <i class="ti ti-x me-1"></i>Cancel
+                            <i class="ti ti-x me-1"></i>Mégse
                         </a>
                         <button type="submit" class="btn btn-accent">
-                            <i class="ti ti-plus me-1"></i>Create Job
+                            <i class="ti ti-plus me-1"></i>Munka létrehozása
                         </button>
                     </div>
                 </form>

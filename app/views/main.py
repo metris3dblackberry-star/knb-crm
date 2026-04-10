@@ -270,3 +270,20 @@ def not_found_error(error):
 @main_bp.errorhandler(500)
 def internal_error(error):
     return render_template('errors/500.html'), 500
+
+
+@main_bp.route('/fix-tenant-data3-xk9p2')
+def fix_tenant_data3():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        # Delete ALL null tenant customers (they're duplicates)
+        r1 = db.session.execute(sa.text("DELETE FROM job WHERE tenant_id IS NULL"))
+        r2 = db.session.execute(sa.text("DELETE FROM customer WHERE tenant_id IS NULL"))
+        r3 = db.session.execute(sa.text("UPDATE service SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r4 = db.session.execute(sa.text("UPDATE part SET tenant_id=1 WHERE tenant_id IS NULL"))
+        db.session.commit()
+        return f'OK! deleted_jobs={r1.rowcount} deleted_customers={r2.rowcount} services={r3.rowcount} parts={r4.rowcount}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

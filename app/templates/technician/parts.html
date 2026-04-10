@@ -1,12 +1,12 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Parts - RepairOS{% endblock %}
+{% block title %}Alkatrészek{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
-    <li class="breadcrumb-item active">Parts</li>
+    <li class="breadcrumb-item active">Alkatrészek</li>
 {% endblock %}
 
 {% block content %}
@@ -15,21 +15,21 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-package text-primary"></i>
-            Parts Inventory
+            Alkatrészek Inventory
         </h1>
-        <p class="text-muted mb-0">Browse available parts and supplies</p>
+        <p class="text-muted mb-0">Elérhető alkatrészek böngészése</p>
     </div>
 </div>
 
-<!-- Parts Table -->
+<!-- Alkatrészek Table -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-list me-2"></i>
-            All Parts
+            All Alkatrészek
         </h3>
         <div class="card-actions">
-            <span class="text-muted">{{ parts|length if parts else 0 }} part{{ 's' if not parts or parts|length != 1 }}</span>
+            <span class="text-muted">{{ parts|length if parts else 0 }} alkatrész</span>
         </div>
     </div>
 
@@ -38,13 +38,13 @@
         <table class="table table-vcenter card-table" id="partsTable">
             <thead>
                 <tr>
-                    <th>Part Name</th>
-                    <th>SKU</th>
-                    <th>Category</th>
-                    <th class="text-end">Cost</th>
-                    <th>Stock Level</th>
-                    <th>Supplier</th>
-                    <th>Status</th>
+                    <th>Alkatrész neve</th>
+                    <th>Cikkszám</th>
+                    <th>Kategória</th>
+                    <th class="text-end">Ár</th>
+                    <th>Készlet</th>
+                    <th>Szállító</th>
+                    <th>Státusz</th>
                 </tr>
             </thead>
             <tbody>
@@ -88,7 +88,7 @@
                                 {{ part.stock_level }}
                             </span>
                             {% if part.stock_level <= 5 %}
-                            <span class="badge bg-danger bg-opacity-10 text-danger ms-1" style="font-size: 0.7rem;">Low</span>
+                            <span class="badge bg-danger bg-opacity-10 text-danger ms-1" style="font-size: 0.7rem;">Alacsony</span>
                             {% endif %}
                         </div>
                         {% else %}
@@ -109,12 +109,12 @@
                         {% if part.active is defined and not part.active %}
                             <span class="badge bg-danger">
                                 <i class="ti ti-circle-x me-1"></i>
-                                Inactive
+                                Inaktív
                             </span>
                         {% else %}
                             <span class="badge bg-success">
                                 <i class="ti ti-circle-check me-1"></i>
-                                Active
+                                Aktív
                             </span>
                         {% endif %}
                     </td>
@@ -127,9 +127,9 @@
     <!-- Empty State -->
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-package"></i></div>
-        <p class="empty-title">No Parts Available</p>
+        <p class="empty-title">No Alkatrészek Available</p>
         <p class="empty-subtitle text-secondary">
-            There are no parts in the inventory at this time. Contact an administrator to add parts.
+            Jelenleg nincs alkatrész a készletben. Kérjen meg egy adminisztrátort az alkatrészek hozzáadásához.
         </p>
     </div>
     {% endif %}

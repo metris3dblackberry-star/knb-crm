@@ -369,15 +369,19 @@ def internal_error(error):
     """500 error handler"""
     return render_template('errors/500.html'), 500 
 
-@main_bp.route('/run-migration-xk9p2')
-def run_migration():
-    """One-time migration route - DELETE AFTER USE"""
+
+
+@main_bp.route('/fix-cost-columns-xk9p2')
+def fix_cost_columns():
+    """Fix numeric columns - DELETE AFTER USE"""
     try:
         from app.extensions import db
-        db.session.execute(db.text('ALTER TABLE customer ALTER COLUMN phone TYPE VARCHAR(30)'))
+        db.session.execute(db.text('ALTER TABLE service ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
+        db.session.execute(db.text('ALTER TABLE part ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
         db.session.commit()
-        return 'Migration OK - phone column updated!'
+        return 'Fix OK - cost columns updated to NUMERIC(10,2)!'
     except Exception as e:
+        db.session.rollback()
         return f'Error: {str(e)}'
 
 
@@ -391,11 +395,6 @@ def seed_services():
         from flask import session
 
         tenant_id = session.get('current_tenant_id') or 1
-
-        # Fix cost column size first
-        db.session.execute(db.text('ALTER TABLE service ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
-        db.session.execute(db.text('ALTER TABLE part ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
-        db.session.commit()
 
         services = [
             Service(service_name="Olajcsere", cost=8000, tenant_id=tenant_id),
@@ -426,6 +425,7 @@ def seed_services():
         for p in parts:
             db.session.add(p)
         db.session.commit()
-        return f'Seed OK - {len(services)} szolgaltatas es {len(parts)} alkatresz feltoltve!'
+        return f'Seed OK - {len(services)} szolgaltatas es {len(parts)} alkatresz!'
     except Exception as e:
+        db.session.rollback()
         return f'Error: {str(e)}'

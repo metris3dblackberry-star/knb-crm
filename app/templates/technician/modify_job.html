@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 {% block title %}
-Modify Job #{{ data.job_id }} - RepairOS
+Munka szerkesztése #{{ data.job_id }} - RepairOS
 {% endblock %}
 
 {% block content %}
@@ -11,55 +11,55 @@ Modify Job #{{ data.job_id }} - RepairOS
                 <div>
                     <h1 class="h3 mb-0">
                         <i class="ti ti-tool text-primary me-2"></i>
-                        Modify Job #{{ data.job_id }}
+                        Munka szerkesztése #{{ data.job_id }}
                     </h1>
                     <p class="text-muted mb-0">Update job details, add services and parts</p>
                 </div>
                 <div>
                     <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-primary">
                         <i class="ti ti-arrow-left me-1"></i>
-                        Back to Jobs
+                        Vissza a munkáhozs
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Job Status Alert -->
+    <!-- Job Státusz Alert -->
     {% if data.completed %}
     <div class="alert alert-success border-0 shadow-sm mb-4">
         <div class="d-flex">
             <i class="ti ti-circle-check text-success me-2"></i>
             <div>
-                <strong>Job Completed</strong>
+                <strong>Job Befejezett</strong>
                 <p class="mb-0">This job has been marked as completed. No further modifications are allowed.</p>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- Customer & Job Information Card -->
+    <!-- Ügyfél & Munka adatai Card -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-user-circle me-2"></i>
-                        Customer & Job Information
+                        Ügyfél & Munka adatai
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Customer</label>
+                                <label class="info-label">Ügyfél</label>
                                 <div class="info-value">
                                     <i class="ti ti-user me-2 text-primary"></i>
                                     {{ data.first_name }} {{ data.family_name }}
                                 </div>
                             </div>
                             <div class="info-item">
-                                <label class="info-label">Customer ID</label>
+                                <label class="info-label">Ügyfél ID</label>
                                 <div class="info-value">
                                     <i class="ti ti-hash me-2 text-secondary"></i>
                                     {{ data.customer_id }}
@@ -68,14 +68,14 @@ Modify Job #{{ data.job_id }} - RepairOS
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Job Date</label>
+                                <label class="info-label">Munka dátuma</label>
                                 <div class="info-value">
                                     <i class="ti ti-calendar-event me-2 text-primary"></i>
                                     {{ data.job_date }}
                                 </div>
                             </div>
                             <div class="info-item">
-                                <label class="info-label">Total Cost</label>
+                                <label class="info-label">Végösszeg</label>
                                 <div class="info-value">
                                     <i class="ti ti-currency-dollar me-2 text-success"></i>
                                     ${{ "%.2f"|format(data.total_cost|float) }}
@@ -86,17 +86,17 @@ Modify Job #{{ data.job_id }} - RepairOS
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Completion Status</label>
+                                <label class="info-label">Completion Státusz</label>
                                 <div class="info-value">
                                     {% if data.completed %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-circle-check me-1"></i>
-                                            Completed
+                                            Befejezett
                                         </span>
                                     {% else %}
                                         <span class="badge bg-warning">
                                             <i class="ti ti-clock me-1"></i>
-                                            In Progress
+                                            Folyamatban
                                         </span>
                                     {% endif %}
                                 </div>
@@ -104,17 +104,17 @@ Modify Job #{{ data.job_id }} - RepairOS
                         </div>
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Payment Status</label>
+                                <label class="info-label">Payment Státusz</label>
                                 <div class="info-value">
                                     {% if data.paid %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-credit-card me-1"></i>
-                                            Paid
+                                            Fizetve
                                         </span>
                                     {% else %}
                                         <span class="badge bg-danger">
                                             <i class="ti ti-alert-triangle me-1"></i>
-                                            Unpaid
+                                            Kifizetetlen
                                         </span>
                                     {% endif %}
                                 </div>
@@ -126,30 +126,30 @@ Modify Job #{{ data.job_id }} - RepairOS
         </div>
     </div>
 
-    <!-- Services and Parts Section -->
+    <!-- Szolgáltatáss and Alkatrészs Section -->
     <div class="row">
-        <!-- Add Service Card -->
+        <!-- Szolgáltatás hozzáadása Card -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-settings me-2"></i>
-                        Services Management
+                        Szolgáltatáss Management
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Add Service Form -->
+                    <!-- Szolgáltatás hozzáadása Form -->
                     <div class="mb-4">
                         <h6 class="text-primary mb-3">
                             <i class="ti ti-circle-plus me-2"></i>
-                            Add New Service
+                            Add New Szolgáltatás
                         </h6>
                         <form method="POST" action="{{ url_for('add_service_to_job', job_id=data.job_id) }}">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label">Service Type</label>
+                                    <label class="form-label">Szolgáltatás Type</label>
                                     <select class="form-select" name="service_id" required {% if job_completed %}disabled{% endif %}>
-                                        <option value="">Select a service...</option>
+                                        <option value="">Válasszon szolgáltatást...</option>
                                         {% for service in all_services %}
                                             <option value="{{ service.service_id }}">
                                                 {{ service.service_name }} - ${{ "%.2f"|format(service.cost|float) }}
@@ -158,24 +158,24 @@ Modify Job #{{ data.job_id }} - RepairOS
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Quantity</label>
+                                    <label class="form-label">Mennyiség</label>
                                     <input type="number" name="service_qty" class="form-control" min="1" value="1" required {% if job_completed %}disabled{% endif %}>
                                 </div>
                                 <div class="col-6 d-flex align-items-end">
                                     <button type="submit" class="btn btn-info w-100" {% if job_completed %}disabled{% endif %}>
                                         <i class="ti ti-plus me-1"></i>
-                                        Add Service
+                                        Szolgáltatás hozzáadása
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Current Services -->
+                    <!-- Jelenlegi szolgáltatások -->
                     <div>
                         <h6 class="text-secondary mb-3">
                             <i class="ti ti-list-check me-2"></i>
-                            Current Services
+                            Jelenlegi szolgáltatások
                         </h6>
                         {% if services %}
                             <div class="list-group">
@@ -184,7 +184,7 @@ Modify Job #{{ data.job_id }} - RepairOS
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="mb-1">{{ service.service_name }}</h6>
-                                            <small class="text-muted">Quantity: {{ service.qty }}</small>
+                                            <small class="text-muted">Mennyiség: {{ service.qty }}</small>
                                         </div>
                                         <span class="badge bg-info rounded-pill">{{ service.qty }}</span>
                                     </div>
@@ -202,28 +202,28 @@ Modify Job #{{ data.job_id }} - RepairOS
             </div>
         </div>
 
-        <!-- Add Parts Card -->
+        <!-- Alkatrész hozzáadásas Card -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-success text-white">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-puzzle me-2"></i>
-                        Parts Management
+                        Alkatrészs Management
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Add Part Form -->
+                    <!-- Alkatrész hozzáadása Form -->
                     <div class="mb-4">
                         <h6 class="text-primary mb-3">
                             <i class="ti ti-circle-plus me-2"></i>
-                            Add New Part
+                            Add New Alkatrész
                         </h6>
                         <form method="POST" action="{{ url_for('add_part_to_job', job_id=data.job_id) }}">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label">Part Type</label>
+                                    <label class="form-label">Alkatrész Type</label>
                                     <select class="form-select" name="part_id" required {% if job_completed %}disabled{% endif %}>
-                                        <option value="">Select a part...</option>
+                                        <option value="">Válasszon alkatrészt...</option>
                                         {% for part in all_parts %}
                                             <option value="{{ part.part_id }}">
                                                 {{ part.part_name }} - ${{ "%.2f"|format(part.cost|float) }}
@@ -232,24 +232,24 @@ Modify Job #{{ data.job_id }} - RepairOS
                                     </select>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Quantity</label>
+                                    <label class="form-label">Mennyiség</label>
                                     <input type="number" name="part_qty" class="form-control" min="1" value="1" required {% if job_completed %}disabled{% endif %}>
                                 </div>
                                 <div class="col-6 d-flex align-items-end">
                                     <button type="submit" class="btn btn-success w-100" {% if job_completed %}disabled{% endif %}>
                                         <i class="ti ti-plus me-1"></i>
-                                        Add Part
+                                        Alkatrész hozzáadása
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Current Parts -->
+                    <!-- Jelenlegi alkatrészek -->
                     <div>
                         <h6 class="text-secondary mb-3">
                             <i class="ti ti-list-check me-2"></i>
-                            Current Parts
+                            Jelenlegi alkatrészek
                         </h6>
                         {% if parts %}
                             <div class="list-group">
@@ -258,7 +258,7 @@ Modify Job #{{ data.job_id }} - RepairOS
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="mb-1">{{ part.part_name }}</h6>
-                                            <small class="text-muted">Quantity: {{ part.qty }}</small>
+                                            <small class="text-muted">Mennyiség: {{ part.qty }}</small>
                                         </div>
                                         <span class="badge bg-success rounded-pill">{{ part.qty }}</span>
                                     </div>
@@ -306,9 +306,9 @@ Modify Job #{{ data.job_id }} - RepairOS
                         </div>
                         <div class="col-md-4 text-md-end">
                             <form action="{{ url_for('technician.complete_job', job_id=data['job_id']) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-warning btn-lg" onclick="return confirm('Are you sure you want to mark this job as completed? This action cannot be undone.')">
+                                <button type="submit" class="btn btn-warning btn-lg" onclick="return confirm('Biztosan befejezettnek jelöli ezt a munkát? This action cannot be undone.')">
                                     <i class="ti ti-circle-check me-2"></i>
-                                    Mark as Completed
+                                    Mark as Befejezett
                                 </button>
                             </form>
                         </div>

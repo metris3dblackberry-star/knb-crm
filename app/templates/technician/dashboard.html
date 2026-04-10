@@ -130,7 +130,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="fw-semibold text-success">${{ "%.2f"|format(job.total_cost) }}</span>
+                        <span class="fw-semibold text-success">{{ "%.0f"|format(job.total_cost) }} Ft</span>
                     </td>
                     <td>
                         <div class="d-flex gap-1">
@@ -212,7 +212,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="fw-semibold text-success">${{ "%.2f"|format(job.total_cost) }}</span>
+                        <span class="fw-semibold text-success">{{ "%.0f"|format(job.total_cost) }} Ft</span>
                     </td>
                     <td>
                         <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}"

@@ -176,7 +176,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="fw-semibold text-success">${{ "%.2f"|format(record.total_cost) }}</span>
+                                <span class="fw-semibold text-success">{{ "%.0f"|format(record.total_cost) }} Ft</span>
                             </td>
                             <td>
                                 {% if record.paid == 1 %}

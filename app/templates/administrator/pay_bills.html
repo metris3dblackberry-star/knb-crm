@@ -58,7 +58,7 @@ Billing Management - Administrator Portal
                         <div class="subheader">Total Outstanding</div>
                     </div>
                     <div class="h1 mb-0">
-                        ${{ "%.2f"|format(customer_info|sum(attribute='total_cost')|float) }}
+                        {{ "%.2f"|format(customer_info|sum(attribute='total_cost')|float) }} Ft
                     </div>
                 </div>
             </div>
@@ -173,7 +173,7 @@ Billing Management - Administrator Portal
                                                 <div class="d-flex align-items-center">
                                                     <i class="ti ti-currency-dollar text-success me-2"></i>
                                                     <span class="h5 mb-0 text-success">
-                                                        ${{ "%.2f"|format(customer.total_cost|float) }}
+                                                        {{ "%.0f"|format(customer.total_cost|float) }} Ft
                                                     </span>
                                                 </div>
                                             </td>

@@ -234,7 +234,7 @@ Customer Management - Administrator Portal
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="fw-bold text-success">${{ "%.2f"|format(job.total_cost|float) }}</span>
+                                        <span class="fw-bold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span>
                                     </td>
                                     <td>
                                         {% if job.completed == 1 %}
@@ -364,7 +364,7 @@ Customer Management - Administrator Portal
                                     {% for service in services %}
                                     <tr>
                                         <td>{{ service.service_name }}</td>
-                                        <td>${{ "%.2f"|format(service.cost|float) }}</td>
+                                        <td>{{ "%.0f"|format(service.cost|float) }} Ft</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -426,7 +426,7 @@ Customer Management - Administrator Portal
                                     {% for part in parts %}
                                     <tr>
                                         <td>{{ part.part_name }}</td>
-                                        <td>${{ "%.2f"|format(part.cost|float) }}</td>
+                                        <td>{{ "%.0f"|format(part.cost|float) }} Ft</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

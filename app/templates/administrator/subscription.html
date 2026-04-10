@@ -48,7 +48,7 @@
                     {% if current_plan.price is defined %}
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Monthly Cost</span>
-                        <span class="fw-semibold">${{ "%.2f"|format(current_plan.price|float) }}</span>
+                        <span class="fw-semibold">{{ "%.0f"|format(current_plan.price|float) }} Ft</span>
                     </div>
                     {% endif %}
                     <div class="mt-4 d-flex gap-2">

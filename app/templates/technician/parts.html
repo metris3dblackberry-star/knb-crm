@@ -78,7 +78,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <span class="fw-semibold text-success">${{ "%.2f"|format(part.cost|float) }}</span>
+                        <span class="fw-semibold text-success">{{ "%.0f"|format(part.cost|float) }} Ft</span>
                     </td>
                     <td>
                         {% if part.stock_level is defined %}

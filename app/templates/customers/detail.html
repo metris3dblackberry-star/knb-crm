@@ -158,7 +158,7 @@
                                 </a>
                             </td>
                             <td>{{ job.job_date.strftime('%b %d, %Y') if job.job_date else 'N/A' }}</td>
-                            <td><span class="fw-semibold text-success">${{ "%.2f"|format(job.total_cost|float) }}</span></td>
+                            <td><span class="fw-semibold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span></td>
                             <td>
                                 {% if job.completed %}
                                 <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Completed</span>

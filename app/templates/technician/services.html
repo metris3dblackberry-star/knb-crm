@@ -69,7 +69,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
-                        <span class="fw-semibold text-success">${{ "%.2f"|format(service.cost|float) }}</span>
+                        <span class="fw-semibold text-success">{{ "%.0f"|format(service.cost|float) }} Ft</span>
                     </td>
                     <td>
                         {% if service.est_duration %}

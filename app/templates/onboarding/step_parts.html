@@ -85,7 +85,7 @@
                                         <td class="fw-semibold">{{ part.part_name }}</td>
                                         <td><code>{{ part.sku }}</code></td>
                                         <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ part.category }}</span></td>
-                                        <td>${{ "%.2f"|format(part.cost) }}</td>
+                                        <td>{{ "%.0f"|format(part.cost) }} Ft</td>
                                         <td>{{ part.supplier }}</td>
                                     </tr>
                                     {% endfor %}

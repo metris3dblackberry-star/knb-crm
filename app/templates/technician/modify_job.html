@@ -78,7 +78,7 @@ Munka szerkesztése #{{ data.job_id }} - RepairOS
                                 <label class="info-label">Végösszeg</label>
                                 <div class="info-value">
                                     <i class="ti ti-currency-dollar me-2 text-success"></i>
-                                    ${{ "%.2f"|format(data.total_cost|float) }}
+                                    {{ "%.0f"|format(data.total_cost|float) }} Ft
                                 </div>
                             </div>
                         </div>
@@ -152,7 +152,7 @@ Munka szerkesztése #{{ data.job_id }} - RepairOS
                                         <option value="">Válasszon szolgáltatást...</option>
                                         {% for service in all_services %}
                                             <option value="{{ service.service_id }}">
-                                                {{ service.service_name }} - ${{ "%.2f"|format(service.cost|float) }}
+                                                {{ service.service_name }} - {{ "%.0f"|format(service.cost|float) }} Ft
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -226,7 +226,7 @@ Munka szerkesztése #{{ data.job_id }} - RepairOS
                                         <option value="">Válasszon alkatrészt...</option>
                                         {% for part in all_parts %}
                                             <option value="{{ part.part_id }}">
-                                                {{ part.part_name }} - ${{ "%.2f"|format(part.cost|float) }}
+                                                {{ part.part_name }} - {{ "%.0f"|format(part.cost|float) }} Ft
                                             </option>
                                         {% endfor %}
                                     </select>
@@ -301,7 +301,7 @@ Munka szerkesztése #{{ data.job_id }} - RepairOS
                                 </div>
                             </div>
                             <p class="text-muted mb-0">
-                                Current total cost: <strong>${{ "%.2f"|format(data.total_cost|float) }}</strong>
+                                Current total cost: <strong>{{ "%.0f"|format(data.total_cost|float) }} Ft</strong>
                             </p>
                         </div>
                         <div class="col-md-4 text-md-end">

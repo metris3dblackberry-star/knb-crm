@@ -314,7 +314,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="fw-semibold">${{ "%.2f"|format(job.total_cost|float if job.total_cost else 0) }}</span>
+                                <span class="fw-semibold">{{ "%.0f"|format(job.total_cost|float if job.total_cost else 0) }} Ft</span>
                                 {% if not job.paid %}
                                 <br><small class="text-warning">Unpaid</small>
                                 {% endif %}

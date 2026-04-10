@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Technician Dashboard - RepairOS{% endblock %}
+{% block title %}Szerelő Műszerfal{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item active">Dashboard</li>
@@ -12,16 +12,16 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-layout-dashboard text-primary"></i>
-            Technician Dashboard
+            Szerelő Műszerfal
         </h1>
-        <p class="text-muted mb-0">Overview of your work orders and schedule</p>
+        <p class="text-muted mb-0">Munkamegrendelések és beosztás áttekintése</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ url_for('technician.new_job') }}" class="btn btn-accent">
-            <i class="ti ti-plus me-2"></i>New Job
+            <i class="ti ti-plus me-2"></i>Új munka
         </a>
         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-clipboard-list me-2"></i>All Jobs
+            <i class="ti ti-clipboard-list me-2"></i>Összes munka
         </a>
     </div>
 </div>
@@ -33,7 +33,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-warning-lt me-2"><i class="ti ti-clock"></i></span>
-                    <div class="subheader">Active Jobs</div>
+                    <div class="subheader">Aktív munkák</div>
                 </div>
                 <div class="h1 mb-0">{{ active_jobs|default(0) }}</div>
             </div>
@@ -44,7 +44,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-info-lt me-2"><i class="ti ti-calendar"></i></span>
-                    <div class="subheader">Today's Jobs</div>
+                    <div class="subheader">Mai munkák</div>
                 </div>
                 <div class="h1 mb-0">{{ todays_jobs|default(0) }}</div>
             </div>
@@ -55,7 +55,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-success-lt me-2"><i class="ti ti-circle-check"></i></span>
-                    <div class="subheader">Completed This Week</div>
+                    <div class="subheader">Befejezett ezen a héten</div>
                 </div>
                 <div class="h1 mb-0">{{ completed_this_week|default(0) }}</div>
             </div>
@@ -63,16 +63,16 @@
     </div>
 </div>
 
-<!-- Recent Jobs Table -->
+<!-- Legutóbbi munkák Table -->
 <div class="card mb-4">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-file-text me-2"></i>
-            Recent Jobs
+            Legutóbbi munkák
         </h3>
         <div class="card-actions">
             <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-primary btn-sm">
-                View All <i class="ti ti-arrow-right ms-1"></i>
+                Összes megtekintése <i class="ti ti-arrow-right ms-1"></i>
             </a>
         </div>
     </div>
@@ -82,12 +82,12 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Job ID</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Actions</th>
+                    <th>Munka ID</th>
+                    <th>Ügyfél</th>
+                    <th>Dátum</th>
+                    <th>Státusz</th>
+                    <th>Összeg</th>
+                    <th>Műveletek</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,23 +109,23 @@
                         </div>
                     </td>
                     <td>
-                        <div class="fw-medium">{{ job.job_date.strftime('%b %d, %Y') if job.job_date else 'N/A' }}</div>
+                        <div class="fw-medium">{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</div>
                     </td>
                     <td>
                         {% if job.completed %}
                             <span class="badge bg-success">
                                 <i class="ti ti-circle-check me-1"></i>
-                                Completed
+                                Befejezett
                             </span>
                         {% elif job.paid %}
                             <span class="badge bg-success">
                                 <i class="ti ti-credit-card me-1"></i>
-                                Paid
+                                Fizetve
                             </span>
                         {% else %}
                             <span class="badge bg-warning">
                                 <i class="ti ti-clock me-1"></i>
-                                In Progress
+                                Folyamatban
                             </span>
                         {% endif %}
                     </td>
@@ -135,11 +135,11 @@
                     <td>
                         <div class="d-flex gap-1">
                             <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}"
-                               class="btn btn-sm btn-outline-primary" title="View Details">
+                               class="btn btn-sm btn-outline-primary" title="Részletek">
                                 <i class="ti ti-eye"></i>
                             </a>
                             <a href="{{ url_for('technician.modify_job', job_id=job.job_id) }}"
-                               class="btn btn-sm btn-outline-secondary" title="Edit">
+                               class="btn btn-sm btn-outline-secondary" title="Szerkesztés">
                                 <i class="ti ti-pencil"></i>
                             </a>
                         </div>
@@ -153,25 +153,25 @@
     <!-- Empty State -->
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-inbox"></i></div>
-        <p class="empty-title">No Recent Jobs</p>
+        <p class="empty-title">No Legutóbbi munkák</p>
         <p class="empty-subtitle text-secondary">
-            You have no recent work orders. Create a new job to get started.
+            Nincs legutóbbi munkamegrendelés. Hozzon létre egy új munkát!
         </p>
         <div class="empty-action">
             <a href="{{ url_for('technician.new_job') }}" class="btn btn-accent">
-                <i class="ti ti-plus me-2"></i>Create New Job
+                <i class="ti ti-plus me-2"></i>Create Új munka
             </a>
         </div>
     </div>
     {% endif %}
 </div>
 
-<!-- Today's Schedule -->
+<!-- Mai beosztás -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-calendar-event me-2"></i>
-            Today's Schedule
+            Mai beosztás
         </h3>
     </div>
 
@@ -180,11 +180,11 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Job ID</th>
-                    <th>Customer</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Actions</th>
+                    <th>Munka ID</th>
+                    <th>Ügyfél</th>
+                    <th>Státusz</th>
+                    <th>Összeg</th>
+                    <th>Műveletek</th>
                 </tr>
             </thead>
             <tbody>
@@ -202,12 +202,12 @@
                         {% if job.completed %}
                             <span class="badge bg-success">
                                 <i class="ti ti-circle-check me-1"></i>
-                                Completed
+                                Befejezett
                             </span>
                         {% else %}
                             <span class="badge bg-warning">
                                 <i class="ti ti-clock me-1"></i>
-                                In Progress
+                                Folyamatban
                             </span>
                         {% endif %}
                     </td>
@@ -216,7 +216,7 @@
                     </td>
                     <td>
                         <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}"
-                           class="btn btn-sm btn-outline-primary" title="View Details">
+                           class="btn btn-sm btn-outline-primary" title="Részletek">
                             <i class="ti ti-eye"></i>
                         </a>
                     </td>
@@ -229,9 +229,9 @@
     <!-- Empty State -->
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-calendar-off"></i></div>
-        <p class="empty-title">No Jobs Scheduled Today</p>
+        <p class="empty-title">Nincs mai munka</p>
         <p class="empty-subtitle text-secondary">
-            There are no work orders scheduled for today.
+            Ma nincs ütemezett munkamegrendelés.
         </p>
     </div>
     {% endif %}

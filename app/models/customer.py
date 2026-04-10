@@ -25,7 +25,7 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
     first_name: Mapped[Optional[str]] = mapped_column(String(25), nullable=True)
     family_name: Mapped[str] = mapped_column(String(25), nullable=False)
     email: Mapped[str] = mapped_column(String(320), nullable=False)
-    phone: Mapped[str] = mapped_column(String(11), nullable=False)
+    phone: Mapped[str] = mapped_column(String(30), nullable=False)
 
     # Relationships
     jobs: Mapped[List["Job"]] = relationship("Job", back_populates="customer_rel", lazy="dynamic")
@@ -118,17 +118,17 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
         errors = []
 
         if not self.family_name or not self.family_name.strip():
-            errors.append("Family name is required")
+            errors.append("A vezetéknév megadása kötelező")
 
         if not self.email or not self.email.strip():
-            errors.append("Email is required")
+            errors.append("Az e-mail cím megadása kötelező")
         else:
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
             if not re.match(email_pattern, self.email):
-                errors.append(f"Invalid email format: {self.email}")
+                errors.append(f"Érvénytelen e-mail formátum: {self.email}")
 
         if not self.phone or not self.phone.strip():
-            errors.append("Phone number is required")
+            errors.append("A telefonszám megadása kötelező")
 
         return errors
 

@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Create Organization - RepairOS{% endblock %}
+{% block title %}Szervezet létrehozása - K&B Autójavító{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -18,14 +18,14 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-6 col-xl-5">
-                <div class="card border-0 shadow-lg" style="border-top: 4px solid var(--accent) !important;">
+                <div class="card border-0 shadow-lg" style="border-top: 4px solid var(--repaisos-accent) !important;">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
                             <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
                                 <i class="ti ti-building-plus text-primary" style="font-size: 2rem;"></i>
                             </div>
-                            <h2 class="fw-bold mb-2">Create Organization</h2>
-                            <p class="text-muted">Set up your business on RepairOS</p>
+                            <h2 class="fw-bold mb-2">Szervezet létrehozása</h2>
+                            <p class="text-muted">Adja meg vállalkozása adatait</p>
                         </div>
 
                         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -41,62 +41,62 @@
 
                         <form method="POST" action="{{ url_for('auth.register_organization') }}" class="needs-validation" novalidate>
                             <div class="mb-3">
-                                <label for="name" class="form-label fw-semibold">Organization Name</label>
+                                <label for="name" class="form-label fw-semibold">Szervezet neve</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="ti ti-building text-muted"></i>
                                     </span>
                                     <input type="text" class="form-control" id="name" name="name"
-                                           placeholder="e.g. Mike's Auto Shop" required minlength="2">
+                                           placeholder="pl. K&B Autójavító Kft." required minlength="2">
                                 </div>
-                                <div class="invalid-feedback">Organization name must be at least 2 characters.</div>
+                                <div class="invalid-feedback">A szervezet neve legalább 2 karakter legyen.</div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="business_type" class="form-label fw-semibold">Business Type</label>
+                                <label for="business_type" class="form-label fw-semibold">Vállalkozás típusa</label>
                                 <select class="form-select" id="business_type" name="business_type" required>
-                                    <option value="auto_repair" selected>Auto Repair</option>
-                                    <option value="parts_seller">Parts Seller</option>
-                                    <option value="both">Both</option>
+                                    <option value="auto_repair" selected>Autójavítás</option>
+                                    <option value="parts_seller">Alkatrész-kereskedő</option>
+                                    <option value="both">Mindkettő</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label for="email" class="form-label fw-semibold">Business Email <span class="text-muted fw-normal">(optional)</span></label>
+                                <label for="email" class="form-label fw-semibold">Üzleti e-mail <span class="text-muted fw-normal">(opcionális)</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="ti ti-mail text-muted"></i>
                                     </span>
                                     <input type="email" class="form-control" id="email" name="email"
-                                           placeholder="shop@example.com">
+                                           placeholder="info@autoszerelo.com">
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="phone" class="form-label fw-semibold">Phone <span class="text-muted fw-normal">(optional)</span></label>
+                                <label for="phone" class="form-label fw-semibold">Telefon <span class="text-muted fw-normal">(opcionális)</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">
                                         <i class="ti ti-phone text-muted"></i>
                                     </span>
                                     <input type="tel" class="form-control" id="phone" name="phone"
-                                           placeholder="(555) 123-4567">
+                                           placeholder="+36 70 408 4988">
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label for="address" class="form-label fw-semibold">Address <span class="text-muted fw-normal">(optional)</span></label>
+                                <label for="address" class="form-label fw-semibold">Cím <span class="text-muted fw-normal">(opcionális)</span></label>
                                 <textarea class="form-control" id="address" name="address" rows="2"
-                                          placeholder="Street address, city, state, zip"></textarea>
+                                          placeholder="1221 Budapest, Tordai út 17/B"></textarea>
                             </div>
 
                             <button type="submit" class="btn btn-accent btn-lg w-100">
-                                <i class="ti ti-plus me-2"></i>Create Organization
+                                <i class="ti ti-plus me-2"></i>Szervezet létrehozása
                             </button>
                         </form>
 
                         <div class="text-center mt-4">
                             <a href="{{ url_for('auth.no_organization') }}" class="text-muted text-decoration-none text-sm">
-                                <i class="ti ti-arrow-left me-1"></i>Back
+                                <i class="ti ti-arrow-left me-1"></i>Vissza
                             </a>
                         </div>
                     </div>
@@ -120,14 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             form.classList.add('was-validated');
-            // Prevent double submission
             const btn = form.querySelector('button[type="submit"]');
             if (btn.disabled) {
                 event.preventDefault();
                 return;
             }
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Létrehozás...';
         });
     });
 });

@@ -113,7 +113,6 @@ class User(db.Model, BaseModelMixin, TimestampMixin):
     def get_default_tenant_id(self) -> Optional[int]:
         """Get the user's default tenant ID"""
         from app.models.tenant_membership import TenantMembership
-        # First try to find a default membership
         membership = db.session.execute(
             db.select(TenantMembership).where(
                 db.and_(
@@ -125,7 +124,6 @@ class User(db.Model, BaseModelMixin, TimestampMixin):
         ).scalar_one_or_none()
         if membership:
             return membership.tenant_id
-        # Otherwise return the first active membership
         membership = db.session.execute(
             db.select(TenantMembership).where(
                 db.and_(
@@ -151,8 +149,6 @@ class User(db.Model, BaseModelMixin, TimestampMixin):
     @classmethod
     def find_by_neon_auth_id(cls, neon_auth_user_id: str) -> Optional['User']:
         """Find user by Neon Auth user ID"""
-        # Ensure str type — neon_auth DB may return UUID objects which cause
-        # "operator does not exist: character varying = uuid" on PostgreSQL
         neon_auth_user_id = str(neon_auth_user_id)
         query = db.select(cls).where(cls.neon_auth_user_id == neon_auth_user_id)
         return db.session.execute(query).scalar_one_or_none()
@@ -201,6 +197,18 @@ class User(db.Model, BaseModelMixin, TimestampMixin):
         db.session.commit()
         user.update_last_login()
         return user
+
+    def set_password(self, password: str) -> None:
+        """Set hashed password"""
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Check password against hash"""
+        from werkzeug.security import check_password_hash
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
     def update_last_login(self) -> bool:
         """Update the last login timestamp"""

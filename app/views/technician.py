@@ -211,17 +211,57 @@ def complete_job(job_id):
         return redirect(url_for('technician.modify_job', job_id=job_id))
 
 
-@technician_bp.route('/jobs/new')
+@technician_bp.route('/jobs/new', methods=['GET', 'POST'])
 @handle_database_errors
 def new_job():
-    """Create new work order page"""
+    """Create new work order page (GET) and form submit (POST)"""
     redirect_response = require_technician_login()
     if redirect_response:
         return redirect_response
 
+    if request.method == 'POST':
+        try:
+            customer_id = request.form.get('customer_id', type=int)
+            job_date_str = sanitize_input(request.form.get('job_date', ''))
+
+            if not customer_id or not validate_positive_integer(customer_id):
+                flash('Kérjük válasszon érvényes ügyfelet', 'error')
+                customers = customer_service.get_all_customers()
+                return render_template('technician/new_job.html',
+                                     customers=customers,
+                                     min_date=date.today().isoformat())
+
+            if not job_date_str or not validate_date(job_date_str):
+                flash('Kérjük adjon meg érvényes dátumot', 'error')
+                customers = customer_service.get_all_customers()
+                return render_template('technician/new_job.html',
+                                     customers=customers,
+                                     min_date=date.today().isoformat())
+
+            job_date = datetime.strptime(job_date_str, '%Y-%m-%d').date()
+            success, errors, job = job_service.create_job(customer_id, job_date)
+
+            if success:
+                flash('Munkamegrendelés sikeresen létrehozva!', 'success')
+                return redirect(url_for('technician.modify_job', job_id=job.job_id))
+            else:
+                for error in errors:
+                    flash(error, 'error')
+                customers = customer_service.get_all_customers()
+                return render_template('technician/new_job.html',
+                                     customers=customers,
+                                     min_date=date.today().isoformat())
+
+        except Exception as e:
+            logger.error(f"Failed to create work order: {e}", exc_info=True)
+            flash(f'Hiba a munkamegrendelés létrehozásakor: {str(e)}', 'error')
+            customers = customer_service.get_all_customers()
+            return render_template('technician/new_job.html',
+                                 customers=customers,
+                                 min_date=date.today().isoformat())
+
     try:
         customers = customer_service.get_all_customers()
-
         return render_template('technician/new_job.html',
                              customers=customers,
                              min_date=date.today().isoformat())

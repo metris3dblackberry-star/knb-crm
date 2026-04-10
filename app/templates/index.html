@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}{% if session.logged_in %}Dashboard{% else %}Automotive Repair Management{% endif %} - RepairOS{% endblock %}
+{% block title %}{% if session.logged_in %}Dashboard{% else %}Automotive Repair Management{% endif %} - K&B Autójavító{% endblock %}
 
 {% block breadcrumb_items %}
     {% if session.logged_in %}
@@ -398,22 +398,22 @@
     <div class="row align-items-center" style="position: relative; z-index: 2;">
         <div class="col-lg-7 text-white mb-4 mb-lg-0">
             <div class="d-flex align-items-center gap-2 mb-3">
-                <span class="trust-badge"><i class="ti ti-shield-check"></i> Enterprise-grade</span>
-                <span class="trust-badge"><i class="ti ti-cloud"></i> Cloud-based</span>
+                <span class="trust-badge"><i class="ti ti-shield-check"></i> Nagyvállalati szintű</span>
+                <span class="trust-badge"><i class="ti ti-cloud"></i> Felhő-alapú</span>
             </div>
             <h1 class="display-5 fw-bold mb-3 text-white" style="line-height: 1.15;">
-                Run your repair shop<br>
-                <span style="color: var(--repaisos-accent);">with confidence.</span>
+                Vezesse műhelyét<br>
+                <span style="color: var(--repaisos-accent);">magabiztosan.</span>
             </h1>
             <p class="fs-5 mb-4" style="color: rgba(255,255,255,0.75); max-width: 520px;">
-                From work orders to invoicing, RepairOS gives your team the tools to deliver faster service, get paid on time, and grow your business.
+                A munkalapoktól a számlázásig a Szerelő OS eszközöket ad a csapatodnak, hogy gyorsabban szolgáltassatok, időben kifizessenek, és növeljétek a vállalkozásotokat.
             </p>
             <div class="d-flex flex-wrap gap-2">
                 <a href="{{ url_for('auth.login') }}" class="btn btn-accent btn-lg px-4">
-                    <i class="ti ti-rocket me-2"></i>Get Started Free
+                    <i class="ti ti-rocket me-2"></i>Bejelentkezés
                 </a>
                 <a href="{{ url_for('main.about') }}" class="btn btn-outline-light btn-lg px-4">
-                    Learn More
+                    Tudjon meg többet
                 </a>
             </div>
         </div>
@@ -435,7 +435,7 @@
     </div>
     <div class="col-6 col-md-3 mb-3">
         <div class="metric-number">24/7</div>
-        <div class="text-secondary mt-1">Access Anywhere</div>
+        <div class="text-secondary mt-1">Bárhol elérhető</div>
     </div>
     <div class="col-6 col-md-3 mb-3">
         <div class="metric-number">$0</div>
@@ -446,8 +446,9 @@
 <!-- Core Features -->
 <div class="row mb-5">
     <div class="col-12 mb-4">
-        <h2 class="h3 fw-bold text-center">Everything your shop needs</h2>
-        <p class="text-secondary text-center mb-0">One platform to manage customers, jobs, parts, billing, and your team.</p>
+        <h2 class="h3 fw-bold text-center">Minden amire egy műhelynek szüksége van</h2>
+        <p class="text-secondary text-center mb-0">Egyetlen platform az ügyfelek, munkák, alkatrészek, számlázás és a csapatod kezelésére.
+</p>
     </div>
     <div class="col-md-6 col-lg-4 mb-4">
         <div class="card h-100 border-0 shadow-sm">
@@ -455,8 +456,10 @@
                 <div class="feature-icon-box bg-primary-lt mb-3">
                     <i class="ti ti-clipboard-list text-primary" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Work Order Tracking</h4>
-                <p class="text-secondary mb-0">Create, assign, and track repair jobs from check-in to completion. Real-time status updates keep everyone in sync.</p>
+                <h4 class="fw-bold mb-2">Munkalap követés
+</h4>
+                <p class="text-secondary mb-0">Hozz létre, rendelj ki és kövess javítási munkákat az átvételtől a befejezésig. A valós idejű státuszfrissítések mindenkit naprakészen tartanak.
+</p>
             </div>
         </div>
     </div>
@@ -466,8 +469,9 @@
                 <div class="feature-icon-box bg-success-lt mb-3">
                     <i class="ti ti-users text-success" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Customer Management</h4>
-                <p class="text-secondary mb-0">Build a complete customer database with vehicle history, contact details, and service records all in one place.</p>
+                <h4 class="fw-bold mb-2">Ügyfél kezelés</h4>
+                <p class="text-secondary mb-0">Építs fel egy teljes ügyféladatbázist járműtörténettel, elérhetőségekkel és szervizelőzményekkel egy helyen.
+</p>
             </div>
         </div>
     </div>
@@ -477,8 +481,8 @@
                 <div class="feature-icon-box bg-warning-lt mb-3">
                     <i class="ti ti-credit-card text-warning" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Billing & Invoicing</h4>
-                <p class="text-secondary mb-0">Generate invoices, track payments, flag overdue accounts, and keep cash flow healthy automatically.</p>
+                <h4 class="fw-bold mb-2">Számlázás és fizetés</h4>
+                <p class="text-secondary mb-0">Számlák generálása, fizetések nyomon követése, lejárt tartozások jelölése és a pénzáramlás automatikus egészséges szinten tartása.</p>
             </div>
         </div>
     </div>
@@ -488,8 +492,10 @@
                 <div class="feature-icon-box bg-info-lt mb-3">
                     <i class="ti ti-package text-info" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Parts & Inventory</h4>
-                <p class="text-secondary mb-0">Track stock levels, manage your parts catalog, and log every transaction for full inventory visibility.</p>
+                <h4 class="fw-bold mb-2">Alkatrészek és készletkezelés
+</h4>
+                <p class="text-secondary mb-0">Készletszintek nyomon követése, alkatrészkatalógus kezelése, valamint minden tranzakció rögzítése a teljes készletátláthatóság érdekében.
+</p>
             </div>
         </div>
     </div>
@@ -499,8 +505,9 @@
                 <div class="feature-icon-box bg-danger-lt mb-3">
                     <i class="ti ti-chart-bar text-danger" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Reports & Analytics</h4>
-                <p class="text-secondary mb-0">Revenue trends, job metrics, and technician performance reports to make smarter business decisions.</p>
+                <h4 class="fw-bold mb-2">Jelentések és elemzések
+</h4>
+                <p class="text-secondary mb-0">Bevételi trendek, munkamutatók és technikusi teljesítményjelentések a megalapozottabb üzleti döntésekhez.</p>
             </div>
         </div>
     </div>
@@ -510,8 +517,10 @@
                 <div class="feature-icon-box bg-purple-lt mb-3">
                     <i class="ti ti-building text-purple" style="font-size: 1.5rem;"></i>
                 </div>
-                <h4 class="fw-bold mb-2">Multi-Location Support</h4>
-                <p class="text-secondary mb-0">Run multiple shops from a single account with isolated data, team roles, and per-location settings.</p>
+                <h4 class="fw-bold mb-2">Több telephely támogatása
+</h4>
+                <p class="text-secondary mb-0">Több műhely kezelése egyetlen fiókból, elkülönített adatokkal, csapatjogosultságokkal és telephelyenkénti beállításokkal.
+</p>
             </div>
         </div>
     </div>
@@ -526,10 +535,10 @@
                 <p class="mb-4" style="color: rgba(255,255,255,0.7);">Start free, no credit card required. Upgrade when you're ready.</p>
                 <div class="d-flex gap-3 justify-content-center flex-wrap">
                     <a href="{{ url_for('auth.login') }}" class="btn btn-accent btn-lg px-4">
-                        <i class="ti ti-rocket me-2"></i>Start Free Trial
+                        <i class="ti ti-rocket me-2"></i>Próbaverzió megkezdése
                     </a>
                     <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-light btn-lg px-4">
-                        View Pricing
+                        Árlista
                     </a>
                 </div>
             </div>

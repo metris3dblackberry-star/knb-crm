@@ -87,7 +87,8 @@ def _configure_database(app, config):
     app.config['SQLALCHEMY_ECHO'] = app.config.get('DEBUG', False)
 
     sslmode = getattr(config, 'DB_SSLMODE', 'require')
-    if sslmode and sslmode != 'disable':
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if sslmode and sslmode != 'disable' and not db_uri.startswith('sqlite'):
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
             'connect_args': {'sslmode': sslmode},
             'pool_pre_ping': True,

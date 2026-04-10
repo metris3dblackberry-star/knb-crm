@@ -4,10 +4,10 @@
 
 /* Brand Color Overrides */
 :root {
-    --tblr-primary: #1e3a5f;
-    --tblr-primary-rgb: 30, 58, 95;
-    --repaisos-accent: #e85d04;
-    --repaisos-accent-hover: #cc5003;
+    --tblr-primary: #1a3a6b;
+    --tblr-primary-rgb: 26, 58, 107;
+    --repaisos-accent: #f57c00;
+    --repaisos-accent-hover: #e65100;
 }
 
 /* Accent button (orange signal color) */

@@ -71,13 +71,22 @@ class JobService:
             all_services = Service.get_all_sorted()
             all_parts = Part.get_all_sorted()
 
+            job_dict = job.to_dict()
             return {
-                'job_info': job.to_dict(),
-                'services': job.get_services(),
-                'parts': job.get_parts(),
+                'job_info':     job_dict,
+                'data':         job_dict,
+                'job':          job,
+                'job_id':       job.job_id,
+                'job_date':     job.job_date,
+                'customer':     job.customer_rel,
+                'total_cost':   float(job.total_cost) if job.total_cost else 0.0,
+                'completed':    job.completed,
+                'paid':         job.paid,
+                'services':     job.get_services(),
+                'parts':        job.get_parts(),
                 'all_services': [s.to_dict() for s in all_services],
-                'all_parts': [p.to_dict() for p in all_parts],
-                'job_completed': job.completed
+                'all_parts':    [p.to_dict() for p in all_parts],
+                'job_completed': job.completed,
             }
 
         except Exception as e:

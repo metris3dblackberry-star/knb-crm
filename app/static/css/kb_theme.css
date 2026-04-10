@@ -1,0 +1,510 @@
+/*
+ * K&B Autójavító és Vizsgáztató Kft. — Branding Override
+ * Alap: RepairOS "Precision Industrial" design
+ * Felülírja: steel blue (#1e3a5f) + signal orange (#e85d04)
+ * K&B paletta: sötétkék (#1a3a6b) + fehér + szürke + narancs-sárga akszent (#f57c00)
+ *
+ * Telepítés: add hozzá app/templates/base/layout.html-hez:
+ *   <link rel="stylesheet" href="{{ url_for('static', filename='css/kb_theme.css') }}">
+ *   (a meglévő CSS linkek UTÁN)
+ */
+
+/* ============================================================
+   1. CSS VÁLTOZÓK — GYÖKÉR SZINTŰ FELÜLÍRÁS
+   ============================================================ */
+:root {
+  /* Fő márka szín – K&B sötétkék */
+  --primary:           #1a3a6b;
+  --primary-dark:      #122a52;
+  --primary-light:     #2a52a0;
+  --primary-subtle:    #e8edf7;
+
+  /* Akszent szín – meleg narancs (nem az erős RepairOS narancs) */
+  --accent:            #f57c00;
+  --accent-dark:       #e65100;
+  --accent-light:      #ff9800;
+  --accent-subtle:     #fff3e0;
+
+  /* Háttér, felületek */
+  --bg-main:           #f4f6fb;
+  --bg-surface:        #ffffff;
+  --bg-sidebar:        #1a3a6b;
+  --bg-sidebar-hover:  #122a52;
+  --bg-sidebar-active: #0e1f3d;
+
+  /* Szöveg */
+  --text-primary:      #1a1a2e;
+  --text-secondary:    #4a5568;
+  --text-muted:        #8a9bb0;
+  --text-on-primary:   #ffffff;
+  --text-on-accent:    #ffffff;
+
+  /* Határ vonalak */
+  --border-color:      #dde3ef;
+  --border-radius:     8px;
+  --border-radius-lg:  12px;
+
+  /* Státusz színek */
+  --success:           #2e7d32;
+  --success-bg:        #e8f5e9;
+  --warning:           #f57c00;
+  --warning-bg:        #fff3e0;
+  --danger:            #c62828;
+  --danger-bg:         #ffebee;
+  --info:              #1565c0;
+  --info-bg:           #e3f2fd;
+
+  /* Árnyékok */
+  --shadow-sm:         0 1px 3px rgba(26,58,107,0.08);
+  --shadow-md:         0 4px 12px rgba(26,58,107,0.12);
+  --shadow-lg:         0 8px 24px rgba(26,58,107,0.16);
+
+  /* Átmenetek */
+  --transition:        0.2s ease;
+}
+
+/* ============================================================
+   2. NAVIGÁCIÓ / SIDEBAR
+   ============================================================ */
+
+/* Oldalsáv alap */
+.sidebar,
+.navbar-vertical,
+nav.sidebar {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--primary-dark) !important;
+}
+
+/* Sidebar logó terület */
+.sidebar-brand,
+.navbar-brand {
+  background-color: var(--bg-sidebar-active) !important;
+  padding: 1rem 1.25rem !important;
+  border-bottom: 1px solid var(--primary-dark) !important;
+}
+
+.sidebar-brand-text,
+.navbar-brand span {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Sidebar menüpontok */
+.sidebar .nav-link,
+.navbar-vertical .nav-link {
+  color: rgba(255,255,255,0.75) !important;
+  border-radius: 6px !important;
+  margin: 2px 8px !important;
+  padding: 0.55rem 0.9rem !important;
+  transition: all var(--transition) !important;
+}
+
+.sidebar .nav-link:hover,
+.navbar-vertical .nav-link:hover {
+  background-color: var(--bg-sidebar-hover) !important;
+  color: #ffffff !important;
+}
+
+.sidebar .nav-link.active,
+.navbar-vertical .nav-link.active {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+/* Sidebar ikonok */
+.sidebar .nav-link i,
+.sidebar .nav-link svg {
+  opacity: 0.85;
+}
+
+.sidebar .nav-link.active i,
+.sidebar .nav-link.active svg {
+  opacity: 1;
+}
+
+/* Sidebar fejlécek (szekciócímek) */
+.sidebar .sidebar-heading,
+.sidebar .nav-divider {
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 0.75rem 1.2rem 0.3rem !important;
+}
+
+/* ============================================================
+   3. TOPBAR / FEJLÉC
+   ============================================================ */
+
+.topbar,
+.navbar-top,
+header.navbar {
+  background-color: var(--bg-surface) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.topbar .navbar-brand,
+header .navbar-brand {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+/* ============================================================
+   4. BOOTSTRAP GOMB FELÜLÍRÁS
+   ============================================================ */
+
+/* Primary gomb = K&B sötétkék */
+.btn-primary {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  box-shadow: 0 0 0 0.2rem rgba(26,58,107,0.3) !important;
+}
+
+/* Secondary gomb = halvány kék */
+.btn-secondary {
+  background-color: var(--primary-subtle) !important;
+  border-color: var(--border-color) !important;
+  color: var(--primary) !important;
+}
+.btn-secondary:hover {
+  background-color: #d0daef !important;
+  border-color: var(--primary-light) !important;
+}
+
+/* Akszent / Warning gomb = narancs */
+.btn-warning,
+.btn-accent {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+.btn-warning:hover {
+  background-color: var(--accent-dark) !important;
+  border-color: var(--accent-dark) !important;
+}
+
+/* Danger gomb */
+.btn-danger {
+  background-color: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
+
+/* Outline gomb */
+.btn-outline-primary {
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.btn-outline-primary:hover {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   5. KÁRTYÁK ÉS PANELEK
+   ============================================================ */
+
+.card {
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--border-radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.card-header {
+  background-color: #f8faff !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  padding: 0.85rem 1.25rem !important;
+}
+
+/* Stat kártyák (dashboard) */
+.card.stat-card,
+.card.bg-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+.card.bg-warning,
+.card.stat-card.accent {
+  background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent-light) 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+.card.bg-success {
+  background: linear-gradient(135deg, #1b5e20 0%, #388e3c 100%) !important;
+  border: none !important;
+}
+
+/* ============================================================
+   6. TÁBLÁZATOK
+   ============================================================ */
+
+.table thead th {
+  background-color: var(--primary-subtle) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 2px solid var(--primary-light) !important;
+}
+
+.table tbody tr:hover {
+  background-color: #f0f4ff !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #f8faff !important;
+}
+
+/* ============================================================
+   7. JELVÉNYEK (BADGE) ÉS STÁTUSZ JELZŐK
+   ============================================================ */
+
+.badge.bg-primary {
+  background-color: var(--primary) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.badge.bg-success {
+  background-color: var(--success) !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--danger) !important;
+}
+
+/* Munkamegrendelés státusz */
+.status-badge {
+  padding: 0.3em 0.7em;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.status-badge.open      { background: #e3f2fd; color: #1565c0; }
+.status-badge.in-progress { background: #fff3e0; color: #e65100; }
+.status-badge.completed { background: #e8f5e9; color: #2e7d32; }
+.status-badge.paid      { background: #e8f5e9; color: #1b5e20; }
+.status-badge.overdue   { background: #ffebee; color: #c62828; }
+
+/* ============================================================
+   8. FORM ELEMEK
+   ============================================================ */
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-light) !important;
+  box-shadow: 0 0 0 0.2rem rgba(26,58,107,0.15) !important;
+}
+
+.form-label {
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important;
+}
+
+/* ============================================================
+   9. OLDAL HÁTTÉR ÉS FŐ TARTALOM
+   ============================================================ */
+
+body, .main-content, #main-content {
+  background-color: var(--bg-main) !important;
+}
+
+/* Oldalcím terület */
+.page-header,
+.content-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-title,
+h1.h3, h1.page-title {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+/* Breadcrumb */
+.breadcrumb-item a {
+  color: var(--primary-light) !important;
+  text-decoration: none !important;
+}
+.breadcrumb-item.active {
+  color: var(--text-secondary) !important;
+}
+
+/* ============================================================
+   10. GRAFIKON (Chart.js) SZÍNEK
+   ============================================================ */
+
+/* Ezeket a JS-ben kell felülírni – lásd kb_charts.js */
+
+/* ============================================================
+   11. LOGIN / AUTH OLDALAK
+   ============================================================ */
+
+.auth-wrapper,
+.login-wrapper {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%) !important;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card,
+.login-card {
+  border-radius: 16px !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: none !important;
+  max-width: 420px;
+  width: 100%;
+}
+
+.auth-logo,
+.login-logo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.auth-logo-sub {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* ============================================================
+   12. ÉRTESÍTÉSEK (TOAST / ALERT)
+   ============================================================ */
+
+.alert-primary {
+  background-color: var(--primary-subtle) !important;
+  border-color: var(--primary-light) !important;
+  color: var(--primary-dark) !important;
+}
+
+.toast-header {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   13. LINK SZÍNEK
+   ============================================================ */
+
+a {
+  color: var(--primary-light) !important;
+}
+
+a:hover {
+  color: var(--primary) !important;
+}
+
+/* Táblázat soron belüli action linkek */
+.table a.action-link {
+  color: var(--primary) !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+}
+
+.table a.action-link:hover {
+  color: var(--accent) !important;
+  text-decoration: underline !important;
+}
+
+/* ============================================================
+   14. MOBIL RESPONSIVE KIEGÉSZÍTÉSEK
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .sidebar {
+    background-color: var(--bg-sidebar) !important;
+  }
+
+  .navbar-toggler-icon {
+    filter: invert(1);
+  }
+}
+
+/* ============================================================
+   15. K&B SPECIFIKUS KOMPONENSEK
+   ============================================================ */
+
+/* Munkamegrendelés kártya */
+.job-card {
+  border-left: 4px solid var(--primary) !important;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+}
+.job-card.urgent {
+  border-left-color: var(--danger) !important;
+}
+.job-card.completed {
+  border-left-color: var(--success) !important;
+  opacity: 0.85;
+}
+
+/* Rendszám megjelenítő */
+.plate-display {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  background: #fff;
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  padding: 3px 10px;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  display: inline-block;
+}
+
+/* Gyors stat szám a dashboardon */
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+/* Kötelező vizsgadátum jelzők */
+.inspection-due {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.inspection-due.ok     { background: var(--success-bg); color: var(--success); }
+.inspection-due.soon   { background: var(--warning-bg); color: var(--warning); }
+.inspection-due.overdue { background: var(--danger-bg);  color: var(--danger); }

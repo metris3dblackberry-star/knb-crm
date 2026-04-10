@@ -1,12 +1,12 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Services - RepairOS{% endblock %}
+{% block title %}Szolgáltatások{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
-    <li class="breadcrumb-item active">Services</li>
+    <li class="breadcrumb-item active">Szolgáltatások</li>
 {% endblock %}
 
 {% block content %}
@@ -15,21 +15,21 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-tool text-primary"></i>
-            Services Catalog
+            Szolgáltatások Catalog
         </h1>
-        <p class="text-muted mb-0">Browse available repair and maintenance services</p>
+        <p class="text-muted mb-0">Elérhető javítási és karbantartási szolgáltatások</p>
     </div>
 </div>
 
-<!-- Services Table -->
+<!-- Szolgáltatások Table -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-list me-2"></i>
-            All Services
+            All Szolgáltatások
         </h3>
         <div class="card-actions">
-            <span class="text-muted">{{ services|length if services else 0 }} service{{ 's' if not services or services|length != 1 }}</span>
+            <span class="text-muted">{{ services|length if services else 0 }} szolgáltatás</span>
         </div>
     </div>
 
@@ -38,11 +38,11 @@
         <table class="table table-vcenter card-table" id="servicesTable">
             <thead>
                 <tr>
-                    <th>Service Name</th>
-                    <th>Category</th>
-                    <th class="text-end">Cost</th>
-                    <th>Est. Duration</th>
-                    <th>Status</th>
+                    <th>Szolgáltatás neve</th>
+                    <th>Kategória</th>
+                    <th class="text-end">Ár</th>
+                    <th>Becsült időtartam</th>
+                    <th>Státusz</th>
                 </tr>
             </thead>
             <tbody>
@@ -85,12 +85,12 @@
                         {% if service.active is defined and not service.active %}
                             <span class="badge bg-danger">
                                 <i class="ti ti-circle-x me-1"></i>
-                                Inactive
+                                Inaktív
                             </span>
                         {% else %}
                             <span class="badge bg-success">
                                 <i class="ti ti-circle-check me-1"></i>
-                                Active
+                                Aktív
                             </span>
                         {% endif %}
                     </td>
@@ -103,9 +103,9 @@
     <!-- Empty State -->
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-tool"></i></div>
-        <p class="empty-title">No Services Available</p>
+        <p class="empty-title">No Szolgáltatások Available</p>
         <p class="empty-subtitle text-secondary">
-            There are no services in the catalog at this time. Contact an administrator to add services.
+            Jelenleg nincs szolgáltatás a katalógusban. Kérjen meg egy adminisztrátort a szolgáltatások hozzáadásához.
         </p>
     </div>
     {% endif %}

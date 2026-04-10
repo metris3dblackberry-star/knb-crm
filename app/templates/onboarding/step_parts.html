@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Add Parts & Inventory - Step 2 of 3 - RepairOS{% endblock %}
+{% block title %}Alkatrészek hozzáadása - 2. lépés / 3{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -50,7 +50,7 @@
             <div class="col-lg-9 col-xl-8">
                 <!-- Step Indicator -->
                 <div class="text-center mb-4">
-                    <span class="step-indicator">Step 2 of 3</span>
+                    <span class="step-indicator">2. lépés / 3</span>
                     <div class="progress-bar-custom mt-2">
                         <div class="progress-fill" style="width: 66%;"></div>
                     </div>
@@ -63,8 +63,8 @@
                             <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mb-3">
                                 <i class="ti ti-package text-primary" style="font-size: 36px;"></i>
                             </div>
-                            <h1 class="h3 fw-bold mb-2">Add Parts & Inventory</h1>
-                            <p class="text-muted">Review the default parts and add any custom ones. You can add more later.</p>
+                            <h1 class="h3 fw-bold mb-2">Alkatrészek és készlet</h1>
+                            <p class="text-muted">Tekintse át az alapértelmezett alkatrészeket és adjon hozzá egyénieket. Később is módosíthatja.</p>
                         </div>
 
                         <!-- Current Parts Table -->
@@ -72,11 +72,11 @@
                             <table class="table table-hover parts-table align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Part Name</th>
-                                        <th>SKU</th>
-                                        <th>Category</th>
-                                        <th>Cost</th>
-                                        <th>Supplier</th>
+                                        <th>Alkatrész neve</th>
+                                        <th>Cikkszám</th>
+                                        <th>Kategória</th>
+                                        <th>Ár</th>
+                                        <th>Szállító</th>
                                     </tr>
                                 </thead>
                                 <tbody id="parts-body">
@@ -93,7 +93,7 @@
                                     <tr id="no-parts-row">
                                         <td colspan="5" class="text-center text-muted py-4">
                                             <i class="ti ti-inbox mb-2" style="font-size: 32px;"></i>
-                                            <p class="mb-0">No parts added yet. Use the form below to add your first part.</p>
+                                            <p class="mb-0">Még nincs alkatrész. Az alábbi űrlappal adja hozzá az elsőt.</p>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -101,52 +101,52 @@
                             </table>
                         </div>
 
-                        <!-- Add Part Form -->
+                        <!-- Alkatrész hozzáadása Form -->
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3 d-flex align-items-center">
                                     <i class="ti ti-circle-plus me-2 text-accent"></i>
-                                    Add New Part
+                                    Új alkatrész hozzáadása
                                 </h6>
                                 <form method="POST" action="{{ url_for('onboarding.save_step', step_number=2) }}" id="add-part-form">
                                     <input type="hidden" name="action" value="add_part">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="part_name" class="form-label">Part Name</label>
-                                            <input type="text" class="form-control" id="part_name" name="part_name" placeholder="e.g. Oil Filter" required>
+                                            <label for="part_name" class="form-label">Alkatrész neve</label>
+                                            <input type="text" class="form-control" id="part_name" name="part_name" placeholder="pl. Olajszűrő" required>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="part_sku" class="form-label">SKU</label>
-                                            <input type="text" class="form-control" id="part_sku" name="part_sku" placeholder="e.g. OIL-FLT-001">
+                                            <label for="part_sku" class="form-label">Cikkszám</label>
+                                            <input type="text" class="form-control" id="part_sku" name="part_sku" placeholder="pl. OLJ-SZR-001">
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="part_cost" class="form-label">Cost ($)</label>
+                                            <label for="part_cost" class="form-label">Ár ($)</label>
                                             <input type="number" class="form-control" id="part_cost" name="part_cost" min="0" step="0.01" placeholder="0.00" required>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="part_category" class="form-label">Category</label>
+                                            <label for="part_category" class="form-label">Kategória</label>
                                             <select class="form-select" id="part_category" name="part_category" required>
-                                                <option value="">Select category</option>
-                                                <option value="Filters">Filters</option>
-                                                <option value="Brakes">Brakes</option>
-                                                <option value="Engine">Engine</option>
-                                                <option value="Electrical">Electrical</option>
-                                                <option value="Fluids">Fluids</option>
-                                                <option value="Tires">Tires</option>
-                                                <option value="Suspension">Suspension</option>
-                                                <option value="Ignition">Ignition</option>
-                                                <option value="Exterior">Exterior</option>
-                                                <option value="Other">Other</option>
+                                                <option value="">Kategória kiválasztása</option>
+                                                <option value="Szűrők">Szűrők</option>
+                                                <option value="Fékek">Fékek</option>
+                                                <option value="Motor">Motor</option>
+                                                <option value="Elektromos">Elektromos</option>
+                                                <option value="Folyadékok">Folyadékok</option>
+                                                <option value="Gumik">Gumik</option>
+                                                <option value="Futómű">Futómű</option>
+                                                <option value="Gyújtás">Gyújtás</option>
+                                                <option value="Karosszéria">Karosszéria</option>
+                                                <option value="Egyéb">Egyéb</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
-                                            <label for="part_supplier" class="form-label">Supplier</label>
-                                            <input type="text" class="form-control" id="part_supplier" name="part_supplier" placeholder="e.g. AutoZone">
+                                            <label for="part_supplier" class="form-label">Szállító</label>
+                                            <input type="text" class="form-control" id="part_supplier" name="part_supplier" placeholder="pl. Szállító neve">
                                         </div>
                                         <div class="col-12">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="ti ti-plus me-1"></i>
-                                                Add Part
+                                                Alkatrész hozzáadása
                                             </button>
                                         </div>
                                     </div>
@@ -158,12 +158,12 @@
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('onboarding.step', step_number=1) }}" class="btn btn-outline-secondary px-4 py-2">
                                 <i class="ti ti-arrow-left me-2"></i>
-                                Back
+                                Vissza
                             </a>
                             <form method="POST" action="{{ url_for('onboarding.save_step', step_number=2) }}">
                                 <input type="hidden" name="action" value="next">
                                 <button type="submit" class="btn btn-accent px-4 py-2">
-                                    Next
+                                    Következő
                                     <i class="ti ti-arrow-right ms-2"></i>
                                 </button>
                             </form>

@@ -1,12 +1,12 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Customers - RepairOS{% endblock %}
+{% block title %}Ügyfelek{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
-    <li class="breadcrumb-item active">Customers</li>
+    <li class="breadcrumb-item active">Ügyfelek</li>
 {% endblock %}
 
 {% block content %}
@@ -15,46 +15,46 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-users text-primary"></i>
-            Customers
+            Ügyfelek
         </h1>
-        <p class="text-muted mb-0">View and manage all customers</p>
+        <p class="text-muted mb-0">Összes ügyfél megtekintése és kezelése</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ url_for('main.new_customer') }}" class="btn btn-accent">
-            <i class="ti ti-user-plus me-2"></i>Add Customer
+            <i class="ti ti-user-plus me-2"></i>Ügyfél hozzáadása
         </a>
     </div>
 </div>
 
-<!-- Search & Filter Bar -->
+<!-- Keresés & Filter Bar -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url_for('main.customers') }}" class="row g-3 align-items-end">
             <div class="col">
-                <label class="form-label">Search:</label>
+                <label class="form-label">Keresés:</label>
                 <div class="input-icon">
                     <span class="input-icon-addon"><i class="ti ti-search"></i></span>
                     <input type="text" class="form-control" name="search"
-                           placeholder="Search by name, email, or phone..."
+                           placeholder="Keresés névben, e-mailben vagy telefonban..."
                            value="{{ search_query }}">
                 </div>
             </div>
             <div class="col-auto">
-                <label class="form-label">Search by:</label>
+                <label class="form-label">Keresés alapja:</label>
                 <select class="form-select" name="search_type">
-                    <option value="both" {% if search_type == 'both' %}selected{% endif %}>Name & Email</option>
-                    <option value="name" {% if search_type == 'name' %}selected{% endif %}>Name Only</option>
-                    <option value="email" {% if search_type == 'email' %}selected{% endif %}>Email Only</option>
+                    <option value="both" {% if search_type == 'both' %}selected{% endif %}>Név és e-mail</option>
+                    <option value="name" {% if search_type == 'name' %}selected{% endif %}>Csak név</option>
+                    <option value="email" {% if search_type == 'email' %}selected{% endif %}>Csak e-mail</option>
                 </select>
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-search me-1"></i>Search
+                    <i class="ti ti-search me-1"></i>Keresés
                 </button>
             </div>
             {% if search_query %}
             <div class="col-auto">
-                <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">Clear</a>
+                <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">Törlés</a>
             </div>
             {% endif %}
         </form>
@@ -68,7 +68,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-primary-lt me-2"><i class="ti ti-users"></i></span>
-                    <div class="subheader">{% if search_query %}Results Found{% else %}Total Customers{% endif %}</div>
+                    <div class="subheader">{% if search_query %}Találatok{% else %}Total Ügyfelek{% endif %}</div>
                 </div>
                 <div class="h1 mb-0">{{ customers|length }}</div>
             </div>
@@ -76,12 +76,12 @@
     </div>
 </div>
 
-<!-- Customer Table -->
+<!-- Ügyfél Table -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-address-book me-1"></i>
-            {% if search_query %}Search Results{% else %}All Customers{% endif %}
+            {% if search_query %}Keresés Results{% else %}All Ügyfelek{% endif %}
         </h3>
     </div>
 
@@ -90,10 +90,10 @@
         <table class="table table-vcenter card-table">
             <thead>
                 <tr>
-                    <th>Customer</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Actions</th>
+                    <th>Ügyfél</th>
+                    <th>E-mail</th>
+                    <th>Telefon</th>
+                    <th>Műveletek</th>
                 </tr>
             </thead>
             <tbody>
@@ -127,11 +127,11 @@
                     <td>
                         <div class="d-flex gap-1">
                             <a href="{{ url_for('main.customer_detail', customer_id=customer.customer_id) }}"
-                               class="btn btn-sm btn-outline-primary" title="View Details">
+                               class="btn btn-sm btn-outline-primary" title="Részletek">
                                 <i class="ti ti-eye"></i>
                             </a>
                             <a href="{{ url_for('main.edit_customer', customer_id=customer.customer_id) }}"
-                               class="btn btn-sm btn-outline-secondary" title="Edit">
+                               class="btn btn-sm btn-outline-secondary" title="Szerkesztés">
                                 <i class="ti ti-pencil"></i>
                             </a>
                         </div>
@@ -145,19 +145,19 @@
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-users"></i></div>
         <p class="empty-title">
-            {% if search_query %}No Customers Found{% else %}No Customers Yet{% endif %}
+            {% if search_query %}No Ügyfelek Found{% else %}No Ügyfelek Yet{% endif %}
         </p>
         <p class="empty-subtitle text-secondary">
             {% if search_query %}
-                No customers match your search criteria. Try a different search term.
+                Nincs az összes keresési feltételnek megfelelő ügyfél. Próbáljon más keresési kifejezést.
             {% else %}
-                Get started by adding your first customer.
+                Adja hozzá az első ügyfelét!
             {% endif %}
         </p>
         {% if not search_query %}
         <div class="empty-action">
             <a href="{{ url_for('main.new_customer') }}" class="btn btn-accent">
-                <i class="ti ti-user-plus me-2"></i>Add Customer
+                <i class="ti ti-user-plus me-2"></i>Ügyfél hozzáadása
             </a>
         </div>
         {% endif %}

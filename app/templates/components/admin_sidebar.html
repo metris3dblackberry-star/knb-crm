@@ -2,7 +2,7 @@
 <aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-header">
         <span class="sidebar-brand">Admin</span>
-        <button class="sidebar-close d-lg-none" onclick="toggleAdminSidebar()" aria-label="Close sidebar">
+        <button class="sidebar-close d-lg-none" onclick="toggleAdminSidebar()" aria-label="Oldalsáv bezárása">
             <i class="ti ti-x"></i>
         </button>
     </div>
@@ -12,66 +12,66 @@
         <a href="{{ url_for('administrator.dashboard') }}"
            class="sidebar-link {% if request.endpoint and 'dashboard' in request.endpoint and 'administrator' in request.endpoint %}active{% endif %}">
             <i class="ti ti-layout-dashboard sidebar-icon"></i>
-            <span class="sidebar-label">Dashboard</span>
+            <span class="sidebar-label">Műszerfal</span>
         </a>
 
         <!-- Operations -->
-        <div class="sidebar-section-title">Operations</div>
+        <div class="sidebar-section-title">Műveletek</div>
         <a href="{{ url_for('administrator.customer_list') }}"
            class="sidebar-link {% if request.endpoint and 'customer' in request.endpoint and 'administrator' in request.endpoint %}active{% endif %}">
             <i class="ti ti-users sidebar-icon"></i>
-            <span class="sidebar-label">Customers</span>
+            <span class="sidebar-label">Ügyfelek</span>
         </a>
         <a href="{{ url_for('administrator.pay_bills') }}"
            class="sidebar-link {% if request.endpoint and 'pay_bills' in request.endpoint %}active{% endif %}">
             <i class="ti ti-credit-card sidebar-icon"></i>
-            <span class="sidebar-label">Billing</span>
+            <span class="sidebar-label">Számlázás</span>
         </a>
         <a href="{{ url_for('administrator.overdue_bills') }}"
            class="sidebar-link {% if request.endpoint and 'overdue' in request.endpoint %}active{% endif %}">
             <i class="ti ti-alert-triangle sidebar-icon"></i>
-            <span class="sidebar-label">Overdue Bills</span>
+            <span class="sidebar-label">Lejárt számlák</span>
         </a>
         <a href="{{ url_for('administrator.reports') }}"
            class="sidebar-link {% if request.endpoint and 'reports' in request.endpoint %}active{% endif %}">
             <i class="ti ti-chart-bar sidebar-icon"></i>
-            <span class="sidebar-label">Reports</span>
+            <span class="sidebar-label">Riportok</span>
         </a>
 
         <!-- Catalog -->
-        <div class="sidebar-section-title">Catalog</div>
+        <div class="sidebar-section-title">Katalógus</div>
         <a href="{{ url_for('administrator.service_catalog') }}"
            class="sidebar-link {% if request.endpoint and 'service_catalog' in request.endpoint %}active{% endif %}">
             <i class="ti ti-list-check sidebar-icon"></i>
-            <span class="sidebar-label">Service Catalog</span>
+            <span class="sidebar-label">Szolgáltatások</span>
         </a>
         <a href="{{ url_for('administrator.parts_catalog') }}"
            class="sidebar-link {% if request.endpoint and 'parts_catalog' in request.endpoint %}active{% endif %}">
             <i class="ti ti-package sidebar-icon"></i>
-            <span class="sidebar-label">Parts Catalog</span>
+            <span class="sidebar-label">Alkatrészek</span>
         </a>
         <a href="{{ url_for('administrator.inventory') }}"
            class="sidebar-link {% if request.endpoint and 'inventory' in request.endpoint %}active{% endif %}">
             <i class="ti ti-building-warehouse sidebar-icon"></i>
-            <span class="sidebar-label">Inventory</span>
+            <span class="sidebar-label">Készlet</span>
         </a>
 
         <!-- Organization -->
-        <div class="sidebar-section-title">Organization</div>
+        <div class="sidebar-section-title">Szervezet</div>
         <a href="{{ url_for('administrator.team_members') }}"
            class="sidebar-link {% if request.endpoint and 'team_members' in request.endpoint %}active{% endif %}">
             <i class="ti ti-users-group sidebar-icon"></i>
-            <span class="sidebar-label">Team Members</span>
+            <span class="sidebar-label">Csapattagok</span>
         </a>
         <a href="{{ url_for('administrator.org_settings') }}"
            class="sidebar-link {% if request.endpoint and 'org_settings' in request.endpoint %}active{% endif %}">
             <i class="ti ti-building sidebar-icon"></i>
-            <span class="sidebar-label">Org Settings</span>
+            <span class="sidebar-label">Beállítások</span>
         </a>
         <a href="{{ url_for('administrator.subscription_management') }}"
            class="sidebar-link {% if request.endpoint and 'subscription' in request.endpoint %}active{% endif %}">
             <i class="ti ti-credit-card sidebar-icon"></i>
-            <span class="sidebar-label">Subscription</span>
+            <span class="sidebar-label">Előfizetés</span>
         </a>
     </nav>
 </aside>

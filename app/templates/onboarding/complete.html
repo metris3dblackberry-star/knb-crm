@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Setup Complete - RepairOS{% endblock %}
+{% block title %}Beállítás kész{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -64,8 +64,8 @@
                             <div class="success-icon mb-4">
                                 <i class="ti ti-check text-white" style="font-size: 40px;"></i>
                             </div>
-                            <h1 class="h3 fw-bold mb-2">Setup Complete!</h1>
-                            <p class="text-muted">Your organization is ready to go. Here is a summary of what was set up.</p>
+                            <h1 class="h3 fw-bold mb-2">Beállítás kész!</h1>
+                            <p class="text-muted">A szervezete készen áll. Összefoglaló a beállításokról.</p>
                         </div>
 
                         <!-- Summary -->
@@ -76,8 +76,8 @@
                                         <i class="ti ti-building text-primary"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">Organization</div>
-                                        <small class="text-muted">{{ summary.org_name if summary else 'Your Organization' }}</small>
+                                        <div class="fw-semibold">Szervezet</div>
+                                        <small class="text-muted">{{ summary.org_name if summary else 'Your Szervezet' }}</small>
                                     </div>
                                 </div>
 
@@ -86,8 +86,8 @@
                                         <i class="ti ti-tool text-primary"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">Services</div>
-                                        <small class="text-muted">{{ summary.services_count if summary else 0 }} services configured</small>
+                                        <div class="fw-semibold">Szolgáltatások</div>
+                                        <small class="text-muted">{{ summary.services_count if summary else 0 }} szolgáltatás beállítva</small>
                                     </div>
                                 </div>
 
@@ -96,8 +96,8 @@
                                         <i class="ti ti-package text-primary"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">Parts & Inventory</div>
-                                        <small class="text-muted">{{ summary.parts_count if summary else 0 }} parts added</small>
+                                        <div class="fw-semibold">Alkatrészek & Készlet</div>
+                                        <small class="text-muted">{{ summary.parts_count if summary else 0 }} alkatrész hozzáadva</small>
                                     </div>
                                 </div>
 
@@ -106,21 +106,21 @@
                                         <i class="ti ti-users text-primary"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">Team Members</div>
-                                        <small class="text-muted">{{ summary.invites_count if summary else 0 }} invitations sent</small>
+                                        <div class="fw-semibold">Csapattagok</div>
+                                        <small class="text-muted">{{ summary.invites_count if summary else 0 }} meghívó elküldve</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Go to Dashboard -->
+                        <!-- Ugrás a műszerfalra -->
                         <a href="{{ dashboard_url if dashboard_url else url_for('main.dashboard') }}" class="btn btn-accent w-100 py-3 fw-semibold">
                             <i class="ti ti-layout-dashboard me-2"></i>
-                            Go to Dashboard
+                            Ugrás a műszerfalra
                         </a>
 
                         <p class="text-center text-muted mt-3 mb-0" style="font-size: 0.85rem;">
-                            You can always update your settings from the dashboard.
+                            A beállításokat bármikor módosíthatja a műszerfalon.
                         </p>
                     </div>
                 </div>

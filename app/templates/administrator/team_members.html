@@ -1,9 +1,9 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Team Members - Administrator Portal{% endblock %}
+{% block title %}Csapattagok{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Team Members</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+<li class="breadcrumb-item active">Csapattagok</li>
 {% endblock %}
 
 {% block admin_content %}
@@ -15,9 +15,9 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-users text-primary"></i>
-                        Team Members
+                        Csapattagok
                     </h1>
-                    <p class="text-muted mb-0">Manage your team and invite new members</p>
+                    <p class="text-muted mb-0">Csapat kezelése és új tagok meghívása</p>
                 </div>
             </div>
         </div>
@@ -30,27 +30,27 @@
                 <div class="card-body p-4">
                     <h5 class="fw-bold d-flex align-items-center gap-2 mb-3">
                         <i class="ti ti-user-plus text-success"></i>
-                        Invite Team Member
+                        Csapattag meghívása
                     </h5>
                     <form method="post" action="#">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-5">
-                                <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control" name="invite_email" placeholder="colleague@example.com" required>
+                                <label class="form-label">E-mail cím</label>
+                                <input type="email" class="form-control" name="invite_email" placeholder="kollegaem@pelda.hu" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Role</label>
+                                <label class="form-label">Szerepkör</label>
                                 <select class="form-select" name="invite_role" required>
-                                    <option value="">Select role...</option>
-                                    <option value="administrator">Administrator</option>
-                                    <option value="technician">Technician</option>
-                                    <option value="viewer">Viewer</option>
+                                    <option value="">Válasszon szerepkört...</option>
+                                    <option value="administrator">Adminisztrátor</option>
+                                    <option value="technician">Szerelő</option>
+                                    <option value="viewer">Megfigyelő</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <button type="submit" class="btn btn-success w-100">
                                     <i class="ti ti-send me-1"></i>
-                                    Send Invite
+                                    Meghívó küldése
                                 </button>
                             </div>
                         </div>
@@ -67,7 +67,7 @@
                 <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-users"></i>
-                        Current Members
+                        Jelenlegi tagok
                     </h5>
                 </div>
                 <div class="card-body">
@@ -75,11 +75,11 @@
                         <table class="table table-vcenter card-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Név</th>
+                                    <th>E-mail</th>
+                                    <th>Szerepkör</th>
+                                    <th>Státusz</th>
+                                    <th>Műveletek</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -108,17 +108,17 @@
                                         {% if member.status|default('active') == 'active' %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-circle-check me-1"></i>
-                                            Active
+                                            Aktív
                                         </span>
                                         {% elif member.status == 'invited' %}
                                         <span class="badge bg-warning">
                                             <i class="ti ti-clock me-1"></i>
-                                            Invited
+                                            Meghívott
                                         </span>
                                         {% else %}
                                         <span class="badge bg-danger">
                                             <i class="ti ti-circle-x me-1"></i>
-                                            Inactive
+                                            Inaktív
                                         </span>
                                         {% endif %}
                                     </td>
@@ -128,11 +128,11 @@
                                                 <input type="hidden" name="member_id" value="{{ member.id }}">
                                                 <select class="form-select form-select-sm d-inline-block" name="new_role" onchange="this.form.submit()" style="width: auto;">
                                                     <option value="administrator" {% if member.role == 'administrator' %}selected{% endif %}>Admin</option>
-                                                    <option value="technician" {% if member.role == 'technician' %}selected{% endif %}>Tech</option>
-                                                    <option value="viewer" {% if member.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                                                    <option value="technician" {% if member.role == 'technician' %}selected{% endif %}>Szerelő</option>
+                                                    <option value="viewer" {% if member.role == 'viewer' %}selected{% endif %}>Megfigyelő</option>
                                                 </select>
                                             </form>
-                                            <form method="post" action="#" class="d-inline" onsubmit="return confirm('Remove this team member?');">
+                                            <form method="post" action="#" class="d-inline" onsubmit="return confirm('Biztosan eltávolítja ezt a csapattagot?');">
                                                 <input type="hidden" name="remove_member_id" value="{{ member.id }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">
                                                     <i class="ti ti-user-minus"></i>
@@ -145,7 +145,7 @@
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-4">
                                         <i class="ti ti-users mb-2 d-block mx-auto" style="font-size: 48px;"></i>
-                                        No team members yet. Invite someone above.
+                                        Még nincs csapattag. Hívjon meg valakit!
                                     </td>
                                 </tr>
                                 {% endfor %}

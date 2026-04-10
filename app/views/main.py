@@ -369,3 +369,19 @@ def internal_error(error):
     """500 error handler"""
     return render_template('errors/500.html'), 500 
 
+
+
+@main_bp.route('/fix-tenant-data-xk9p2')
+def fix_tenant_data():
+    from app.extensions import db
+    import sqlalchemy as sa
+    try:
+        r1 = db.session.execute(sa.text("UPDATE customer SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r2 = db.session.execute(sa.text("UPDATE job SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r3 = db.session.execute(sa.text("UPDATE service SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r4 = db.session.execute(sa.text("UPDATE part SET tenant_id=1 WHERE tenant_id IS NULL"))
+        db.session.commit()
+        return f'Fix OK! customers={r1.rowcount}, jobs={r2.rowcount}, services={r3.rowcount}, parts={r4.rowcount}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

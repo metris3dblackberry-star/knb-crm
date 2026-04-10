@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Verify Email - RepairOS{% endblock %}
+{% block title %}E-mail megerősítése{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -34,17 +34,17 @@
                     <i class="ti ti-mail-check" style="font-size: 2rem;"></i>
                 </div>
 
-                <h2 class="fw-bold mb-3">Verify Your Email</h2>
+                <h2 class="fw-bold mb-3">E-mail megerősítése</h2>
                 <p class="text-muted mb-4">
-                    Enter your email and the 6-digit verification code we sent you.
+                    Adja meg az e-mail címét és a 6 jegyű megerősítő kódot.
                 </p>
 
                 <div id="verify-message" class="alert d-none mb-3"></div>
 
                 <form id="standaloneVerifyForm">
                     <div class="mb-3 text-start">
-                        <label for="verify-email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="verify-email" placeholder="you@example.com" required>
+                        <label for="verify-email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="verify-email" placeholder="nev@pelda.hu" required>
                     </div>
 
                     <div class="otp-inputs mb-4">
@@ -57,18 +57,18 @@
                     </div>
 
                     <button type="submit" id="verifyBtn" class="btn btn-accent w-100 py-3 fw-semibold mb-3">
-                        <i class="ti ti-check me-2"></i>Verify Email
+                        <i class="ti ti-check me-2"></i>Megerősítés
                     </button>
                 </form>
 
                 <p class="text-muted text-sm mb-0">
-                    Didn't receive the code?
-                    <a href="#" id="resendBtn" class="text-primary text-decoration-none fw-semibold">Resend code</a>
+                    Nem kapta meg a kódot?
+                    <a href="#" id="resendBtn" class="text-primary text-decoration-none fw-semibold">Kód újraküldése</a>
                 </p>
 
                 <div class="mt-3">
                     <a href="{{ url_for('auth.login') }}" class="text-muted text-decoration-none text-sm">
-                        <i class="ti ti-arrow-left me-1"></i>Back to sign in
+                        <i class="ti ti-arrow-left me-1"></i>Vissza a bejelentkezéshez
                     </a>
                 </div>
             </div>
@@ -121,26 +121,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('verifyBtn');
 
         if (!email || otp.length !== 6) {
-            showMsg('Please enter your email and the 6-digit code.', 'error');
+            showMsg('Kérjük, adja meg az e-mail címét és a 6 jegyű kódot.', 'error');
             return;
         }
 
         if (!window.neonAuth) {
-            showMsg('Authentication service not configured.', 'error');
+            showMsg('A hitelesítési szolgáltatás nincs konfigurálva.', 'error');
             return;
         }
 
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Megerősítés folyamatban...';
 
         try {
-            await window.neonAuth.verifyEmail(email, otp);
-            showMsg('Email verified! Redirecting to sign in...', 'success');
+            await window.neonAuth.verifyE-mail(email, otp);
+            showMsg('E-mail megerősítve! Átirányítás...', 'success');
             setTimeout(() => { window.location.href = '{{ url_for("auth.login") }}'; }, 1500);
         } catch (error) {
-            showMsg(error.message || 'Verification failed. Please try again.', 'error');
+            showMsg(error.message || 'Megerősítés sikertelen. Kérjük, próbálja újra.', 'error');
             btn.disabled = false;
-            btn.innerHTML = '<i class="ti ti-check me-2"></i>Verify Email';
+            btn.innerHTML = '<i class="ti ti-check me-2"></i>Megerősítés';
         }
     });
 
@@ -148,29 +148,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('resendBtn').addEventListener('click', async function(e) {
         e.preventDefault();
         const email = document.getElementById('verify-email').value.trim();
-        if (!email) { showMsg('Please enter your email first.', 'error'); return; }
+        if (!email) { showMsg('Kérjük, először adja meg az e-mail címét.', 'error'); return; }
         if (!window.neonAuth || resendCooldown > 0) return;
 
-        this.textContent = 'Sending...';
+        this.textContent = 'Küldés...';
         this.style.pointerEvents = 'none';
         try {
             await window.neonAuth.resendOtp(email);
-            showMsg('A new code has been sent.', 'success');
+            showMsg('Új kód elküldve.', 'success');
             resendCooldown = 60;
             const tick = setInterval(() => {
                 resendCooldown--;
-                document.getElementById('resendBtn').textContent = 'Resend code (' + resendCooldown + 's)';
+                document.getElementById('resendBtn').textContent = 'Kód újraküldése (' + resendCooldown + 's)';
                 if (resendCooldown <= 0) {
                     clearInterval(tick);
-                    document.getElementById('resendBtn').textContent = 'Resend code';
+                    document.getElementById('resendBtn').textContent = 'Kód újraküldése';
                     document.getElementById('resendBtn').style.pointerEvents = '';
                     document.getElementById('resendBtn').style.opacity = '';
                 }
             }, 1000);
             this.style.opacity = '0.6';
         } catch (error) {
-            showMsg('Failed to resend code.', 'error');
-            this.textContent = 'Resend code';
+            showMsg('Nem sikerült újraküldeni a kódot.', 'error');
+            this.textContent = 'Kód újraküldése';
             this.style.pointerEvents = '';
         }
     });

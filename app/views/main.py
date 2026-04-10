@@ -296,3 +296,11 @@ def debug_jobs():
     from flask import session
     jobs = db.session.execute(sa.text('SELECT job_id, tenant_id, completed, customer FROM job')).fetchall()
     return f'Session tenant: {session.get("current_tenant_id")} | Jobs: {list(jobs)}'
+
+
+@main_bp.route('/debug-customers-xk9p2')
+def debug_customers():
+    import sqlalchemy as sa
+    from app.extensions import db
+    customers = db.session.execute(sa.text('SELECT customer_id, tenant_id, first_name, family_name FROM customer')).fetchall()
+    return f'Customers: {list(customers)}'

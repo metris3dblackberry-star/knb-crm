@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Completing Sign In - RepairOS{% endblock %}
+{% block title %}Bejelentkezés folyamatban{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -11,15 +11,15 @@
             <div class="card-body p-5">
                 <div class="mb-4">
                     <div class="spinner-border text-primary" role="status" id="loadingSpinner">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">Betöltés...</span>
                     </div>
                 </div>
-                <h3 class="fw-bold mb-2" id="statusTitle">Completing sign in...</h3>
-                <p class="text-muted" id="statusMessage">Please wait while we set up your session.</p>
+                <h3 class="fw-bold mb-2" id="statusTitle">Bejelentkezés folyamatban...</h3>
+                <p class="text-muted" id="statusMessage">Kérjük, várjon míg beállítjuk a munkamenetet.</p>
 
                 <div id="errorActions" class="d-none mt-4">
                     <a href="{{ url_for('auth.login') }}" class="btn btn-accent">
-                        <i class="ti ti-arrow-left me-2"></i>Back to Sign In
+                        <i class="ti ti-arrow-left me-2"></i>Vissza a bejelentkezéshez
                     </a>
                 </div>
             </div>
@@ -38,13 +38,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     function showError(message) {
         loadingSpinner.classList.add('d-none');
-        statusTitle.textContent = 'Sign in failed';
+        statusTitle.textContent = 'Bejelentkezés sikertelen';
         statusMessage.textContent = message;
         errorActions.classList.remove('d-none');
     }
 
     if (!window.neonAuth) {
-        showError('Authentication service not configured. Please try again.');
+        showError('A hitelesítési szolgáltatás nincs konfigurálva. Kérjük, próbálja újra.');
         return;
     }
 
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const token = sessionData ? (sessionData.token || null) : null;
 
         if (!sessionData) {
-            showError('Could not retrieve session. Please sign in again.');
+            showError('Nem sikerült lekérni a munkamenetet. Kérjük, jelentkezzen be újra.');
             return;
         }
 
@@ -87,11 +87,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             const data = await response.json();
             window.location.href = data.redirect || '/dashboard';
         } else {
-            showError('Could not establish session. Please sign in again.');
+            showError('Nem sikerült létrehozni a munkamenetet. Kérjük, jelentkezzen be újra.');
         }
     } catch (error) {
         console.error('OAuth completion error:', error);
-        showError('An error occurred. Please try again.');
+        showError('Hiba történt. Kérjük, próbálja újra.');
     }
 });
 </script>

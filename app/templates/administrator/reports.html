@@ -1,9 +1,9 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Reports - Administrator Portal{% endblock %}
+{% block title %}Riportok{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Reports</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+<li class="breadcrumb-item active">Riportok</li>
 {% endblock %}
 
 {% block admin_content %}
@@ -15,14 +15,14 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-chart-bar text-primary"></i>
-                        Reports
+                        Riportok
                     </h1>
-                    <p class="text-muted mb-0">Business analytics and performance metrics</p>
+                    <p class="text-muted mb-0">Üzleti elemzések és teljesítménymutatók</p>
                 </div>
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-primary" onclick="window.print()">
                         <i class="ti ti-download me-1"></i>
-                        Export
+                        Exportálás
                     </button>
                 </div>
             </div>
@@ -36,10 +36,10 @@
             <div class="alert alert-info d-flex align-items-center gap-2">
                 <i class="ti ti-info-circle"></i>
                 <div>
-                    <strong>Report Period:</strong>
+                    <strong>Riport időszak:</strong>
                     {{ report_data.period_info.start_date|default('N/A') }} to {{ report_data.period_info.end_date|default('N/A') }}
                     {% if report_data.period_info.comparison %}
-                    &mdash; Compared with {{ report_data.period_info.comparison }}
+                    &mdash; Összehasonlítva ezzel: {{ report_data.period_info.comparison }}
                     {% endif %}
                 </div>
             </div>
@@ -47,14 +47,14 @@
     </div>
     {% endif %}
 
-    <!-- Job Statistics -->
+    <!-- Munka statisztikák -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-briefcase"></i>
-                        Job Statistics
+                        Munka statisztikák
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -63,25 +63,25 @@
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
                                 <div class="h2 mb-0 text-primary">{{ js.total|default(0) }}</div>
-                                <small class="text-muted">Total Jobs</small>
+                                <small class="text-muted">Összes munka</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
                                 <div class="h2 mb-0 text-success">{{ js.completed|default(0) }}</div>
-                                <small class="text-muted">Completed</small>
+                                <small class="text-muted">Befejezett</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
                                 <div class="h2 mb-0 text-warning">{{ js.in_progress|default(0) }}</div>
-                                <small class="text-muted">In Progress</small>
+                                <small class="text-muted">Folyamatban</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(107,114,128,0.1);">
                                 <div class="h2 mb-0 text-secondary">{{ js.pending|default(0) }}</div>
-                                <small class="text-muted">Pending</small>
+                                <small class="text-muted">Várakozó</small>
                             </div>
                         </div>
                     </div>
@@ -90,14 +90,14 @@
         </div>
     </div>
 
-    <!-- Billing Statistics -->
+    <!-- Számlázási statisztikák -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header" style="background: var(--info); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-currency-dollar"></i>
-                        Billing Statistics
+                        Számlázási statisztikák
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -105,26 +105,26 @@
                     <div class="row g-4">
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
-                                <div class="h2 mb-0 text-primary">${{ "%.2f"|format(bs.total_revenue|default(0)|float) }}</div>
-                                <small class="text-muted">Total Revenue</small>
+                                <div class="h2 mb-0 text-primary">{{ "%.2f"|format(bs.total_revenue|default(0)|float) }}</div>
+                                <small class="text-muted">Összes bevétel</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
-                                <div class="h2 mb-0 text-success">${{ "%.2f"|format(bs.total_paid|default(0)|float) }}</div>
-                                <small class="text-muted">Collected</small>
+                                <div class="h2 mb-0 text-success">{{ "%.2f"|format(bs.total_paid|default(0)|float) }}</div>
+                                <small class="text-muted">Befolyt</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
-                                <div class="h2 mb-0 text-warning">${{ "%.2f"|format(bs.total_unpaid|default(0)|float) }}</div>
-                                <small class="text-muted">Outstanding</small>
+                                <div class="h2 mb-0 text-warning">{{ "%.2f"|format(bs.total_unpaid|default(0)|float) }}</div>
+                                <small class="text-muted">Kintlévőség</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(220,38,38,0.1);">
-                                <div class="h2 mb-0 text-danger">${{ "%.2f"|format(bs.total_overdue|default(0)|float) }}</div>
-                                <small class="text-muted">Overdue</small>
+                                <div class="h2 mb-0 text-danger">{{ "%.2f"|format(bs.total_overdue|default(0)|float) }}</div>
+                                <small class="text-muted">Lejárt</small>
                             </div>
                         </div>
                     </div>
@@ -133,14 +133,14 @@
         </div>
     </div>
 
-    <!-- Customer Statistics -->
+    <!-- Ügyfél statisztikák -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header" style="background: var(--success); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-users"></i>
-                        Customer Statistics
+                        Ügyfél statisztikák
                     </h5>
                 </div>
                 <div class="card-body p-4">
@@ -149,19 +149,19 @@
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
                                 <div class="h2 mb-0 text-primary">{{ cs.total|default(0) }}</div>
-                                <small class="text-muted">Total Customers</small>
+                                <small class="text-muted">Összes ügyfél</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
                                 <div class="h2 mb-0 text-success">{{ cs.active|default(0) }}</div>
-                                <small class="text-muted">Active Customers</small>
+                                <small class="text-muted">Aktív ügyfelek</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
                                 <div class="h2 mb-0 text-warning">{{ cs.with_unpaid|default(0) }}</div>
-                                <small class="text-muted">With Unpaid Bills</small>
+                                <small class="text-muted">Kifizetetlen számlával</small>
                             </div>
                         </div>
                     </div>

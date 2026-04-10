@@ -287,3 +287,12 @@ def fix_tenant_data3():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/debug-jobs-xk9p2')
+def debug_jobs():
+    import sqlalchemy as sa
+    from app.extensions import db
+    from flask import session
+    jobs = db.session.execute(sa.text('SELECT job_id, tenant_id, completed, customer FROM job')).fetchall()
+    return f'Session tenant: {session.get("current_tenant_id")} | Jobs: {list(jobs)}'

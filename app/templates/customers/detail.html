@@ -4,10 +4,10 @@
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.customers') }}">Customers</a>
+        <a href="{{ url_for('main.customers') }}">Ügyfelek</a>
     </li>
     <li class="breadcrumb-item active">{{ customer.first_name }} {{ customer.family_name }}</li>
 {% endblock %}
@@ -20,14 +20,14 @@
             <i class="ti ti-user text-primary"></i>
             {{ customer.first_name }} {{ customer.family_name }}
         </h1>
-        <p class="text-muted mb-0">Customer ID: #{{ customer.customer_id }}</p>
+        <p class="text-muted mb-0">Ügyfél ID: #{{ customer.customer_id }}</p>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ url_for('main.edit_customer', customer_id=customer.customer_id) }}" class="btn btn-accent">
-            <i class="ti ti-pencil me-2"></i>Edit Customer
+            <i class="ti ti-pencil me-2"></i>Ügyfél szerkesztése
         </a>
         <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-2"></i>Back to Customers
+            <i class="ti ti-arrow-left me-2"></i>Back to Ügyfelek
         </a>
     </div>
 </div>
@@ -40,7 +40,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-primary-lt me-2"><i class="ti ti-briefcase"></i></span>
-                    <div class="subheader">Total Jobs</div>
+                    <div class="subheader">Összes munka</div>
                 </div>
                 <div class="h1 mb-0">{{ stats.total_jobs|default(0) }}</div>
             </div>
@@ -51,7 +51,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-success-lt me-2"><i class="ti ti-circle-check"></i></span>
-                    <div class="subheader">Completed</div>
+                    <div class="subheader">Befejezett</div>
                 </div>
                 <div class="h1 mb-0">{{ stats.completed_jobs|default(0) }}</div>
             </div>
@@ -62,7 +62,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-info-lt me-2"><i class="ti ti-currency-dollar"></i></span>
-                    <div class="subheader">Total Revenue</div>
+                    <div class="subheader">Összes bevétel</div>
                 </div>
                 <div class="h1 mb-0">${{ "%.2f"|format(stats.total_revenue|default(0)|float) }}</div>
             </div>
@@ -73,7 +73,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-danger-lt me-2"><i class="ti ti-alert-triangle"></i></span>
-                    <div class="subheader">Unpaid Amount</div>
+                    <div class="subheader">Kifizetetlen összeg</div>
                 </div>
                 <div class="h1 mb-0">${{ "%.2f"|format(stats.unpaid_amount|default(0)|float) }}</div>
             </div>
@@ -83,13 +83,13 @@
 {% endif %}
 
 <div class="row">
-    <!-- Customer Information Card -->
+    <!-- Ügyfél adatai Card -->
     <div class="col-lg-4 mb-4">
         <div class="card h-100">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-user me-1"></i>
-                    Customer Information
+                    Ügyfél adatai
                 </h3>
             </div>
             <div class="card-body">
@@ -99,7 +99,7 @@
                     </div>
                     <div>
                         <div class="fw-bold fs-5">{{ customer.first_name }} {{ customer.family_name }}</div>
-                        <small class="text-muted">Customer #{{ customer.customer_id }}</small>
+                        <small class="text-muted">Ügyfél #{{ customer.customer_id }}</small>
                     </div>
                 </div>
 
@@ -107,7 +107,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <i class="ti ti-mail text-muted me-3"></i>
                     <div>
-                        <small class="text-muted d-block">Email</small>
+                        <small class="text-muted d-block">E-mail</small>
                         <span class="fw-medium">{{ customer.email }}</span>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                 <div class="d-flex align-items-center mb-3">
                     <i class="ti ti-phone text-muted me-3"></i>
                     <div>
-                        <small class="text-muted d-block">Phone</small>
+                        <small class="text-muted d-block">Telefon</small>
                         <span class="fw-medium">{{ customer.phone }}</span>
                     </div>
                 </div>
@@ -126,13 +126,13 @@
         </div>
     </div>
 
-    <!-- Job History -->
+    <!-- Munkák előzményei -->
     <div class="col-lg-8 mb-4">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-file-text me-1"></i>
-                    Job History
+                    Munkák előzményei
                 </h3>
             </div>
 
@@ -141,12 +141,12 @@
                 <table class="table table-vcenter card-table">
                     <thead>
                         <tr>
-                            <th>Job ID</th>
-                            <th>Date</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Payment</th>
-                            <th>Actions</th>
+                            <th>Munka ID</th>
+                            <th>Dátum</th>
+                            <th>Összeg</th>
+                            <th>Státusz</th>
+                            <th>Fizetés</th>
+                            <th>Műveletek</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -157,25 +157,25 @@
                                     #{{ job.job_id }}
                                 </a>
                             </td>
-                            <td>{{ job.job_date.strftime('%b %d, %Y') if job.job_date else 'N/A' }}</td>
+                            <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</td>
                             <td><span class="fw-semibold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span></td>
                             <td>
                                 {% if job.completed %}
-                                <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Completed</span>
+                                <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Befejezett</span>
                                 {% else %}
-                                <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>In Progress</span>
+                                <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>Folyamatban</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if job.paid %}
-                                <span class="badge bg-success"><i class="ti ti-credit-card me-1"></i>Paid</span>
+                                <span class="badge bg-success"><i class="ti ti-credit-card me-1"></i>Fizetve</span>
                                 {% else %}
-                                <span class="badge bg-danger"><i class="ti ti-alert-triangle me-1"></i>Unpaid</span>
+                                <span class="badge bg-danger"><i class="ti ti-alert-triangle me-1"></i>Kifizetetlen</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}"
-                                   class="btn btn-sm btn-outline-primary" title="View">
+                                   class="btn btn-sm btn-outline-primary" title="Megtekintés">
                                     <i class="ti ti-eye"></i>
                                 </a>
                             </td>
@@ -187,8 +187,8 @@
             {% else %}
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-file-text"></i></div>
-                <p class="empty-title">No Job History</p>
-                <p class="empty-subtitle text-secondary">This customer has no jobs on record yet.</p>
+                <p class="empty-title">No Munkák előzményei</p>
+                <p class="empty-subtitle text-secondary">Ennek az ügyfélnek még nincs rögzített munkája.</p>
             </div>
             {% endif %}
         </div>

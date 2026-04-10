@@ -385,3 +385,25 @@ def fix_tenant_data():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/fix-tenant-data2-xk9p2')
+def fix_tenant_data2():
+    from app.extensions import db
+    import sqlalchemy as sa
+    try:
+        # Delete NULL tenant customers that have duplicates with tenant_id=1
+        r1 = db.session.execute(sa.text("""
+            DELETE FROM customer WHERE tenant_id IS NULL
+            AND email IN (SELECT email FROM customer WHERE tenant_id=1)
+        """))
+        # Update remaining NULL tenant records
+        r2 = db.session.execute(sa.text("UPDATE customer SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r3 = db.session.execute(sa.text("UPDATE job SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r4 = db.session.execute(sa.text("UPDATE service SET tenant_id=1 WHERE tenant_id IS NULL"))
+        r5 = db.session.execute(sa.text("UPDATE part SET tenant_id=1 WHERE tenant_id IS NULL"))
+        db.session.commit()
+        return f'Fix OK! deleted_dupes={r1.rowcount}, customers={r2.rowcount}, jobs={r3.rowcount}, services={r4.rowcount}, parts={r5.rowcount}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Configure Services - Step 1 of 3 - RepairOS{% endblock %}
+{% block title %}Szolgáltatások beállítása - 1. lépés / 3{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -50,7 +50,7 @@
             <div class="col-lg-9 col-xl-8">
                 <!-- Step Indicator -->
                 <div class="text-center mb-4">
-                    <span class="step-indicator">Step 1 of 3</span>
+                    <span class="step-indicator">1. lépés / 3</span>
                     <div class="progress-bar-custom mt-2">
                         <div class="progress-fill" style="width: 33%;"></div>
                     </div>
@@ -63,8 +63,8 @@
                             <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mb-3">
                                 <i class="ti ti-tool text-primary" style="font-size: 36px;"></i>
                             </div>
-                            <h1 class="h3 fw-bold mb-2">Configure Services</h1>
-                            <p class="text-muted">Review the default services and add any custom ones your shop offers. You can edit these later.</p>
+                            <h1 class="h3 fw-bold mb-2">Szolgáltatások beállítása</h1>
+                            <p class="text-muted">Tekintse át az alapértelmezett szolgáltatásokat és adjon hozzá egyénieket. Később is módosíthatja.</p>
                         </div>
 
                         <!-- Current Services Table -->
@@ -72,10 +72,10 @@
                             <table class="table table-hover service-table align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Service Name</th>
-                                        <th>Category</th>
-                                        <th>Cost</th>
-                                        <th>Duration</th>
+                                        <th>Szolgáltatás neve</th>
+                                        <th>Kategória</th>
+                                        <th>Ár</th>
+                                        <th>Időtartam</th>
                                     </tr>
                                 </thead>
                                 <tbody id="services-body">
@@ -91,7 +91,7 @@
                                     <tr id="no-services-row">
                                         <td colspan="4" class="text-center text-muted py-4">
                                             <i class="ti ti-inbox mb-2" style="font-size: 32px;"></i>
-                                            <p class="mb-0">No services added yet. Use the form below to add your first service.</p>
+                                            <p class="mb-0">Még nincs szolgáltatás. Az alábbi űrlappal adja hozzá az elsőt.</p>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -99,44 +99,44 @@
                             </table>
                         </div>
 
-                        <!-- Add Service Form -->
+                        <!-- Szolgáltatás hozzáadása Form -->
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3 d-flex align-items-center">
                                     <i class="ti ti-circle-plus me-2 text-accent"></i>
-                                    Add New Service
+                                    Új szolgáltatás hozzáadása
                                 </h6>
                                 <form method="POST" action="{{ url_for('onboarding.save_step', step_number=1) }}" id="add-service-form">
                                     <input type="hidden" name="action" value="add_service">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="service_name" class="form-label">Service Name</label>
-                                            <input type="text" class="form-control" id="service_name" name="service_name" placeholder="e.g. Oil Change" required>
+                                            <label for="service_name" class="form-label">Szolgáltatás neve</label>
+                                            <input type="text" class="form-control" id="service_name" name="service_name" placeholder="pl. Olajcsere" required>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="service_category" class="form-label">Category</label>
+                                            <label for="service_category" class="form-label">Kategória</label>
                                             <select class="form-select" id="service_category" name="service_category" required>
-                                                <option value="">Select category</option>
-                                                <option value="Maintenance">Maintenance</option>
-                                                <option value="Repair">Repair</option>
-                                                <option value="Inspection">Inspection</option>
-                                                <option value="Diagnostic">Diagnostic</option>
-                                                <option value="Body Work">Body Work</option>
-                                                <option value="Electrical">Electrical</option>
+                                                <option value="">Kategória kiválasztása</option>
+                                                <option value="Karbantartás">Karbantartás</option>
+                                                <option value="Javítás">Javítás</option>
+                                                <option value="Vizsgálat">Vizsgálat</option>
+                                                <option value="Diagnosztika">Diagnosztika</option>
+                                                <option value="Karosszéria">Karosszéria</option>
+                                                <option value="Elektromos">Elektromos</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="service_cost" class="form-label">Cost ($)</label>
+                                            <label for="service_cost" class="form-label">Ár ($)</label>
                                             <input type="number" class="form-control" id="service_cost" name="service_cost" min="0" step="0.01" placeholder="0.00" required>
                                         </div>
                                         <div class="col-md-6">
-                                            <label for="service_duration" class="form-label">Duration (minutes)</label>
-                                            <input type="number" class="form-control" id="service_duration" name="service_duration" min="1" placeholder="e.g. 30">
+                                            <label for="service_duration" class="form-label">Időtartam (minutes)</label>
+                                            <input type="number" class="form-control" id="service_duration" name="service_duration" min="1" placeholder="pl. 30">
                                         </div>
                                         <div class="col-12">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="ti ti-plus me-1"></i>
-                                                Add Service
+                                                Szolgáltatás hozzáadása
                                             </button>
                                         </div>
                                     </div>
@@ -147,13 +147,13 @@
                         <!-- Navigation -->
                         <div class="d-flex justify-content-between">
                             <a href="{{ url_for('onboarding.step', step_number=2) }}" class="btn btn-link text-muted px-0">
-                                Skip for now
+                                Kihagyás
                                 <i class="ti ti-arrow-right ms-1"></i>
                             </a>
                             <form method="POST" action="{{ url_for('onboarding.save_step', step_number=1) }}">
                                 <input type="hidden" name="action" value="next">
                                 <button type="submit" class="btn btn-accent px-4 py-2">
-                                    Next
+                                    Következő
                                     <i class="ti ti-arrow-right ms-2"></i>
                                 </button>
                             </form>

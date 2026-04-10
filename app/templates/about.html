@@ -1,9 +1,9 @@
 {% extends "base/layout.html" %}
 
-{% block title %}About - RepairOS{% endblock %}
+{% block title %}Névjegy - K&B Autójavító{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item active">About</li>
+<li class="breadcrumb-item active">Névjegy</li>
 {% endblock %}
 
 {% block content %}
@@ -13,16 +13,16 @@
         <div class="card border-0 shadow-sm mb-4" style="border-top: 4px solid var(--accent) !important;">
             <div class="card-body p-5">
                 <div class="d-flex align-items-center mb-4">
-                    <img src="{{ url_for('static', filename='images/RepairOS-logo.svg') }}" alt="RepairOS" style="height: 56px; width: auto;" class="me-3">
+                    <img src="{{ url_for('static', filename='images/RepairOS-logo.svg') }}" alt="K&B CRM" style="height: 56px; width: auto;" class="me-3">
                     <div>
-                        <h1 class="h2 fw-bold mb-1">RepairOS</h1>
-                        <p class="text-muted mb-0">Professional Automotive Repair Management Platform</p>
+                        <h1 class="h2 fw-bold mb-1">K&B Autójavító CRM</h1>
+                        <p class="text-muted mb-0">Professzionális műhelykezelő rendszer</p>
                     </div>
                 </div>
                 <p class="text-muted">
-                    RepairOS is a comprehensive management platform designed for automotive repair shops,
-                    parts sellers, and multi-location businesses. It streamlines operations from customer intake
-                    and repair order management to billing, inventory tracking, and team coordination.
+                    A K&B Autójavító CRM egy átfogó kezelőrendszer, amelyet autószerelő műhelyek számára fejlesztettünk.
+                    Leegyszerűsíti a műhely teljes működését az ügyfélkezeléstől és munkamegrendelésektől
+                    a számlázásig, készletnyilvántartásig és csapatkoordinációig.
                 </p>
             </div>
         </div>
@@ -32,7 +32,7 @@
             <div class="card-body p-4">
                 <h4 class="fw-bold mb-4 d-flex align-items-center">
                     <i class="ti ti-star me-2 text-accent"></i>
-                    Key Features
+                    Főbb funkciók
                 </h4>
                 <div class="row g-4">
                     <div class="col-md-6">
@@ -41,8 +41,8 @@
                                 <i class="ti ti-clipboard-list text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Repair Order Management</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Create, track, and manage repair orders from intake to completion with real-time status updates.</p>
+                                <h6 class="fw-bold mb-1">Munkamegrendelés kezelés</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Munkák létrehozása, nyomon követése és kezelése a beérkezéstől a befejezésig, valós idejű állapotfrissítéssel.</p>
                             </div>
                         </div>
                     </div>
@@ -52,8 +52,8 @@
                                 <i class="ti ti-users text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Customer Management</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Maintain detailed customer profiles, vehicle history, and communication logs.</p>
+                                <h6 class="fw-bold mb-1">Ügyfélkezelés</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Részletes ügyfélprofilok, szervíztörténet és kommunikációs napló karbantartása.</p>
                             </div>
                         </div>
                     </div>
@@ -63,8 +63,8 @@
                                 <i class="ti ti-credit-card text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Billing & Invoicing</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Generate invoices, track payments, manage overdue accounts, and process transactions.</p>
+                                <h6 class="fw-bold mb-1">Számlázás & Fizetések</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Számlák készítése, fizetések nyomon követése, lejárt tételek kezelése.</p>
                             </div>
                         </div>
                     </div>
@@ -74,8 +74,8 @@
                                 <i class="ti ti-package text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Parts & Inventory</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Track parts stock levels, manage suppliers, and automate reorder notifications.</p>
+                                <h6 class="fw-bold mb-1">Alkatrészek & Készlet</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Készletszintek nyomon követése, szállítók kezelése, automatikus utánrendelési értesítések.</p>
                             </div>
                         </div>
                     </div>
@@ -85,8 +85,8 @@
                                 <i class="ti ti-building text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Multi-Tenant Support</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Manage multiple locations or organizations with isolated data and shared user accounts.</p>
+                                <h6 class="fw-bold mb-1">Több szervezet támogatása</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Több telephely vagy szervezet kezelése elkülönített adatokkal és megosztott felhasználói fiókokkal.</p>
                             </div>
                         </div>
                     </div>
@@ -96,8 +96,8 @@
                                 <i class="ti ti-chart-bar text-primary"></i>
                             </div>
                             <div>
-                                <h6 class="fw-bold mb-1">Reports & Analytics</h6>
-                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Generate detailed reports on revenue, technician performance, and business metrics.</p>
+                                <h6 class="fw-bold mb-1">Riportok & Elemzések</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.9rem;">Részletes kimutatások bevételről, szerelői teljesítményről és üzleti mutatókról.</p>
                             </div>
                         </div>
                     </div>
@@ -110,34 +110,34 @@
             <div class="card-body p-4">
                 <h4 class="fw-bold mb-4 d-flex align-items-center">
                     <i class="ti ti-info-circle me-2 text-accent"></i>
-                    Version Information
+                    Verzióinformáció
                 </h4>
                 <div class="table-responsive">
                     <table class="table table-borderless mb-0">
                         <tbody>
                             <tr>
-                                <td class="fw-semibold text-muted" style="width: 200px;">Application</td>
-                                <td>RepairOS</td>
+                                <td class="fw-semibold text-muted" style="width: 200px;">Alkalmazás</td>
+                                <td>K&B Autójavító CRM</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Version</td>
-                                <td>2.0.0</td>
+                                <td class="fw-semibold text-muted">Verzió</td>
+                                <td>1.0.0</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Framework</td>
+                                <td class="fw-semibold text-muted">Keretrendszer</td>
                                 <td>Flask (Python)</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">Database</td>
+                                <td class="fw-semibold text-muted">Adatbázis</td>
                                 <td>PostgreSQL</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">UI Framework</td>
+                                <td class="fw-semibold text-muted">UI keretrendszer</td>
                                 <td>Tabler (Bootstrap 5)</td>
                             </tr>
                             <tr>
-                                <td class="fw-semibold text-muted">License</td>
-                                <td>Proprietary</td>
+                                <td class="fw-semibold text-muted">Licensz</td>
+                                <td>Tulajdonosi</td>
                             </tr>
                         </tbody>
                     </table>

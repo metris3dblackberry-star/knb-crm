@@ -418,3 +418,12 @@ def seed_services():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/debug-tenant-xk9p2')
+def debug_tenant():
+    from app.extensions import db
+    from flask import session
+    import sqlalchemy as sa
+    tenants = db.session.execute(sa.text('SELECT tenant_id, name FROM tenant')).fetchall()
+    return f'Session tenant_id: {session.get("current_tenant_id")} | Tenants in DB: {list(tenants)}'

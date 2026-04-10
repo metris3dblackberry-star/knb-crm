@@ -1,15 +1,15 @@
 {% extends "base/layout.html" %}
 
-{% block title %}{% if action == 'edit' %}Edit Customer{% else %}New Customer{% endif %} - RepairOS{% endblock %}
+{% block title %}{% if action == 'edit' %}Ügyfél szerkesztése{% else %}Új ügyfél{% endif %}{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.customers') }}">Customers</a>
+        <a href="{{ url_for('main.customers') }}">Ügyfelek</a>
     </li>
-    <li class="breadcrumb-item active">{% if action == 'edit' %}Edit Customer{% else %}New Customer{% endif %}</li>
+    <li class="breadcrumb-item active">{% if action == 'edit' %}Ügyfél szerkesztése{% else %}Új ügyfél{% endif %}</li>
 {% endblock %}
 
 {% block content %}
@@ -18,14 +18,14 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-{% if action == 'edit' %}pencil{% else %}user-plus{% endif %} text-primary"></i>
-            {% if action == 'edit' %}Edit Customer{% else %}New Customer{% endif %}
+            {% if action == 'edit' %}Ügyfél szerkesztése{% else %}Új ügyfél{% endif %}
         </h1>
         <p class="text-muted mb-0">
-            {% if action == 'edit' %}Update customer information{% else %}Add a new customer to your shop{% endif %}
+            {% if action == 'edit' %}Ügyfél adatainak frissítése{% else %}Új ügyfél hozzáadása a műhelyhez{% endif %}
         </p>
     </div>
     <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
-        <i class="ti ti-arrow-left me-2"></i>Back to Customers
+        <i class="ti ti-arrow-left me-2"></i>Back to Ügyfelek
     </a>
 </div>
 
@@ -36,7 +36,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-user me-1"></i>
-                    Customer Information
+                    Ügyfél adatai
                 </h3>
             </div>
             <div class="card-body">
@@ -44,36 +44,36 @@
                       action="{% if action == 'edit' %}{{ url_for('main.update_customer', customer_id=customer.customer_id) }}{% else %}{{ url_for('main.create_customer') }}{% endif %}">
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">First Name</label>
+                            <label class="form-label fw-medium">Keresztnév</label>
                             <input type="text" class="form-control" name="first_name"
-                                   placeholder="Enter first name"
+                                   placeholder="Keresztnév"
                                    value="{{ customer.first_name if customer else '' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Family Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-medium">Vezetéknév <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="family_name" required
-                                   placeholder="Enter family name"
+                                   placeholder="Vezetéknév"
                                    value="{{ customer.family_name if customer else '' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Email <span class="text-danger">*</span></label>
+                            <label class="form-label fw-medium">E-mail <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" name="email" required
-                                   placeholder="Enter email address"
+                                   placeholder="E-mail cím"
                                    value="{{ customer.email if customer else '' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Phone <span class="text-danger">*</span></label>
+                            <label class="form-label fw-medium">Telefon <span class="text-danger">*</span></label>
                             <input type="tel" class="form-control" name="phone" required
-                                   placeholder="Enter phone number"
+                                   placeholder="Telefonszám"
                                    value="{{ customer.phone if customer else '' }}">
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">Mégse</a>
                         <button type="submit" class="btn btn-accent">
                             <i class="ti ti-{% if action == 'edit' %}device-floppy{% else %}plus{% endif %} me-2"></i>
-                            {% if action == 'edit' %}Save Changes{% else %}Add Customer{% endif %}
+                            {% if action == 'edit' %}Mentés{% else %}Ügyfél hozzáadása{% endif %}
                         </button>
                     </div>
                 </form>

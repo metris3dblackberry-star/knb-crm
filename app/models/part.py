@@ -23,7 +23,7 @@ class Part(db.Model, BaseModelMixin, TenantScopedMixin):
         Integer, ForeignKey('tenant.tenant_id'), nullable=True, index=True
     )
     part_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    cost: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False)
+    cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     sku: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)

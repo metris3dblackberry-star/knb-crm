@@ -1,6 +1,6 @@
 {% extends "base/layout.html" %}
 
-{% block title %}Pending Invitations - RepairOS{% endblock %}
+{% block title %}Függő meghívók{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -13,8 +13,8 @@
                     <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
                         <i class="ti ti-mail-forward text-primary" style="font-size: 2rem;"></i>
                     </div>
-                    <h2 class="fw-bold mb-2">Pending Invitations</h2>
-                    <p class="text-muted">You have been invited to join the following organizations.</p>
+                    <h2 class="fw-bold mb-2">Függő meghívók</h2>
+                    <p class="text-muted">Meghívták az alábbi szervezetekhez.</p>
                 </div>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -43,7 +43,7 @@
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
                                             <span class="badge bg-primary bg-opacity-10 text-primary">{{ invite.role|title }}</span>
                                             {% if invite.invited_by %}
-                                            <small class="text-muted">Invited by {{ invite.invited_by }}</small>
+                                            <small class="text-muted">Meghívó: {{ invite.invited_by }}</small>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -52,12 +52,12 @@
                             <div class="d-flex gap-2 mt-3">
                                 <form method="POST" action="{{ url_for('auth.accept_invitation', membership_id=invite.membership_id) }}" class="d-inline">
                                     <button type="submit" class="btn btn-accent btn-sm">
-                                        <i class="ti ti-check me-1"></i>Accept
+                                        <i class="ti ti-check me-1"></i>Elfogadás
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ url_for('auth.decline_invitation', membership_id=invite.membership_id) }}" class="d-inline">
                                     <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                        <i class="ti ti-x me-1"></i>Decline
+                                        <i class="ti ti-x me-1"></i>Elutasítás
                                     </button>
                                 </form>
                             </div>
@@ -68,27 +68,27 @@
                 {% else %}
                 <div class="text-center py-4 mb-4">
                     <i class="ti ti-inbox text-muted mb-2" style="font-size: 48px;"></i>
-                    <p class="text-muted mb-0">No pending invitations.</p>
+                    <p class="text-muted mb-0">Nincs függő meghívó.</p>
                 </div>
                 {% endif %}
 
                 <div class="d-flex flex-column gap-2">
                     {% if has_active_tenants %}
                     <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary w-100">
-                        <i class="ti ti-layout-dashboard me-2"></i>Go to Dashboard
+                        <i class="ti ti-layout-dashboard me-2"></i>Ugrás a műszerfalra
                     </a>
                     {% endif %}
 
                     {% if not invitations and not has_active_tenants %}
                     <a href="{{ url_for('auth.register_organization') }}" class="btn btn-accent w-100">
-                        <i class="ti ti-building-plus me-2"></i>Create Organization
+                        <i class="ti ti-building-plus me-2"></i>Szervezet létrehozása
                     </a>
                     {% endif %}
                 </div>
 
                 <div class="text-center mt-3">
                     <a href="{{ url_for('main.logout') }}" class="text-muted text-decoration-none text-sm">
-                        <i class="ti ti-logout me-1"></i>Sign out
+                        <i class="ti ti-logout me-1"></i>Kijelentkezés
                     </a>
                 </div>
             </div>

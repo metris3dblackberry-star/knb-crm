@@ -376,9 +376,7 @@ def dashboard():
         recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=10)
 
         today_jobs = [job for job in recent_jobs
-                     if job.get('job_date') == today or
-                        (isinstance(job.get('job_date'), str) and
-                         job.get('job_date').startswith(str(today)))]
+                     if getattr(job, 'job_date', None) == today]
 
         return render_template('technician/dashboard.html',
                              job_stats=job_stats,

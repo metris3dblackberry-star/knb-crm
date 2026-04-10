@@ -1,9 +1,9 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Billing Management - Administrator Portal{% endblock %}
+{% block title %}Számlázás kezelése{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Billing</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+<li class="breadcrumb-item active">Számlázás</li>
 {% endblock %}
 
 {% block admin_content %}
@@ -15,22 +15,22 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-credit-card text-primary"></i>
-                        Billing Management
+                        Számlázás Management
                     </h1>
-                    <p class="text-muted mb-0">View and manage invoices and payments</p>
+                    <p class="text-muted mb-0">Számlák és fizetések megtekintése és kezelése</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Billing Stats Summary -->
+    <!-- Számlázás Stats Summary -->
     <div class="row mb-4">
         <div class="col-sm-6 col-lg-3">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-primary-lt me-2"><i class="ti ti-file-text"></i></span>
-                        <div class="subheader">Total Bills</div>
+                        <div class="subheader">Összes számla</div>
                     </div>
                     <div class="h1 mb-0">{{ billing_stats.total_bills|default(0) }}</div>
                 </div>
@@ -41,9 +41,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-success-lt me-2"><i class="ti ti-circle-check"></i></span>
-                        <div class="subheader">Total Paid</div>
+                        <div class="subheader">Összes fizetve</div>
                     </div>
-                    <div class="h1 mb-0">${{ "%.2f"|format(billing_stats.total_paid|default(0)|float) }}</div>
+                    <div class="h1 mb-0">{{ "%.0f"|format(billing_stats.total_paid|default(0)|float) }}</div>
                 </div>
             </div>
         </div>
@@ -52,9 +52,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-warning-lt me-2"><i class="ti ti-clock"></i></span>
-                        <div class="subheader">Unpaid</div>
+                        <div class="subheader">Kifizetetlen</div>
                     </div>
-                    <div class="h1 mb-0">${{ "%.2f"|format(billing_stats.total_unpaid|default(0)|float) }}</div>
+                    <div class="h1 mb-0">{{ "%.0f"|format(billing_stats.total_unpaid|default(0)|float) }}</div>
                 </div>
             </div>
         </div>
@@ -63,15 +63,15 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-danger-lt me-2"><i class="ti ti-alert-triangle"></i></span>
-                        <div class="subheader">Overdue</div>
+                        <div class="subheader">Lejárt</div>
                     </div>
-                    <div class="h1 mb-0">${{ "%.2f"|format(billing_stats.total_overdue|default(0)|float) }}</div>
+                    <div class="h1 mb-0">{{ "%.0f"|format(billing_stats.total_overdue|default(0)|float) }}</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter Tabs & Customer Filter -->
+    <!-- Filter Tabs & Ügyfél Filter -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -82,29 +82,29 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if not filter_type or filter_type == 'all' %}active{% endif %}"
                                    href="{{ url_for('administrator.pay_bills') }}">
-                                    All
+                                    Összes
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if filter_type == 'unpaid' %}active{% endif %}"
                                    href="{{ url_for('administrator.pay_bills', filter='unpaid') }}">
                                     <i class="ti ti-clock me-1"></i>
-                                    Unpaid
+                                    Kifizetetlen
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if filter_type == 'overdue' %}active{% endif %}"
                                    href="{{ url_for('administrator.overdue_bills') }}">
                                     <i class="ti ti-alert-triangle me-1"></i>
-                                    Overdue
+                                    Lejárt
                                 </a>
                             </li>
                         </ul>
 
-                        <!-- Customer Dropdown Filter -->
+                        <!-- Ügyfél Dropdown Filter -->
                         <form method="get" class="d-flex align-items-center gap-2">
                             <select class="form-select form-select-sm" name="customer" onchange="this.form.submit()" style="min-width: 200px;">
-                                <option value="">All Customers</option>
+                                <option value="">Összes ügyfél</option>
                                 {% for name in customer_names|default([]) %}
                                 <option value="{{ name }}" {% if customer_name == name %}selected{% endif %}>{{ name }}</option>
                                 {% endfor %}
@@ -116,14 +116,14 @@
         </div>
     </div>
 
-    <!-- Bills Table -->
+    <!-- Számlák Table -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-file-text"></i>
-                        Bills
+                        Számlák
                     </h5>
                 </div>
                 <div class="card-body">
@@ -131,12 +131,12 @@
                         <table class="table table-vcenter card-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Job ID</th>
-                                    <th>Customer</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Munka ID</th>
+                                    <th>Ügyfél</th>
+                                    <th>Dátum</th>
+                                    <th>Összeg</th>
+                                    <th>Státusz</th>
+                                    <th>Műveletek</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -158,23 +158,23 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="fw-bold">${{ "%.2f"|format(bill.total_cost|default(0)|float) }}</span>
+                                        <span class="fw-bold">{{ "%.0f"|format(bill.total_cost|default(0)|float) }}</span>
                                     </td>
                                     <td>
                                         {% if bill.paid == 1 %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-circle-check me-1"></i>
-                                            Paid
+                                            Fizetve
                                         </span>
                                         {% elif bill.overdue is defined and bill.overdue %}
                                         <span class="badge bg-danger">
                                             <i class="ti ti-alert-triangle me-1"></i>
-                                            Overdue
+                                            Lejárt
                                         </span>
                                         {% else %}
                                         <span class="badge bg-warning">
                                             <i class="ti ti-clock me-1"></i>
-                                            Unpaid
+                                            Kifizetetlen
                                         </span>
                                         {% endif %}
                                     </td>
@@ -184,13 +184,13 @@
                                             <input type="hidden" name="job_id" value="{{ bill.job_id }}">
                                             <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="ti ti-credit-card me-1"></i>
-                                                Pay
+                                                Fizetés
                                             </button>
                                         </form>
                                         {% else %}
                                         <span class="text-muted">
                                             <i class="ti ti-check"></i>
-                                            Settled
+                                            Rendezve
                                         </span>
                                         {% endif %}
                                     </td>
@@ -199,7 +199,7 @@
                                 <tr>
                                     <td colspan="6" class="text-center text-muted py-4">
                                         <i class="ti ti-inbox mb-2 d-block mx-auto" style="font-size: 48px;"></i>
-                                        No bills found
+                                        Nincs számla
                                     </td>
                                 </tr>
                                 {% endfor %}

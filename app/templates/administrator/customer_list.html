@@ -94,7 +94,7 @@ Customer Management - Administrator Portal
                 </div>
                 <div class="card-body p-4">
                     <!-- Search Form -->
-                    <form method="post" action="/administrator_customer_list" class="mb-4">
+                    <form method="post" action="{{ url_for('administrator.customers') }}" class="mb-4">
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label">Search By</label>
@@ -119,7 +119,7 @@ Customer Management - Administrator Portal
 
                     <!-- Customer List -->
                     <div class="table-responsive">
-                        <form method="post" action="/schedule_job">
+                        <form method="post" action="{{ url_for('technician.new_job') }}">
                             <table class="table table-vcenter card-table">
                                 <thead class="table-light">
                                     <tr>
@@ -289,7 +289,7 @@ Customer Management - Administrator Portal
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/add_customer" method="post">
+            <form action="{{ url_for('main.create_customer') }}" method="post">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -333,7 +333,7 @@ Customer Management - Administrator Portal
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/add_service" method="post">
+            <form action="{{ url_for('administrator.services') }}" method="post">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
@@ -395,7 +395,7 @@ Customer Management - Administrator Portal
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/add_part" method="post">
+            <form action="{{ url_for('administrator.parts') }}" method="post">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">

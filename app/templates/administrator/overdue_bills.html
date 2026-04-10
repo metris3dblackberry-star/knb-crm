@@ -1,13 +1,13 @@
 {% extends "base/layout_with_sidebar.html" %}
 {% block title %}
-Billing History & Overdue Bills - Administrator Portal
+Billing History & Lejárt számlák
 {% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
-    <li class="breadcrumb-item active">Overdue Bills</li>
+    <li class="breadcrumb-item active">Lejárt számlák</li>
 {% endblock %}
 
 {% block admin_content %}
@@ -19,16 +19,16 @@ Billing History & Overdue Bills - Administrator Portal
                 <div>
                     <h1 class="h3 mb-0">
                         <i class="ti ti-clock text-primary me-2"></i>
-                        Billing History & Overdue Bills
+                        Billing History & Lejárt számlák
                     </h1>
                     <p class="text-muted mb-0">View billing history and manage overdue payments</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ url_for('administrator.customer_list') }}" class="btn btn-outline-primary">
                         <i class="ti ti-users me-1"></i>
-                        Customer Management
+                        Ügyfél Management
                     </a>
-                    <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-outline-success">
+                    <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-outline-success">
                         <i class="ti ti-credit-card me-1"></i>
                         Process Payments
                     </a>
@@ -47,7 +47,7 @@ Billing History & Overdue Bills - Administrator Portal
                             <i class="ti ti-alert-triangle text-warning" style="font-size: 2.5rem;"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="small text-muted">Overdue Bills</div>
+                            <div class="small text-muted">Lejárt számlák</div>
                             <div class="h4 mb-0">
                                 {{ jobs|selectattr('overdue')|list|length if jobs else 0 }}
                             </div>
@@ -79,7 +79,7 @@ Billing History & Overdue Bills - Administrator Portal
                             <i class="ti ti-circle-check text-success" style="font-size: 2.5rem;"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="small text-muted">Paid Bills</div>
+                            <div class="small text-muted">Fizetve Bills</div>
                             <div class="h4 mb-0">
                                 {{ jobs|selectattr('paid')|list|length if jobs else 0 }}
                             </div>
@@ -111,22 +111,22 @@ Billing History & Overdue Bills - Administrator Portal
         </div>
     </div>
 
-    <!-- Customer Filter -->
+    <!-- Ügyfél Filter -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-filter me-2"></i>
-                        Filter Bills by Customer
+                        Filter Bills by Ügyfél
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="/administrator_overdue_bills" class="row g-3">
+                    <form method="POST" action="/administrator_overdue_számla" class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label">Select Customer</label>
+                            <label class="form-label">Select Ügyfél</label>
                             <select class="form-select" name="customer_choose_overduebill">
-                                <option value="">Show all bills...</option>
+                                <option value="">Show all számla...</option>
                                     {% for customer in customers %}
                                     <option value="{{ customer.customer_id }} {{ customer.first_name }} {{ customer.family_name }}"
                                             {% if selected_customer and customer.customer_id == selected_customer.customer_id %}selected{% endif %}>
@@ -147,7 +147,7 @@ Billing History & Overdue Bills - Administrator Portal
         </div>
     </div>
 
-    <!-- Selected Customer Details -->
+    <!-- Selected Ügyfél Details -->
     {% if selected_customer %}
     <div class="row mb-4">
         <div class="col-12">
@@ -155,21 +155,21 @@ Billing History & Overdue Bills - Administrator Portal
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-user-circle me-2"></i>
-                        Customer Details
+                        Ügyfél Details
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="info-item">
-                                <label class="info-label">Customer Name</label>
+                                <label class="info-label">Ügyfél Name</label>
                                 <div class="info-value">
                                     <i class="ti ti-user me-2 text-primary"></i>
                                     {{ selected_customer.first_name }} {{ selected_customer.family_name }}
                                 </div>
                             </div>
                             <div class="info-item">
-                                <label class="info-label">Customer ID</label>
+                                <label class="info-label">Ügyfél ID</label>
                                 <div class="info-value">
                                     <i class="ti ti-hash me-2 text-secondary"></i>
                                     {{ selected_customer.customer_id }}
@@ -219,13 +219,13 @@ Billing History & Overdue Bills - Administrator Portal
                             <table class="table table-vcenter card-table">
                                 <thead class="table-light">
                                 <tr>
-                                    <th>Job ID</th>
-                                        <th>Customer</th>
-                                    <th>Job Date</th>
-                                        <th>Amount</th>
+                                    <th>Munka ID</th>
+                                        <th>Ügyfél</th>
+                                    <th>Job Dátum</th>
+                                        <th>Összeg</th>
                                         <th>Job Status</th>
                                     <th>Payment Status</th>
-                                        <th>Actions</th>
+                                        <th>Műveletek</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -269,7 +269,7 @@ Billing History & Overdue Bills - Administrator Portal
                                                     {% if job.paid %}
                                                         <span class="badge bg-success">
                                                             <i class="ti ti-credit-card me-1"></i>
-                                                            Paid
+                                                            Fizetve
                                                         </span>
                                                     {% else %}
                                                         {% if job.overdue %}
@@ -291,7 +291,7 @@ Billing History & Overdue Bills - Administrator Portal
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}
-                                                            <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-sm btn-outline-success">
+                                                            <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-sm btn-outline-success">
                                                                 <i class="ti ti-credit-card"></i>
                                                             </a>
                                                         {% endif %}
@@ -338,7 +338,7 @@ Billing History & Overdue Bills - Administrator Portal
                                                     {% if job.paid %}
                                                         <span class="badge bg-success">
                                                             <i class="ti ti-credit-card me-1"></i>
-                                                            Paid
+                                                            Fizetve
                                                         </span>
                                                     {% else %}
                                                         {% if job.overdue %}
@@ -360,7 +360,7 @@ Billing History & Overdue Bills - Administrator Portal
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}
-                                                            <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-sm btn-outline-success">
+                                                            <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-sm btn-outline-success">
                                                                 <i class="ti ti-credit-card"></i>
                                                             </a>
                                                         {% endif %}
@@ -379,11 +379,11 @@ Billing History & Overdue Bills - Administrator Portal
                             <div class="d-flex flex-wrap gap-3">
                                 <div class="d-flex align-items-center">
                                     <div class="table-warning" style="width: 20px; height: 20px; border-radius: 3px; margin-right: 8px;"></div>
-                                    <small>Overdue Bills</small>
+                                    <small>Lejárt számlák</small>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="table-light" style="width: 20px; height: 20px; border-radius: 3px; margin-right: 8px; border: 1px solid #dee2e6;"></div>
-                                    <small>Paid Bills</small>
+                                    <small>Fizetve Bills</small>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="bg-white" style="width: 20px; height: 20px; border-radius: 3px; margin-right: 8px; border: 1px solid #dee2e6;"></div>
@@ -400,9 +400,9 @@ Billing History & Overdue Bills - Administrator Portal
                             <div class="empty-title">No Bills Found</div>
                             <div class="empty-subtitle text-secondary">
                                 {% if selected_customer %}
-                                    This customer has no bills on record.
+                                    This customer has no számla on record.
                                 {% else %}
-                                    There are no bills in the system yet.
+                                    There are no számla in the system yet.
                                 {% endif %}
                             </div>
                             <a href="{{ url_for('administrator.customer_list') }}" class="btn btn-primary">

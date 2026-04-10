@@ -125,8 +125,19 @@ def customer_list(page=1, per_page=20):
         customers_page = customers[start:end]
         total_pages = (total + per_page - 1) // per_page
 
+        from app.models.service import Service
+        from app.models.part import Part
+        from datetime import date as date_today
+        all_jobs = job_service.get_all_jobs_with_customer_info()
+        all_services = Service.get_all_sorted()
+        all_parts = Part.get_all_sorted()
+
         return render_template('administrator/customer_list.html',
                              customers=customers_page,
+                             jobs=[j.to_dict() for j in all_jobs],
+                             services=all_services,
+                             parts=all_parts,
+                             today=date_today.today().isoformat(),
                              page=page,
                              per_page=per_page,
                              total=total,
@@ -135,10 +146,14 @@ def customer_list(page=1, per_page=20):
                              search_query=search_query)
 
     except Exception as e:
-        logger.error(f"Customer management page loading failed: {e}")
+        logger.error(f"Customer management page loading failed: {e}", exc_info=True)
         flash('Failed to load customer list', 'error')
         return render_template('administrator/customer_list.html',
                              customers=[],
+                             jobs=[],
+                             services=[],
+                             parts=[],
+                             today='',
                              page=1,
                              per_page=per_page,
                              total=0,

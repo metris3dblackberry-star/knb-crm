@@ -371,32 +371,23 @@ def internal_error(error):
 
 
 
-@main_bp.route('/fix-cost-columns-xk9p2')
-def fix_cost_columns():
-    """Fix numeric columns - DELETE AFTER USE"""
-    try:
-        from app.extensions import db
-        db.session.execute(db.text('ALTER TABLE service ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
-        db.session.execute(db.text('ALTER TABLE part ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
-        db.session.commit()
-        return 'Fix OK - cost columns updated to NUMERIC(10,2)!'
-    except Exception as e:
-        db.session.rollback()
-        return f'Error: {str(e)}'
-
-
 @main_bp.route('/seed-services-xk9p2')
 def seed_services():
-    """One-time seed route - DELETE AFTER USE"""
     try:
         from app.extensions import db
         from app.models.service import Service
         from app.models.part import Part
         from flask import session
+        import sqlalchemy as sa
 
-        tenant_id = session.get('current_tenant_id') or 1
+        tenant_id = session.get('current_tenant_id')
+        if not tenant_id:
+            result = db.session.execute(sa.text('SELECT tenant_id FROM tenant LIMIT 1')).fetchone()
+            if not result:
+                return 'Error: no tenant found in DB!'
+            tenant_id = result[0]
 
-        services = [
+        for s in [
             Service(service_name="Olajcsere", cost=8000, tenant_id=tenant_id),
             Service(service_name="Fekbetet csere", cost=15000, tenant_id=tenant_id),
             Service(service_name="Gumiszereles", cost=2500, tenant_id=tenant_id),
@@ -407,8 +398,9 @@ def seed_services():
             Service(service_name="Gyujtogyertya csere", cost=8500, tenant_id=tenant_id),
             Service(service_name="Akkumulator csere", cost=5000, tenant_id=tenant_id),
             Service(service_name="Futomuu beallitas", cost=10000, tenant_id=tenant_id),
-        ]
-        parts = [
+        ]: db.session.add(s)
+
+        for p in [
             Part(part_name="Motorolaj 5W-30 5L", cost=4500, tenant_id=tenant_id),
             Part(part_name="Olajszuro", cost=1200, tenant_id=tenant_id),
             Part(part_name="Levegoszuro", cost=2800, tenant_id=tenant_id),
@@ -419,13 +411,10 @@ def seed_services():
             Part(part_name="Vezerlosziij keszlet", cost=18000, tenant_id=tenant_id),
             Part(part_name="Hutofol 1L", cost=1500, tenant_id=tenant_id),
             Part(part_name="Fekfolyadek DOT4 500ml", cost=1800, tenant_id=tenant_id),
-        ]
-        for s in services:
-            db.session.add(s)
-        for p in parts:
-            db.session.add(p)
+        ]: db.session.add(p)
+
         db.session.commit()
-        return f'Seed OK - {len(services)} szolgaltatas es {len(parts)} alkatresz!'
+        return f'Seed OK! tenant_id={tenant_id}'
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'

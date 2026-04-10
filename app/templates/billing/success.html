@@ -1,9 +1,9 @@
 {% extends "base/layout.html" %}
-{% block title %}Payment Successful - RepairOS{% endblock %}
+{% block title %}Sikeres fizetés{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Payment Confirmation</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+<li class="breadcrumb-item active">Fizetés megerősítése</li>
 {% endblock %}
 
 {% block content %}
@@ -15,19 +15,19 @@
                     <div class="rounded-circle bg-success bg-opacity-10 mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
                         <i class="ti ti-circle-check text-success" style="font-size: 48px;"></i>
                     </div>
-                    <h2 class="fw-bold mb-3">Payment Successful</h2>
+                    <h2 class="fw-bold mb-3">Sikeres fizetés</h2>
                     <p class="text-muted mb-4">
-                        Your payment has been processed successfully. A confirmation email will be sent to your registered address.
+                        A fizetés sikeresen feldolgozva. Visszaigazoló e-mailt küldtünk a regisztrált e-mail címére.
                     </p>
                     <hr class="my-4">
                     <div class="d-flex justify-content-center gap-3">
                         <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
                             <i class="ti ti-layout-dashboard me-1"></i>
-                            Return to Dashboard
+                            Return to Műszerfal
                         </a>
                         <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-outline-secondary">
                             <i class="ti ti-credit-card me-1"></i>
-                            View Billing
+                            Számlázás megtekintése
                         </a>
                     </div>
                 </div>

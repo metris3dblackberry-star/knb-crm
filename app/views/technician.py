@@ -29,7 +29,7 @@ def require_technician_login():
     return None
 
 
-@technician_bp.route('/current-jobs')
+@technician_bp.route('/current-jobs', methods=['GET', 'POST'])
 @validate_pagination
 @handle_database_errors
 @log_function_call

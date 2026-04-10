@@ -217,13 +217,11 @@ def new_customer():
 def create_customer():
     """Create new customer"""
     # Get form data
-    tenant_id = session.get('tenant_id') or session.get('current_tenant_id') or 1
     customer_data = {
         'first_name': sanitize_input(request.form.get('first_name', '')),
         'family_name': sanitize_input(request.form.get('family_name', '')),
         'email': sanitize_input(request.form.get('email', '')),
-        'phone': sanitize_input(request.form.get('phone', '')),
-        'tenant_id': tenant_id
+        'phone': sanitize_input(request.form.get('phone', ''))
     }
     
     try:
@@ -240,19 +238,18 @@ def create_customer():
         success, errors, customer = customer_service.create_customer(customer_data)
         
         if success:
-            flash(f'Ügyfél sikeresen létrehozva: {customer.full_name}!', 'success')
+            flash(f'Customer {customer.full_name} created successfully!', 'success')
             return redirect(url_for('main.customers'))
         else:
             for error in errors:
                 flash(error, 'error')
-            logger.error(f"create_customer service errors: {errors}")
             return render_template('customers/form.html',
                                  customer=customer_data,
                                  action='create')
             
     except Exception as e:
-        logger.error(f"Failed to create customer: {e}", exc_info=True)
-        flash(f'Hiba az ügyfél létrehozásakor: {str(e)}', 'error')
+        logger.error(f"Failed to create customer: {e}")
+        flash('Failed to create customer, please try again later', 'error')
         return render_template('customers/form.html',
                              customer=customer_data,
                              action='create')
@@ -371,3 +368,14 @@ def not_found_error(error):
 def internal_error(error):
     """500 error handler"""
     return render_template('errors/500.html'), 500 
+
+@main_bp.route('/run-migration-xk9p2')
+def run_migration():
+    """One-time migration route - DELETE AFTER USE"""
+    try:
+        from app.extensions import db
+        db.session.execute(db.text('ALTER TABLE customer ALTER COLUMN phone TYPE VARCHAR(30)'))
+        db.session.commit()
+        return 'Migration OK - phone column updated!'
+    except Exception as e:
+        return f'Error: {str(e)}'

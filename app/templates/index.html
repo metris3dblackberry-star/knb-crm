@@ -297,33 +297,33 @@
                         {% for job in recent_jobs[:5] %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('technician.job_detail', job_id=job.get('job_id', 0)) }}" class="text-decoration-none fw-semibold">
-                                    #{{ job.get('job_id', 'N/A') }}
+                                <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="text-decoration-none fw-semibold">
+                                    #{{ job.job_id }}
                                 </a>
                             </td>
                             <td>
-                                <div class="fw-medium">{{ job.get('first_name', '') }} {{ job.get('family_name', '') }}</div>
-                                <small class="text-secondary">#{{ job.get('customer_id', '') }}</small>
+                                <div class="fw-medium">{{ job.customer_rel.first_name if job.customer_rel else "" }} {{ job.customer_rel.family_name if job.customer_rel else "" }}</div>
+                                <small class="text-secondary">#{{ job.customer }}</small>
                             </td>
-                            <td><span class="text-secondary">{{ job.get('job_date', 'N/A') }}</span></td>
+                            <td><span class="text-secondary">{{ job.job_date }}</span></td>
                             <td>
-                                {% if job.get('completed') %}
+                                {% if job.completed %}
                                 <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Completed</span>
                                 {% else %}
                                 <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>In Progress</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="fw-semibold">${{ "%.2f"|format(job.get('total_cost', 0)) }}</span>
-                                {% if not job.get('paid') %}
+                                <span class="fw-semibold">${{ "%.2f"|format(job.total_cost|float if job.total_cost else 0) }}</span>
+                                {% if not job.paid %}
                                 <br><small class="text-warning">Unpaid</small>
                                 {% endif %}
                             </td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ url_for('technician.job_detail', job_id=job.get('job_id', 0)) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="ti ti-eye"></i></a>
-                                    {% if not job.get('completed') %}
-                                    <a href="{{ url_for('technician.modify_job', job_id=job.get('job_id', 0)) }}" class="btn btn-sm btn-outline-success" title="Edit"><i class="ti ti-pencil"></i></a>
+                                    <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="ti ti-eye"></i></a>
+                                    {% if not job.completed %}
+                                    <a href="{{ url_for('technician.modify_job', job_id=job.job_id) }}" class="btn btn-sm btn-outline-success" title="Edit"><i class="ti ti-pencil"></i></a>
                                     {% endif %}
                                 </div>
                             </td>

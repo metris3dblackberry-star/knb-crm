@@ -392,6 +392,11 @@ def seed_services():
 
         tenant_id = session.get('current_tenant_id') or 1
 
+        # Fix cost column size first
+        db.session.execute(db.text('ALTER TABLE service ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
+        db.session.execute(db.text('ALTER TABLE part ALTER COLUMN cost TYPE NUMERIC(10, 2)'))
+        db.session.commit()
+
         services = [
             Service(service_name="Olajcsere", cost=8000, tenant_id=tenant_id),
             Service(service_name="Fekbetet csere", cost=15000, tenant_id=tenant_id),

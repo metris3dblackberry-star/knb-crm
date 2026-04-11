@@ -63,7 +63,7 @@
                                         <span class="badge bg-secondary">{{ service.category|default('Általános') }}</span>
                                     </td>
                                     <td>
-                                        <span class="fw-bold text-success">{{ "%.2f"|format(service.cost|default(0)|float) }}</span>
+                                        <span class="fw-bold text-success">{{ "%.0f"|format(service.cost|default(0)|float) }} Ft</span>
                                     </td>
                                     <td>{{ service.duration|default('N/A') }}</td>
                                     <td>
@@ -126,7 +126,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Service Név *</label>
+                            <label class="form-label">Szolgáltatás neve *</label>
                             <input type="text" class="form-control" name="service_name" required placeholder="pl. Olajcsere">
                         </div>
                         <div class="col-md-6">
@@ -147,7 +147,7 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Estimated Időtartam</label>
+                            <label class="form-label">Becsült időtartam</label>
                             <input type="text" class="form-control" name="duration" placeholder="pl. 1 óra">
                         </div>
                     </div>

@@ -28,7 +28,7 @@ Billing History & Lejárt számlák
                         <i class="ti ti-users me-1"></i>
                         Ügyfél Management
                     </a>
-                    <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-outline-success">
+                    <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-outline-success">
                         <i class="ti ti-credit-card me-1"></i>
                         Process Payments
                     </a>
@@ -291,7 +291,7 @@ Billing History & Lejárt számlák
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}
-                                                            <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-sm btn-outline-success">
+                                                            <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-sm btn-outline-success">
                                                                 <i class="ti ti-credit-card"></i>
                                                             </a>
                                                         {% endif %}
@@ -360,7 +360,7 @@ Billing History & Lejárt számlák
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}
-                                                            <a href="{{ url_for('administrator.pay_számla') }}" class="btn btn-sm btn-outline-success">
+                                                            <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-sm btn-outline-success">
                                                                 <i class="ti ti-credit-card"></i>
                                                             </a>
                                                         {% endif %}

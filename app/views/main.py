@@ -149,7 +149,8 @@ def create_customer():
         'family_name': sanitize_input(request.form.get('family_name', '')),
         'email': sanitize_input(request.form.get('email', '')),
         'phone': sanitize_input(request.form.get('phone', '')),
-        'tenant_id': tenant_id
+        'tenant_id': tenant_id,
+        'tax_number': sanitize_input(request.form.get('tax_number', ''))
     }
     try:
         validation_result = validate_customer_data(customer_data)
@@ -210,7 +211,8 @@ def update_customer(customer_id):
         'first_name': sanitize_input(request.form.get('first_name', '')),
         'family_name': sanitize_input(request.form.get('family_name', '')),
         'email': sanitize_input(request.form.get('email', '')),
-        'phone': sanitize_input(request.form.get('phone', ''))
+        'phone': sanitize_input(request.form.get('phone', '')),
+        'tax_number': sanitize_input(request.form.get('tax_number', ''))
     }
     try:
         validation_result = validate_customer_data(customer_data)
@@ -315,6 +317,19 @@ def fix_tenant_name():
         db.session.commit()
         result = db.session.execute(sa.text("SELECT name FROM tenant WHERE tenant_id=1")).fetchone()
         return f'OK! Tenant name: {result[0]}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'
+
+
+@main_bp.route('/migrate-tax-number-xk9p2')
+def migrate_tax_number():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        db.session.execute(sa.text("ALTER TABLE customer ADD COLUMN IF NOT EXISTS tax_number VARCHAR(20)"))
+        db.session.commit()
+        return 'OK! tax_number oszlop hozzáadva'
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'

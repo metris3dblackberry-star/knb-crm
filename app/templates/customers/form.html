@@ -25,7 +25,7 @@
         </p>
     </div>
     <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
-        <i class="ti ti-arrow-left me-2"></i>Back to Ügyfelek
+        <i class="ti ti-arrow-left me-2"></i>Vissza az ügyfelekhez
     </a>
 </div>
 
@@ -66,6 +66,12 @@
                             <input type="tel" class="form-control" name="phone" required
                                    placeholder="Telefonszám"
                                    value="{{ customer.phone if customer else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Adószám</label>
+                            <input type="text" class="form-control" name="tax_number"
+                                   placeholder="pl. 12345678-1-42"
+                                   value="{{ customer.tax_number if customer else '' }}">
                         </div>
                     </div>
 

@@ -528,7 +528,7 @@ def org_settings():
             db.session.rollback()
             flash('Failed to update settings', 'error')
 
-    return render_template('administrator/org_settings.html', tenant=tenant)
+    return render_template('administrator/org_settings.html', tenant=tenant, org=tenant)
 
 
 # =============================================================================

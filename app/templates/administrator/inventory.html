@@ -139,7 +139,7 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <i class="ti ti-puzzle text-{% if needs_reorder %}warning{% else %}primary{% endif %} me-2"></i>
-                                            <strong>{{ item.part_name|default(item.name) }}</strong>
+                                            <strong>{{ item.part.part_name if item.part else "N/A" }}</strong>
                                         </div>
                                     </td>
                                     <td>
@@ -231,7 +231,7 @@
                                         <span class="badge bg-secondary">{{ txn.transaction_type|title }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ txn.inventory_item.part.part_name if txn.inventory_item and txn.inventory_item.part else "N/A" }}</td>
+                                    <td>{{ txn.inventory.part.part_name if txn.inventory and txn.inventory.part else "N/A" }}</td>
                                     <td>
                                         <span class="fw-bold {% if txn.transaction_type == 'in' or txn.transaction_type == 'received' %}text-success{% else %}text-danger{% endif %}">
                                             {% if txn.transaction_type == 'in' or txn.transaction_type == 'received' %}+{% else %}-{% endif %}{{ txn.quantity|default(0)|abs }}

@@ -126,7 +126,7 @@ Számlatörténet és Lejárt számlák
                         <div class="col-md-8">
                             <label class="form-label">Select Ügyfél</label>
                             <select class="form-select" name="customer_choose_overduebill">
-                                <option value="">Show all számla...</option>
+                                <option value="">Összes számla mutatása...</option>
                                     {% for customer in customers %}
                                     <option value="{{ customer.customer_id }} {{ customer.first_name }} {{ customer.family_name }}"
                                             {% if selected_customer and customer.customer_id == selected_customer.customer_id %}selected{% endif %}>

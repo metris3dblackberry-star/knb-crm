@@ -691,6 +691,7 @@ def service_catalog():
 
     # GET - load services
     try:
+        from flask import g
         g.current_tenant_id = tenant_id
         services = Service.get_all_sorted()
         return render_template('administrator/service_catalog.html', services=services)
@@ -764,6 +765,7 @@ def parts_catalog():
 
     # GET - load parts
     try:
+        from flask import g
         g.current_tenant_id = tenant_id
         parts = Part.get_all_sorted()
         return render_template('administrator/parts_catalog.html', parts=parts)

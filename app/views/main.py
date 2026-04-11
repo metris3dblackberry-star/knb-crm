@@ -304,3 +304,17 @@ def debug_customers():
     from app.extensions import db
     customers = db.session.execute(sa.text('SELECT customer_id, tenant_id, first_name, family_name FROM customer')).fetchall()
     return f'Customers: {list(customers)}'
+
+
+@main_bp.route('/fix-tenant-name-xk9p2')
+def fix_tenant_name():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        db.session.execute(sa.text("UPDATE tenant SET name='K&B Autojavito' WHERE tenant_id=1"))
+        db.session.commit()
+        result = db.session.execute(sa.text("SELECT name FROM tenant WHERE tenant_id=1")).fetchone()
+        return f'OK! Tenant name: {result[0]}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

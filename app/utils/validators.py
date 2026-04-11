@@ -37,11 +37,11 @@ def validate_phone(phone: str) -> bool:
     if not phone or not isinstance(phone, str):
         return False
 
-    # Remove formatting characters including + prefix
-    clean_phone = re.sub(r'[\s\-\(\)\+\.]', '', phone)
+    # Remove spaces and hyphens
+    clean_phone = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
 
-    # Accept 7-15 digits (international range)
-    pattern = r'^\d{7,15}$'
+    # Check if it's 10-11 digits
+    pattern = r'^\d{10,11}$'
     return bool(re.match(pattern, clean_phone))
 
 
@@ -157,8 +157,8 @@ def validate_name(name: str) -> bool:
     if not name or not isinstance(name, str):
         return False
 
-    # Names should only contain letters (including Hungarian accented), spaces, hyphens, and apostrophes
-    pattern = r"^[a-zA-ZáéíóöőüűÁÉÍÓÖŐÜŰ\s\-'\.]{1,50}$"
+    # Names should only contain letters, spaces, hyphens, and apostrophes
+    pattern = r"^[a-zA-Z\s\-']{1,50}$"
     return bool(re.match(pattern, name.strip()))
 
 
@@ -176,7 +176,7 @@ def validate_service_part_name(name: str) -> bool:
         return False
 
     # Service/part names can contain letters, numbers, spaces, hyphens, and parentheses
-    pattern = r"^[a-zA-Z0-9\s\-()]{1,100}$"
+    pattern = r"^[a-zA-ZáéíóöőüűÁÉÍÓÖŐÜŰ0-9\s\-(),./]{1,100}$"
     return bool(re.match(pattern, name.strip()))
 
 
@@ -255,29 +255,42 @@ class ValidationResult:
 
 
 def validate_customer_data(data: dict) -> ValidationResult:
+    """
+    Validate customer data.
+
+    Args:
+        data: Customer data dictionary
+
+    Returns:
+        Validation result
+    """
     result = ValidationResult()
 
+    # Validate family name
     family_name = data.get('family_name', '')
     if not family_name or not family_name.strip():
-        result.add_error('family_name', 'A vezetéknév megadása kötelező')
+        result.add_error('family_name', 'Family name is required')
     elif not validate_name(family_name):
-        result.add_error('family_name', 'Érvénytelen vezetéknév formátum')
+        result.add_error('family_name', 'Invalid family name format')
 
+    # Validate first name (optional)
     first_name = data.get('first_name', '')
     if first_name and not validate_name(first_name):
-        result.add_error('first_name', 'Érvénytelen keresztnév formátum')
+        result.add_error('first_name', 'Invalid first name format')
 
+    # Validate email
     email = data.get('email', '')
     if not email or not email.strip():
-        result.add_error('email', 'Az e-mail cím megadása kötelező')
+        result.add_error('email', 'Email is required')
     elif not validate_email(email):
-        result.add_error('email', 'Érvénytelen e-mail formátum')
+        result.add_error('email', 'Invalid email format')
 
+    # Validate phone number
     phone = data.get('phone', '')
     if not phone or not phone.strip():
-        result.add_error('phone', 'A telefonszám megadása kötelező')
+        result.add_error('phone', 'Phone number is required')
     elif not validate_phone(phone):
-        result.add_error('phone', 'Érvénytelen telefonszám formátum (pl. +36301234567)')
+        result.add_error('phone', 'Invalid phone number format')
 
     return result
 

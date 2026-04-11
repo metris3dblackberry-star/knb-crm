@@ -80,11 +80,16 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
     def get_current_jobs(cls, page: int = 1, per_page: int = 10) -> Tuple[List['Job'], int]:
         """Get current incomplete jobs with pagination, scoped to tenant"""
         from app.models.customer import Customer
+        from flask import session, g
 
-        base_filter = [cls.completed == False]
-        tenant_id = cls._get_current_tenant_id()
-        if tenant_id:
-            base_filter.append(cls.tenant_id == tenant_id)
+        tenant_id = (
+            cls._get_current_tenant_id()
+            or getattr(g, 'current_tenant_id', None)
+            or session.get('current_tenant_id')
+            or 1
+        )
+
+        base_filter = [cls.completed == False, cls.tenant_id == tenant_id]
 
         total = db.session.execute(
             db.select(db.func.count()).select_from(cls).where(and_(*base_filter))

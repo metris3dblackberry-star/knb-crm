@@ -38,7 +38,7 @@
             <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
                 <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt='SolvioRepair' style="height: 30px; width: auto; margin-right: 8px;">
-                <span>RepairOS{% if current_tenant %} &middot; {{ current_tenant.name }}{% endif %}</span>
+                <span>RepairOS{% if current_tenant %} &middot; {{ current_tenant.name | e }}{% endif %}</span>
             </a>
 
             {% if user_tenants and user_tenants|length > 1 %}
@@ -46,7 +46,7 @@
             <div class="dropdown me-3">
                 <button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="ti ti-building me-1"></i>
-                    <span class="d-none d-md-inline">{{ current_tenant.name if current_tenant else 'Select Org' }}</span>
+                    <span class="d-none d-md-inline">{{ current_tenant.name | safe if current_tenant else 'Select Org' }}</span>
                 </button>
                 <ul class="dropdown-menu">
                     <li><h6 class="dropdown-header">Organizations</h6></li>

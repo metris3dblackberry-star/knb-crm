@@ -30,7 +30,7 @@ Számlatörténet és Lejárt számlák
                     </a>
                     <a href="{{ url_for('administrator.pay_bills') }}" class="btn btn-outline-success">
                         <i class="ti ti-credit-card me-1"></i>
-                        Process Payments
+                        Kifizetések kezelése
                     </a>
                 </div>
             </div>
@@ -64,7 +64,7 @@ Számlatörténet és Lejárt számlák
                             <i class="ti ti-file-text text-info" style="font-size: 2.5rem;"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="small text-muted">Total Bills</div>
+                            <div class="small text-muted">Számlák száma</div>
                             <div class="h4 mb-0">{{ jobs|length if jobs else 0 }}</div>
                         </div>
                     </div>
@@ -79,7 +79,7 @@ Számlatörténet és Lejárt számlák
                             <i class="ti ti-circle-check text-success" style="font-size: 2.5rem;"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <div class="small text-muted">Fizetve Bills</div>
+                            <div class="small text-muted">Fizetve</div>
                             <div class="h4 mb-0">
                                 {{ jobs|selectattr('paid')|list|length if jobs else 0 }}
                             </div>
@@ -118,7 +118,7 @@ Számlatörténet és Lejárt számlák
                 <div class="card-header bg-light">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-filter me-2"></i>
-                        Filter Bills by Ügyfél
+                        Számlák Rendezése Ügyfél Szerint
                     </h5>
                 </div>
                 <div class="card-body">
@@ -138,7 +138,7 @@ Számlatörténet és Lejárt számlák
                         <div class="col-md-4 d-flex align-items-end">
                             <button class="btn btn-primary w-100" type="submit">
                                 <i class="ti ti-search me-1"></i>
-                                Apply Filter
+                                Szűrő alkalmazása
                             </button>
                         </div>
                     </form>
@@ -209,7 +209,7 @@ Számlatörténet és Lejárt számlák
                         {% if selected_customer %}
                             Bills for {{ selected_customer.first_name }} {{ selected_customer.family_name }}
                         {% else %}
-                            All Bills
+                            Összes számla
                         {% endif %}
                     </h5>
                 </div>
@@ -397,7 +397,7 @@ Számlatörténet és Lejárt számlák
                             <div class="empty-icon">
                                 <i class="ti ti-file-text text-muted" style="font-size: 4rem;"></i>
                             </div>
-                            <div class="empty-title">No Bills Found</div>
+                            <div class="empty-title">Számla nem található</div>
                             <div class="empty-subtitle text-secondary">
                                 {% if selected_customer %}
                                     This customer has no számla on record.
@@ -407,7 +407,7 @@ Számlatörténet és Lejárt számlák
                             </div>
                             <a href="{{ url_for('administrator.customer_list') }}" class="btn btn-primary">
                                 <i class="ti ti-circle-plus me-1"></i>
-                                Schedule New Job
+                                Új előjegyzés
                             </a>
                     </div>
                     {% endif %}

@@ -193,6 +193,31 @@
                 <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá szolgáltatást.</p>
             </div>
             {% endif %}
+
+            {% if not data.completed and all_services %}
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('technician.add_service_to_job', job_id=data.job_id) }}" class="row g-2 align-items-end">
+                    <div class="col">
+                        <label class="form-label mb-1">Szolgáltatás hozzáadása</label>
+                        <select name="service_id" class="form-select" required>
+                            <option value="">-- Válassz szolgáltatást --</option>
+                            {% for s in all_services %}
+                            <option value="{{ s.service_id }}">{{ s.service_name }} — {{ "%.0f"|format(s.cost|float) }} Ft</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto" style="width:90px">
+                        <label class="form-label mb-1">Menny.</label>
+                        <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-accent">
+                            <i class="ti ti-plus me-1"></i>Hozzáad
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Alkatrészek Table -->
@@ -243,6 +268,31 @@
                 <div class="empty-icon"><i class="ti ti-package"></i></div>
                 <p class="empty-title">No Alkatrészek</p>
                 <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá alkatrészt.</p>
+            </div>
+            {% endif %}
+
+            {% if not data.completed and all_parts %}
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('technician.add_part_to_job', job_id=data.job_id) }}" class="row g-2 align-items-end">
+                    <div class="col">
+                        <label class="form-label mb-1">Alkatrész hozzáadása</label>
+                        <select name="part_id" class="form-select" required>
+                            <option value="">-- Válassz alkatrészt --</option>
+                            {% for p in all_parts %}
+                            <option value="{{ p.part_id }}">{{ p.part_name }} — {{ "%.0f"|format(p.cost|float) }} Ft</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto" style="width:90px">
+                        <label class="form-label mb-1">Menny.</label>
+                        <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-plus me-1"></i>Hozzáad
+                        </button>
+                    </div>
+                </form>
             </div>
             {% endif %}
         </div>

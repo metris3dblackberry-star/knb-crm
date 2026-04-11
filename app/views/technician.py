@@ -85,7 +85,9 @@ def job_detail(job_id):
         return render_template('technician/job_detail.html',
                              data=job_details.get('job_info', {}),
                              services=job_details.get('services', []),
-                             parts=job_details.get('parts', []))
+                             parts=job_details.get('parts', []),
+                             all_services=job_details.get('all_services', []),
+                             all_parts=job_details.get('all_parts', []))
 
     except Exception as e:
         logger.error(f"Failed to get work order details (ID: {job_id}): {e}")

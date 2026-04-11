@@ -866,19 +866,42 @@ def inventory_adjust():
         flash('No organization selected', 'error')
         return redirect(url_for('main.dashboard'))
 
+    part_id = request.form.get('part_id', type=int)
     inventory_id = request.form.get('inventory_id', type=int)
     adjustment = request.form.get('quantity', type=int)
     transaction_type = sanitize_input(request.form.get('transaction_type', 'adjustment'))
     notes = sanitize_input(request.form.get('notes', ''))
 
-    if not inventory_id or adjustment is None:
-        flash('Invalid adjustment data', 'error')
+    if adjustment is None:
+        flash('Érvénytelen mennyiség', 'error')
         return redirect(url_for('administrator.inventory'))
 
     try:
-        item = db.session.get(Inventory, inventory_id)
-        if not item or item.tenant_id != tenant_id:
-            flash('Inventory item not found', 'error')
+        # If part_id given, find or create inventory item
+        if part_id and not inventory_id:
+            item = db.session.execute(
+                db.select(Inventory).where(
+                    Inventory.tenant_id == tenant_id,
+                    Inventory.part_id == part_id
+                )
+            ).scalar_one_or_none()
+            if not item:
+                item = Inventory(
+                    tenant_id=tenant_id,
+                    part_id=part_id,
+                    quantity_on_hand=0,
+                    reorder_level=5,
+                )
+                db.session.add(item)
+                db.session.flush()
+            inventory_id = item.id
+        elif inventory_id:
+            item = db.session.get(Inventory, inventory_id)
+            if not item or item.tenant_id != tenant_id:
+                flash('Készlet elem nem található', 'error')
+                return redirect(url_for('administrator.inventory'))
+        else:
+            flash('Hiányzó alkatrész adat', 'error')
             return redirect(url_for('administrator.inventory'))
 
         # Update quantity

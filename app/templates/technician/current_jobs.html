@@ -36,7 +36,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-warning-lt me-2"><i class="ti ti-clock"></i></span>
-                    <div class="subheader">Active Jobs</div>
+                    <div class="subheader">AKTÍV SZERELÉS</div>
                 </div>
                 <div class="h1 mb-0">{{ data|length }}</div>
             </div>
@@ -47,7 +47,7 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-info-lt me-2"><i class="ti ti-calendar"></i></span>
-                    <div class="subheader">This Week</div>
+                    <div class="subheader">EHÉTEN</div>
                 </div>
                 <div class="h1 mb-0">{{ data|selectattr('job_date')|list|length if data else 0 }}</div>
             </div>
@@ -58,9 +58,9 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <span class="badge bg-success-lt me-2"><i class="ti ti-currency-dollar"></i></span>
-                    <div class="subheader">Total Value</div>
+                    <div class="subheader">TELJES ÉRTÉK</div>
                 </div>
-                <div class="h1 mb-0">${{ "%.0f"|format(data|sum(attribute='total_cost') or 0) }}</div>
+                <div class="h1 mb-0">Ft{{ "%.0f"|format(data|sum(attribute='total_cost') or 0) }}</div>
             </div>
         </div>
     </div>
@@ -159,8 +159,8 @@
                                         <i class="ti ti-user text-primary"></i>
                                     </div>
                                     <div>
-                                        <div class="fw-semibold">{{ record.first_name }} {{ record.family_name }}</div>
-                                        <small class="text-muted">ID: #{{ record.customer_id }}</small>
+                                        <div class="fw-semibold">{{ record.customer_rel.first_name ~ " " ~ record.customer_rel.family_name if record.customer_rel else "N/A" }}</div>
+                                        <small class="text-muted">ID: #{{ record.customer }}</small>
                                     </div>
                                 </div>
                             </td>

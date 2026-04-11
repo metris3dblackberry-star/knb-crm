@@ -38,7 +38,7 @@
             <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
                 <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt='SolvioRepair' style="height: 30px; width: auto; margin-right: 8px;">
-                <span>RepairOS{% if current_tenant %} &middot; {{ current_tenant.name | e }}{% endif %}</span>
+                <span>RepairOS{% if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
             </a>
 
             {% if user_tenants and user_tenants|length > 1 %}
@@ -58,7 +58,7 @@
                             {% else %}
                             <span style="width: 14px; display: inline-block;" class="me-2"></span>
                             {% endif %}
-                            {{ tenant.name }}
+                            {{ tenant.name | safe }}
                         </a>
                     </li>
                     {% endfor %}

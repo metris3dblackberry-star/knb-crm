@@ -35,3 +35,4 @@ stripe==11.4.1
 
 # Security
 bcrypt==4.2.1
+reportlab

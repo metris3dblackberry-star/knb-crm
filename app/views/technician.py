@@ -455,3 +455,184 @@ def api_get_job_status(job_id):
     except Exception as e:
         logger.error(f"Failed to get work order status: {e}")
         return jsonify({'error': 'Failed to get status'}), 500
+
+
+@technician_bp.route('/jobs/<int:job_id>/invoice')
+def generate_invoice(job_id):
+    """Generate PDF invoice for a job"""
+    from flask import make_response, session
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+    from app.models.job import Job
+    from app.models.tenant import Tenant
+    from app.extensions import db
+    import datetime
+
+    # Load job
+    job = db.session.get(Job, job_id)
+    if not job:
+        flash('Munka nem található', 'error')
+        return redirect(url_for('technician.current_jobs'))
+
+    # Load tenant settings
+    tenant_id = session.get('current_tenant_id') or 1
+    tenant = Tenant.find_by_id(tenant_id)
+    settings = tenant.settings or {} if tenant else {}
+
+    # Customer info
+    customer = job.customer_rel
+    services = job.get_services()
+    parts = job.get_parts()
+
+    # Invoice number
+    invoice_num = f"KNB-{datetime.date.today().year}-{job_id:04d}"
+
+    # PDF buffer
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                           rightMargin=1.5*cm, leftMargin=1.5*cm,
+                           topMargin=1.5*cm, bottomMargin=1.5*cm)
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Colors
+    primary_color = colors.HexColor('#1e3a5f')
+    accent_color = colors.HexColor('#e87e04')
+    white = colors.white
+
+    # Header background
+    header_data = [[
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&B Autojavito"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="10">Bizonylat · {invoice_num} · {datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+    ]]
+    header_table = Table(header_data, colWidths=[12*cm, 6*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), accent_color),
+        ('TEXTCOLOR', (0,0), (-1,-1), white),
+        ('PADDING', (0,0), (-1,-1), 16),
+        ('ROUNDEDCORNERS', [8]),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (1,0), (1,0), 'RIGHT'),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Seller / Buyer info
+    seller_lines = [
+        '<b>Eladó</b>',
+        tenant.name if tenant else 'K&B Autojavito',
+        settings.get('company_reg', ''),
+        tenant.address if tenant else '',
+        f'Adószám: {settings.get("tax_id", "")}' if settings.get('tax_id') else '',
+        f'Bankszámlaszám: {settings.get("bank_account", "")}' if settings.get('bank_account') else '',
+    ]
+    seller_text = '<br/>'.join([l for l in seller_lines if l])
+
+    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
+    buyer_lines = [
+        '<b>Vevő</b>',
+        buyer_name,
+        customer.phone if customer else '',
+        customer.email if customer else '',
+        f'Adószám: {customer.tax_number}' if customer and getattr(customer, 'tax_number', None) else '',
+    ]
+    buyer_text = '<br/>'.join([l for l in buyer_lines if l])
+
+    info_style = ParagraphStyle('info', fontSize=9, leading=14)
+    info_data = [[
+        Paragraph(seller_text, info_style),
+        Paragraph(buyer_text, info_style)
+    ]]
+    info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+    info_table.setStyle(TableStyle([
+        ('BOX', (0,0), (0,0), 0.5, colors.HexColor('#e2e8f0')),
+        ('BOX', (1,0), (1,0), 0.5, colors.HexColor('#e2e8f0')),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+        ('PADDING', (0,0), (-1,-1), 12),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Items table header
+    tax_rate = float(settings.get('tax_rate', 27))
+    header_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName='Helvetica-Bold')
+    items_data = [[
+        Paragraph('Tétel', header_style),
+        Paragraph('Menny.', header_style),
+        Paragraph('Nettó', header_style),
+        Paragraph(f'ÁFA {int(tax_rate)}%', header_style),
+        Paragraph('Bruttó', header_style),
+    ]]
+
+    # Add services
+    brutto_total = 0
+    cell_style = ParagraphStyle('cell', fontSize=9)
+    for svc in services:
+        netto = float(svc['cost']) * int(svc['qty'])
+        afa = netto * tax_rate / 100
+        brutto = netto + afa
+        brutto_total += brutto
+        items_data.append([
+            Paragraph(svc['service_name'], cell_style),
+            Paragraph(f"{svc['qty']} db", cell_style),
+            Paragraph(f"{int(netto):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(f"{int(afa):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(f"{int(brutto):,} Ft".replace(',', ' '), cell_style),
+        ])
+
+    # Add parts
+    for part in parts:
+        netto = float(part['cost']) * int(part['qty'])
+        afa = netto * tax_rate / 100
+        brutto = netto + afa
+        brutto_total += brutto
+        items_data.append([
+            Paragraph(part['part_name'], cell_style),
+            Paragraph(f"{part['qty']} db", cell_style),
+            Paragraph(f"{int(netto):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(f"{int(afa):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(f"{int(brutto):,} Ft".replace(',', ' '), cell_style),
+        ])
+
+    items_table = Table(items_data, colWidths=[7*cm, 2*cm, 3*cm, 3*cm, 3*cm])
+    items_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), primary_color),
+        ('TEXTCOLOR', (0,0), (-1,0), white),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 8),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('ALIGN', (1,0), (-1,-1), 'RIGHT'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+    ]))
+    story.append(items_table)
+    story.append(Spacer(1, 0.3*cm))
+
+    # Total
+    total_style = ParagraphStyle('total', fontSize=12, fontName='Helvetica-Bold', alignment=TA_RIGHT)
+    total_data = [[
+        Paragraph(f'<b>Bruttó összesen: {int(brutto_total):,} Ft</b>'.replace(',', ' '), total_style)
+    ]]
+    total_table = Table(total_data, colWidths=[18*cm])
+    total_table.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'RIGHT'), ('PADDING', (0,0), (-1,-1), 8)]))
+    story.append(total_table)
+
+    # Footer
+    story.append(Spacer(1, 1*cm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e2e8f0')))
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER)
+    story.append(Paragraph(f'Powered by SolvioRepair · {tenant.name if tenant else "K&B Autojavito"}', footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    response = make_response(buffer.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=szamla-{invoice_num}.pdf'
+    return response

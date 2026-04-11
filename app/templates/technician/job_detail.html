@@ -33,6 +33,9 @@
             </button>
         </form>
         {% endif %}
+        <a href="{{ url_for('technician.generate_invoice', job_id=data.job_id) }}" class="btn btn-outline-primary" target="_blank">
+            <i class="ti ti-file-invoice me-2"></i>Számla PDF
+        </a>
         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
             <i class="ti ti-arrow-left me-2"></i>Vissza a munkákhoz
         </a>

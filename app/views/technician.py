@@ -83,7 +83,9 @@ def job_detail(job_id):
             return redirect(url_for('technician.current_jobs'))
 
         return render_template('technician/job_detail.html',
-                             job_details=job_details)
+                             data=job_details.get('job_info', {}),
+                             services=job_details.get('services', []),
+                             parts=job_details.get('parts', []))
 
     except Exception as e:
         logger.error(f"Failed to get work order details (ID: {job_id}): {e}")

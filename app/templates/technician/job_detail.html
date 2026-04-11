@@ -36,6 +36,9 @@
         <a href="{{ url_for('technician.generate_invoice', job_id=data.job_id) }}" class="btn btn-outline-primary" target="_blank">
             <i class="ti ti-file-invoice me-2"></i>Számla PDF
         </a>
+        <a href="{{ url_for('technician.generate_worksheet', job_id=data.job_id) }}" class="btn btn-outline-secondary" target="_blank">
+            <i class="ti ti-clipboard-text me-2"></i>Munkalap PDF
+        </a>
         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
             <i class="ti ti-arrow-left me-2"></i>Vissza a munkákhoz
         </a>
@@ -295,6 +298,29 @@
                 </form>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Megjegyzés -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="ti ti-notes me-2"></i>
+                    Megjegyzés (munkalapra kerül)
+                </h3>
+            </div>
+            <div class="card-body">
+                {% if data.completed %}
+                <p class="text-muted mb-0">{{ data.notes if data.notes else 'Nincs megjegyzés.' }}</p>
+                {% else %}
+                <form method="POST" action="{{ url_for('technician.save_notes', job_id=data.job_id) }}">
+                    <textarea name="notes" class="form-control mb-2" rows="3"
+                              placeholder="pl. Bal első kerékcsapágy cserélve, vezérlés ellenőrizve...">{{ data.notes or '' }}</textarea>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </form>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Végösszeg Summary -->

@@ -5,7 +5,7 @@ Work orders with services and parts, multi-tenant scoped
 from typing import List, Optional, Tuple
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import String, Date, Numeric, Boolean, Integer, ForeignKey, and_
+from sqlalchemy import String, Text, Date, Numeric, Boolean, Integer, ForeignKey, and_
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from app.extensions import db
@@ -67,6 +67,7 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
     assigned_to: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey('user.user_id'), nullable=True
     )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
     customer_rel: Mapped["Customer"] = relationship("Customer", back_populates="jobs")

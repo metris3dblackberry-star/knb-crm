@@ -95,7 +95,219 @@ def job_detail(job_id):
         return redirect(url_for('technician.current_jobs'))
 
 
-@technician_bp.route('/jobs/<int:job_id>/modify')
+@technician_bp.route('/jobs/<int:job_id>/notes', methods=['POST'])
+@handle_database_errors
+def save_notes(job_id):
+    """Save notes for a job"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+    try:
+        from app.models.job import Job
+        job = db.session.get(Job, job_id)
+        if not job:
+            flash('Munka nem található', 'error')
+            return redirect(url_for('technician.current_jobs'))
+        job.notes = request.form.get('notes', '').strip()
+        db.session.commit()
+        flash('Megjegyzés mentve!', 'success')
+    except Exception as e:
+        logger.error(f"Failed to save notes: {e}")
+        db.session.rollback()
+        flash('Hiba a mentés során', 'error')
+    return redirect(url_for('technician.job_detail', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/worksheet')
+def generate_worksheet(job_id):
+    """Generate PDF worksheet for a job"""
+    from flask import make_response, session
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from app.models.job import Job
+    from app.models.tenant import Tenant
+    from app.extensions import db
+    import datetime, os
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        flash('Munka nem található', 'error')
+        return redirect(url_for('technician.current_jobs'))
+
+    tenant_id = session.get('current_tenant_id') or 1
+    tenant = Tenant.find_by_id(tenant_id)
+    settings = tenant.settings or {} if tenant else {}
+    customer = job.customer_rel
+    services = job.get_services()
+    parts = job.get_parts()
+
+    # Unicode font
+    font_paths = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+    ]
+    unicode_font = 'Helvetica'
+    unicode_font_bold = 'Helvetica-Bold'
+    for path in font_paths:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont('DejaVuSans', path))
+                bold_path = path.replace('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf')
+                if os.path.exists(bold_path):
+                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
+                    unicode_font_bold = 'DejaVuSans-Bold'
+                unicode_font = 'DejaVuSans'
+            except Exception:
+                pass
+            break
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                           rightMargin=1.5*cm, leftMargin=1.5*cm,
+                           topMargin=1.5*cm, bottomMargin=1.5*cm)
+
+    styles = getSampleStyleSheet()
+    for style in styles.byName.values():
+        style.fontName = unicode_font
+    story = []
+
+    primary_color = colors.HexColor('#1e3a5f')
+    accent_color = colors.HexColor('#e87e04')
+    white = colors.white
+
+    # Fejléc
+    ws_num = f"ML-{datetime.date.today().year}-{job_id:04d}"
+    header_data = [[
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="10"><b>Munkalap</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+    ]]
+    header_table = Table(header_data, colWidths=[10*cm, 8*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), primary_color),
+        ('TOPPADDING', (0,0), (-1,-1), 18),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 18),
+        ('LEFTPADDING', (0,0), (-1,-1), 16),
+        ('RIGHTPADDING', (0,0), (-1,-1), 16),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (1,0), (1,0), 'RIGHT'),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Ügyfél + munka adatok
+    info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
+    bold_style = ParagraphStyle('bold', fontSize=9, leading=14, fontName=unicode_font_bold)
+
+    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
+    left_lines = ['<b>Ügyfél adatai</b>', buyer_name,
+                  customer.phone if customer else '',
+                  customer.email if customer else '']
+    right_lines = ['<b>Munka adatai</b>',
+                   f'Munkalap sz.: {ws_num}',
+                   f'Dátum: {job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A"}',
+                   f'Státusz: {"Befejezett" if job.completed else "Folyamatban"}']
+
+    info_data = [[
+        Paragraph('<br/>'.join([l for l in left_lines if l]), info_style),
+        Paragraph('<br/>'.join([l for l in right_lines if l]), info_style),
+    ]]
+    info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+    info_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('LINEAFTER', (0,0), (0,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 12),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # Szolgáltatások
+    th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
+    cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
+
+    if services:
+        story.append(Paragraph('<b>Elvégzett munkák</b>', ParagraphStyle('h', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        svc_data = [[Paragraph('Megnevezés', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        for s in services:
+            svc_data.append([
+                Paragraph(s['service_name'], cell_style),
+                Paragraph(str(s['qty']), cell_style),
+                Paragraph('', cell_style),
+            ])
+        svc_table = Table(svc_data, colWidths=[9*cm, 2.5*cm, 6.5*cm])
+        svc_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), primary_color),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+            ('PADDING', (0,0), (-1,-1), 8),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(svc_table)
+        story.append(Spacer(1, 0.4*cm))
+
+    # Alkatrészek
+    if parts:
+        story.append(Paragraph('<b>Felhasznált alkatrészek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        parts_data = [[Paragraph('Alkatrész', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        for p in parts:
+            parts_data.append([
+                Paragraph(p['part_name'], cell_style),
+                Paragraph(str(p['qty']), cell_style),
+                Paragraph('', cell_style),
+            ])
+        parts_table = Table(parts_data, colWidths=[9*cm, 2.5*cm, 6.5*cm])
+        parts_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), primary_color),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+            ('PADDING', (0,0), (-1,-1), 8),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(parts_table)
+        story.append(Spacer(1, 0.4*cm))
+
+    # Megjegyzés
+    if job.notes:
+        story.append(Paragraph('<b>Megjegyzés</b>', ParagraphStyle('h3', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        story.append(Paragraph(job.notes, ParagraphStyle('notes', fontSize=9, fontName=unicode_font, leading=14,
+                                                          borderPadding=10, backColor=colors.HexColor('#fffbeb'),
+                                                          borderColor=colors.HexColor('#f59e0b'), borderWidth=0.5)))
+        story.append(Spacer(1, 0.4*cm))
+
+    # Aláírás sor
+    story.append(Spacer(1, 1*cm))
+    sign_data = [[
+        Paragraph('Szerelő aláírása: ________________________', cell_style),
+        Paragraph('Ügyfél aláírása: ________________________', cell_style),
+    ]]
+    sign_table = Table(sign_data, colWidths=[9*cm, 9*cm])
+    sign_table.setStyle(TableStyle([('PADDING', (0,0), (-1,-1), 4)]))
+    story.append(sign_table)
+
+    # Footer
+    story.append(Spacer(1, 0.5*cm))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'),
+                                   alignment=TA_CENTER, fontName=unicode_font)
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    response = make_response(buffer.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=munkalap-{ws_num}.pdf'
+    return response
+
+
+
 @handle_database_errors
 @log_function_call
 def modify_job(job_id):

@@ -1,9 +1,127 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Alkatrész katalógus{% endblock %}
+{% block title %}Alkatrész katalógus
+<!-- Edit Part Modals -->
+{% for part in parts|default([]) %}
+<div class="modal fade" id="editPartModal{{ part.part_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="part_id" value="{{ part.part_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Alkatrész neve *</label>
+                            <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cikkszám</label>
+                            <input type="text" class="form-control" name="sku" value="{{ part.sku or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if part.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Motor" {% if part.category == 'Motor' %}selected{% endif %}>Motor</option>
+                                <option value="Fékek" {% if part.category == 'Fékek' %}selected{% endif %}>Fékek</option>
+                                <option value="Futómű" {% if part.category == 'Futómű' %}selected{% endif %}>Futómű</option>
+                                <option value="Elektromos" {% if part.category == 'Elektromos' %}selected{% endif %}>Elektromos</option>
+                                <option value="Karosszéria" {% if part.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                                <option value="Folyadékok" {% if part.category == 'Folyadékok' %}selected{% endif %}>Folyadékok</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ part.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Szállító</label>
+                            <input type="text" class="form-control" name="supplier" value="{{ part.supplier or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
 <li class="breadcrumb-item active">Alkatrész katalógus</li>
+
+<!-- Edit Part Modals -->
+{% for part in parts|default([]) %}
+<div class="modal fade" id="editPartModal{{ part.part_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="part_id" value="{{ part.part_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Alkatrész neve *</label>
+                            <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cikkszám</label>
+                            <input type="text" class="form-control" name="sku" value="{{ part.sku or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if part.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Motor" {% if part.category == 'Motor' %}selected{% endif %}>Motor</option>
+                                <option value="Fékek" {% if part.category == 'Fékek' %}selected{% endif %}>Fékek</option>
+                                <option value="Futómű" {% if part.category == 'Futómű' %}selected{% endif %}>Futómű</option>
+                                <option value="Elektromos" {% if part.category == 'Elektromos' %}selected{% endif %}>Elektromos</option>
+                                <option value="Karosszéria" {% if part.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                                <option value="Folyadékok" {% if part.category == 'Folyadékok' %}selected{% endif %}>Folyadékok</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ part.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Szállító</label>
+                            <input type="text" class="form-control" name="supplier" value="{{ part.supplier or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
 
 {% block admin_content %}
@@ -85,7 +203,7 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" title="Szerkesztés" data-bs-toggle="modal" data-bs-target="#editPartModal{{ part.part_id }}">
                                                 <i class="ti ti-pencil"></i>
                                             </button>
                                             <form method="post" action="{{ url_for('administrator.parts_catalog') }}" class="d-inline">
@@ -173,4 +291,63 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Part Modals -->
+{% for part in parts|default([]) %}
+<div class="modal fade" id="editPartModal{{ part.part_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="part_id" value="{{ part.part_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Alkatrész neve *</label>
+                            <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cikkszám</label>
+                            <input type="text" class="form-control" name="sku" value="{{ part.sku or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if part.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Motor" {% if part.category == 'Motor' %}selected{% endif %}>Motor</option>
+                                <option value="Fékek" {% if part.category == 'Fékek' %}selected{% endif %}>Fékek</option>
+                                <option value="Futómű" {% if part.category == 'Futómű' %}selected{% endif %}>Futómű</option>
+                                <option value="Elektromos" {% if part.category == 'Elektromos' %}selected{% endif %}>Elektromos</option>
+                                <option value="Karosszéria" {% if part.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                                <option value="Folyadékok" {% if part.category == 'Folyadékok' %}selected{% endif %}>Folyadékok</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ part.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Szállító</label>
+                            <input type="text" class="form-control" name="supplier" value="{{ part.supplier or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

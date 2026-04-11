@@ -751,6 +751,22 @@ def parts_catalog():
                     db.session.rollback()
                     flash('Failed to add part', 'error')
 
+        elif action == 'edit':
+            part_id = request.form.get('part_id', type=int)
+            if part_id:
+                part = Part.find_by_id(part_id)
+                if part:
+                    part.part_name = sanitize_input(request.form.get('part_name', part.part_name))
+                    part.category = sanitize_input(request.form.get('category', part.category))
+                    part.supplier = sanitize_input(request.form.get('supplier', ''))
+                    try:
+                        part.cost = float(request.form.get('cost', part.cost))
+                    except (ValueError, TypeError):
+                        pass
+                    part.sku = sanitize_input(request.form.get('sku', ''))
+                    db.session.commit()
+                    flash('Alkatrész frissítve!', 'success')
+
         elif action == 'toggle':
             part_id = request.form.get('part_id', type=int)
             if part_id:

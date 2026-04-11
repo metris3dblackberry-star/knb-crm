@@ -189,7 +189,7 @@
                                     </td>
                                     <td>{{ part.supplier|default('N/A') }}</td>
                                     <td>
-                                        {% if part.active|default(true) %}
+                                        {% if part.is_active|default(true) %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-circle-check me-1"></i>
                                             Aktív
@@ -209,8 +209,8 @@
                                             <form method="post" action="{{ url_for('administrator.parts_catalog') }}" class="d-inline">
                                                 <input type="hidden" name="part_id" value="{{ part.id|default(part.part_id|default('')) }}">
                                                 <input type="hidden" name="action" value="toggle">
-                                                <button type="submit" class="btn btn-sm btn-outline-{% if part.active|default(true) %}warning{% else %}success{% endif %}" title="{% if part.active|default(true) %}Deaktiválás{% else %}Aktiválás{% endif %}">
-                                                    <i class="ti ti-{% if part.active|default(true) %}player-pause{% else %}player-play{% endif %}"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-{% if part.is_active|default(true) %}warning{% else %}success{% endif %}" title="{% if part.is_active|default(true) %}Deaktiválás{% else %}Aktiválás{% endif %}">
+                                                    <i class="ti ti-{% if part.is_active|default(true) %}player-pause{% else %}player-play{% endif %}"></i>
                                                 </button>
                                             </form>
                                         </div>

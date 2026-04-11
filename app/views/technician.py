@@ -510,14 +510,17 @@ def generate_invoice(job_id):
 
     # Header background
     header_data = [[
-        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&B Autojavito"}</b></font>', styles['Normal']),
-        Paragraph(f'<font color="white" size="10">Bizonylat · {invoice_num} · {datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="10"><b>Számla</b><br/>{invoice_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
-    header_table = Table(header_data, colWidths=[12*cm, 6*cm])
+    header_table = Table(header_data, colWidths=[10*cm, 8*cm])
     header_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), accent_color),
         ('TEXTCOLOR', (0,0), (-1,-1), white),
-        ('PADDING', (0,0), (-1,-1), 16),
+        ('TOPPADDING', (0,0), (-1,-1), 18),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 18),
+        ('LEFTPADDING', (0,0), (-1,-1), 16),
+        ('RIGHTPADDING', (0,0), (-1,-1), 16),
         ('ROUNDEDCORNERS', [8]),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ALIGN', (1,0), (1,0), 'RIGHT'),
@@ -538,7 +541,7 @@ def generate_invoice(job_id):
 
     buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
     buyer_lines = [
-        '<b>Vevő</b>',
+        '<b>Vev\u0151</b>',
         buyer_name,
         customer.phone if customer else '',
         customer.email if customer else '',

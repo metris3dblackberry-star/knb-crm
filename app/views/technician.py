@@ -481,6 +481,31 @@ def generate_invoice(job_id):
         flash('Munka nem található', 'error')
         return redirect(url_for('technician.current_jobs'))
 
+    # Register Unicode font (DejaVu supports Hungarian chars: á, é, í, ó, ö, ő, ú, ü, ű)
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import os
+    font_paths = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
+    ]
+    unicode_font = 'Helvetica'
+    unicode_font_bold = 'Helvetica-Bold'
+    for path in font_paths:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont('DejaVuSans', path))
+                bold_path = path.replace('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf')
+                if os.path.exists(bold_path):
+                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
+                    unicode_font_bold = 'DejaVuSans-Bold'
+                unicode_font = 'DejaVuSans'
+            except Exception:
+                pass
+            break
+
     # Load tenant settings
     tenant_id = session.get('current_tenant_id') or 1
     tenant = Tenant.find_by_id(tenant_id)
@@ -501,6 +526,9 @@ def generate_invoice(job_id):
                            topMargin=1.5*cm, bottomMargin=1.5*cm)
 
     styles = getSampleStyleSheet()
+    # Override default font to Unicode-capable one
+    for style in styles.byName.values():
+        style.fontName = unicode_font
     story = []
 
     # Colors
@@ -549,7 +577,7 @@ def generate_invoice(job_id):
     ]
     buyer_text = '<br/>'.join([l for l in buyer_lines if l])
 
-    info_style = ParagraphStyle('info', fontSize=9, leading=14)
+    info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
     info_data = [[
         Paragraph(seller_text, info_style),
         Paragraph(buyer_text, info_style)
@@ -567,7 +595,7 @@ def generate_invoice(job_id):
 
     # Items table header
     tax_rate = float(settings.get('tax_rate', 27))
-    header_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName='Helvetica-Bold')
+    header_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
     items_data = [[
         Paragraph('Tétel', header_style),
         Paragraph('Menny.', header_style),
@@ -578,7 +606,7 @@ def generate_invoice(job_id):
 
     # Add services
     brutto_total = 0
-    cell_style = ParagraphStyle('cell', fontSize=9)
+    cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
     for svc in services:
         netto = float(svc['cost']) * int(svc['qty'])
         afa = netto * tax_rate / 100
@@ -620,7 +648,7 @@ def generate_invoice(job_id):
     story.append(Spacer(1, 0.3*cm))
 
     # Total
-    total_style = ParagraphStyle('total', fontSize=12, fontName='Helvetica-Bold', alignment=TA_RIGHT)
+    total_style = ParagraphStyle('total', fontSize=12, fontName=unicode_font_bold, alignment=TA_RIGHT)
     total_data = [[
         Paragraph(f'<b>Bruttó összesen: {int(brutto_total):,} Ft</b>'.replace(',', ' '), total_style)
     ]]
@@ -631,7 +659,7 @@ def generate_invoice(job_id):
     # Footer
     story.append(Spacer(1, 1*cm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#e2e8f0')))
-    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER)
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
     story.append(Paragraph(f'Powered by SolvioRepair · {tenant.name if tenant else "K&B Autojavito"}', footer_style))
 
     doc.build(story)

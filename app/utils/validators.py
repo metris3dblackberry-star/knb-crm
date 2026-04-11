@@ -135,9 +135,6 @@ def sanitize_input(value: Any) -> str:
     # Convert to string
     text = str(value)
 
-    # HTML escape
-    text = html.escape(text)
-
     # Remove excess whitespace
     text = re.sub(r'\s+', ' ', text).strip()
 

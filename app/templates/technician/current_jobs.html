@@ -149,7 +149,7 @@
                         <tr class="job-row" data-job-id="{{ record.job_id }}">
                             <td>
                                 <div class="form-check">
-                                    <input type="radio" class="form-check-input job-select" name="job_select"
+                                    <input type="checkbox" class="form-check-input job-select" name="job_select"
                                            value="{{ record.job_id }}" id="job_{{ record.job_id }}">
                                 </div>
                             </td>
@@ -316,16 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.toggleSelectAll = function() {
         const allSelected = Array.from(jobSelects).every(radio => radio.checked);
 
-        if (allSelected) {
-            // Unselect all
-            jobSelects.forEach(radio => radio.checked = false);
-            selectAllCheckbox.checked = false;
-        } else {
-            // Select first if none selected
-            if (jobSelects.length > 0) {
-                jobSelects[0].checked = true;
-            }
-        }
+        jobSelects.forEach(radio => radio.checked = !allSelected);
+        selectAllCheckbox.checked = !allSelected;
         updateModifyButton();
     };
 

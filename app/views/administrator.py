@@ -911,13 +911,23 @@ def subscription_management():
             db.select(Subscription).where(Subscription.tenant_id == tenant_id)
         ).scalar_one_or_none()
 
+        current_plan = {
+            'name': subscription.plan_name if subscription else 'Ingyenes',
+            'status': subscription.status if subscription else 'active',
+            'price': subscription.price if subscription else 0,
+        }
+        usage = {}
         return render_template('administrator/subscription.html',
                              tenant=tenant,
-                             subscription=subscription)
+                             subscription=subscription,
+                             current_plan=current_plan,
+                             usage=usage)
 
     except Exception as e:
         logger.error(f"Failed to load subscription info: {e}")
         flash('Failed to load subscription information', 'error')
         return render_template('administrator/subscription.html',
                              tenant=None,
-                             subscription=None)
+                             subscription=None,
+                             current_plan={'name': 'Ingyenes', 'status': 'active'},
+                             usage={})

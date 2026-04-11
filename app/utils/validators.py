@@ -135,6 +135,9 @@ def sanitize_input(value: Any) -> str:
     # Convert to string
     text = str(value)
 
+    # HTML escape
+    text = html.escape(text)
+
     # Remove excess whitespace
     text = re.sub(r'\s+', ' ', text).strip()
 
@@ -155,7 +158,7 @@ def validate_name(name: str) -> bool:
         return False
 
     # Names should only contain letters, spaces, hyphens, and apostrophes
-    pattern = r"^[a-zA-Z\s\-']{1,50}$"
+    pattern = r"^[a-zA-ZáéíóöőüűÁÉÍÓÖŐÜŰ\s\-']{1,50}$"
     return bool(re.match(pattern, name.strip()))
 
 

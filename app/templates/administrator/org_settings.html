@@ -1,9 +1,9 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Organization Settings - Administrator Portal{% endblock %}
+{% block title %}Cégadatok - Administrator Portal{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Organization Settings</li>
+<li class="breadcrumb-item active">Cégadatoks</li>
 {% endblock %}
 
 {% block admin_content %}
@@ -15,7 +15,7 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-building text-primary"></i>
-                        Organization Settings
+                        Cégadatok
                     </h1>
                     <p class="text-muted mb-0">Configure your shop's profile and preferences</p>
                 </div>
@@ -29,11 +29,11 @@
                 <div class="card-body p-4">
                     <form method="post" action="{{ url_for('administrator.org_settings') if url_for('administrator.org_settings') is defined else '#' }}">
                         <div class="row g-4">
-                            <!-- Organization Name -->
+                            <!-- Cégnév -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-building me-1"></i>
-                                    Organization Name
+                                    Cégnév
                                 </label>
                                 <input type="text" class="form-control" name="org_name" value="{{ org.name|default('') }}" placeholder="Your Shop Name" required>
                             </div>
@@ -95,11 +95,11 @@
                                     Currency
                                 </label>
                                 <select class="form-select" name="currency">
-                                    <option value="USD" {% if org.currency|default('USD') == 'USD' %}selected{% endif %}>USD - US Dollar</option>
+                                    <option value="USD" {% if org.currency|default('USD') == 'USD' %}selected{% endif %}>USD - USA Dollár</option>
                                     <option value="EUR" {% if org.currency|default('') == 'EUR' %}selected{% endif %}>EUR - Euro</option>
-                                    <option value="GBP" {% if org.currency|default('') == 'GBP' %}selected{% endif %}>GBP - British Pound</option>
-                                    <option value="CAD" {% if org.currency|default('') == 'CAD' %}selected{% endif %}>CAD - Canadian Dollar</option>
-                                    <option value="AUD" {% if org.currency|default('') == 'AUD' %}selected{% endif %}>AUD - Australian Dollar</option>
+                                    <option value="GBP" {% if org.currency|default('') == 'GBP' %}selected{% endif %}>GBP - Angol Font</option>
+                                    <option value="CAD" {% if org.currency|default('') == 'CAD' %}selected{% endif %}>CAD - Kanadai Dollár</option>
+                                    <option value="AUD" {% if org.currency|default('') == 'HUF' %}selected{% endif %}>HUF - Magyar Forint</option>
                                 </select>
                             </div>
 
@@ -126,12 +126,13 @@
                         About Settings
                     </h6>
                     <p class="text-muted small mb-3">
-                        These settings apply to your entire organization. Changes will be reflected across all invoices, reports, and customer-facing documents.
+                        Ezek a beállítások az egész szervezetre vonatkoznak. 
+A módosítások minden számlán, jelentésen és ügyfél felé megjelenő dokumentumon érvényesülnek.
                     </p>
                     <ul class="list-unstyled text-muted small">
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>
-                            Organization name appears on invoices
+                            A cégnév megjelenik a számlákon.
                         </li>
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>

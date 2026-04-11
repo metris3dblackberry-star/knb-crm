@@ -505,14 +505,17 @@ def org_settings():
 
     if request.method == 'POST':
         try:
-            # Handle logo upload
-            import os
+            # Handle logo upload as base64
+            import base64
             logo_url = tenant.logo_url
             if 'logo_file' in request.files:
                 logo_file = request.files['logo_file']
                 if logo_file and logo_file.filename:
-                    import uuid
                     ext = logo_file.filename.rsplit('.', 1)[-1].lower()
+                    if ext in ['png', 'jpg', 'jpeg', 'gif', 'svg']:
+                        img_data = base64.b64encode(logo_file.read()).decode('utf-8')
+                        mime = 'image/svg+xml' if ext == 'svg' else f'image/{ext}'
+                        logo_url = f'data:{mime};base64,{img_data}'
                     if ext in ['png', 'jpg', 'jpeg', 'gif', 'svg']:
                         filename = f'logo_{tenant_id}_{uuid.uuid4().hex[:8]}.{ext}'
                         upload_path = os.path.join('app', 'static', 'images', filename)
@@ -527,7 +530,8 @@ def org_settings():
             tenant.address = request.form.get('address', '').strip() or tenant.address
             tenant.logo_url = logo_url
 
-            settings = tenant.settings or {}
+            from sqlalchemy.orm.attributes import flag_modified
+            settings = dict(tenant.settings or {})
             tax_rate = request.form.get('tax_rate')
             if tax_rate:
                 try:
@@ -536,6 +540,7 @@ def org_settings():
                     pass
             settings['currency'] = request.form.get('currency', 'HUF')
             tenant.settings = settings
+            flag_modified(tenant, 'settings')
 
             session['current_tenant_name'] = tenant.name
             db.session.commit()

@@ -308,6 +308,7 @@ def generate_worksheet(job_id):
 
 
 
+@technician_bp.route('/jobs/<int:job_id>/modify')
 @handle_database_errors
 @log_function_call
 def modify_job(job_id):

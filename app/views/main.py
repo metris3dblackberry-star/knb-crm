@@ -357,3 +357,16 @@ def fix_tenant_reset():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/migrate-logo-column-xk9p2')
+def migrate_logo_column():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        db.session.execute(sa.text("ALTER TABLE tenant ALTER COLUMN logo_url TYPE TEXT"))
+        db.session.commit()
+        return 'OK! logo_url mező TEXT-re növelve'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

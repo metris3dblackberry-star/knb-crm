@@ -894,9 +894,9 @@ def inventory_adjust():
                 )
                 db.session.add(item)
                 db.session.flush()
-            inventory_id = item.id
+            inventory_id = item.inventory_id
         elif inventory_id:
-            item = db.session.get(Inventory, inventory_id)
+            item = db.session.execute(db.select(Inventory).where(Inventory.inventory_id == inventory_id)).scalar_one_or_none()
             if not item or item.tenant_id != tenant_id:
                 flash('Készlet elem nem található', 'error')
                 return redirect(url_for('administrator.inventory'))

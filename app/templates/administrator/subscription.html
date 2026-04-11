@@ -52,11 +52,11 @@
                     </div>
                     {% endif %}
                     <div class="mt-4 d-flex gap-2">
-                        <a href="#" class="btn btn-primary flex-fill">
+                        <a href="{{ url_for('billing.plans') }}" class="btn btn-primary flex-fill">
                             <i class="ti ti-arrow-up-circle me-1"></i>
                             Csomag frissítése
                         </a>
-                        <a href="#" class="btn btn-outline-secondary flex-fill">
+                        <a href="{{ url_for('billing.plans') }}" class="btn btn-outline-secondary flex-fill">
                             <i class="ti ti-settings me-1"></i>
                             Kezelés
                         </a>

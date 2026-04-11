@@ -13,11 +13,11 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész (Inventory ID)</label>
-                            <select class="form-select" name="inventory_id" required>
+                            <label class="form-label">Alkatrész</label>
+                            <select class="form-select" name="part_id" required>
                                 <option value="">Válasszon alkatrészt...</option>
-                                {% for item in inventory_items|default([]) %}
-                                <option value="{{ item.id }}">{{ item.part.part_name if item.part else item.id }}</option>
+                                {% for part in parts|default([]) %}
+                                <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -60,11 +60,11 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész (Inventory ID)</label>
-                            <select class="form-select" name="inventory_id" required>
+                            <label class="form-label">Alkatrész</label>
+                            <select class="form-select" name="part_id" required>
                                 <option value="">Válasszon alkatrészt...</option>
-                                {% for item in inventory_items|default([]) %}
-                                <option value="{{ item.id }}">{{ item.part.part_name if item.part else item.id }}</option>
+                                {% for part in parts|default([]) %}
+                                <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -270,11 +270,11 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész (Inventory ID)</label>
-                            <select class="form-select" name="inventory_id" required>
+                            <label class="form-label">Alkatrész</label>
+                            <select class="form-select" name="part_id" required>
                                 <option value="">Válasszon alkatrészt...</option>
-                                {% for item in inventory_items|default([]) %}
-                                <option value="{{ item.id }}">{{ item.part.part_name if item.part else item.id }}</option>
+                                {% for part in parts|default([]) %}
+                                <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

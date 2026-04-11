@@ -829,11 +829,15 @@ def inventory():
         low_stock = [item for item in inventory_items
                      if item.quantity_on_hand <= item.reorder_level]
 
+        from app.models.part import Part
+        g.current_tenant_id = tenant_id
+        parts = Part.get_all_sorted()
         return render_template('administrator/inventory.html',
                              inventory_items=inventory_items,
                              recent_transactions=recent_transactions,
                              low_stock=low_stock,
-                             total_items=len(inventory_items))
+                             total_items=len(inventory_items),
+                             parts=parts)
 
     except Exception as e:
         logger.error(f"Failed to load inventory: {e}")
@@ -842,7 +846,8 @@ def inventory():
                              inventory_items=[],
                              recent_transactions=[],
                              low_stock=[],
-                             total_items=0)
+                             total_items=0,
+                             parts=[])
 
 
 @administrator_bp.route('/inventory/adjust', methods=['POST'])

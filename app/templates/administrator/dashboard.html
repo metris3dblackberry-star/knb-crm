@@ -126,9 +126,9 @@
                             </div>
                             <div class="flex-grow-1">
                                 <div class="fw-semibold">Munka #{{ job.job_id }}</div>
-                                <small class="text-muted">{{ job.first_name }} {{ job.family_name }} &mdash; {{ job.job_date }}</small>
+                                <small class="text-muted">{{ job.customer_rel.first_name ~ " " ~ job.customer_rel.family_name if job.customer_rel else "N/A" }} &mdash; {{ job.job_date }}</small>
                             </div>
-                            <div>
+                            <div class="d-flex align-items-center gap-2">
                                 {% if job.completed == 1 %}
                                 <span class="badge bg-success">
                                     <i class="ti ti-circle-check me-1"></i>
@@ -139,6 +139,11 @@
                                     <i class="ti ti-clock me-1"></i>
                                     Folyamatban
                                 </span>
+                                <form method="post" action="{{ url_for('technician.complete_job', job_id=job.job_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Biztosan lezárja ezt a munkát?')">
+                                        <i class="ti ti-check"></i>
+                                    </button>
+                                </form>
                                 {% endif %}
                             </div>
                         </div>

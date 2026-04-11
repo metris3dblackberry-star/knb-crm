@@ -122,7 +122,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="{{ url_for('administrator.service_catalog') }}">
+            <form method="post" action="{{ url_for('administrator.service_catalog') }}"><input type="hidden" name="action" value="add">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">

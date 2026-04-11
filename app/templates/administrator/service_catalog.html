@@ -169,7 +169,7 @@
                                     <td>
                                         <span class="fw-bold text-success">{{ "%.0f"|format(service.cost|default(0)|float) }} Ft</span>
                                     </td>
-                                    <td>{{ service.duration|default('N/A') }}</td>
+                                    <td>{{ service.estimated_duration_minutes ~ ' perc' if service.estimated_duration_minutes else 'N/A' }}</td>
                                     <td>
                                         {% if service.is_active|default(true) %}
                                         <span class="badge bg-success">

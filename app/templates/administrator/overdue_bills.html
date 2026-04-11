@@ -1,6 +1,6 @@
 {% extends "base/layout_with_sidebar.html" %}
 {% block title %}
-Billing History & Lejárt számlák
+Számlatörténet és Lejárt számlák
 {% endblock %}
 
 {% block breadcrumb_items %}
@@ -101,7 +101,7 @@ Billing History & Lejárt számlák
                                 {% if jobs %}
                                     {{ "%.2f"|format(jobs|selectattr('paid')|sum(attribute='total_cost')|float) }} Ft
                                 {% else %}
-                                    $0.00
+                                    0.00Ft
                                 {% endif %}
                             </div>
                         </div>

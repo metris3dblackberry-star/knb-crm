@@ -110,8 +110,7 @@ def init_extensions(app):
             Tenant, TenantMembership, Inventory, InventoryTransaction, Subscription
         )
 
-        if app.config.get('ENV') != 'production':
-            db.create_all()
+        db.create_all()  # checkfirst=True by default, never drops existing tables
 
     # Initialize Neon Auth service
     from app.services.auth_service import neon_auth

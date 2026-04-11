@@ -27,7 +27,7 @@
         <div class="col-lg-8">
             <div class="card" style="border-top: 3px solid var(--primary);">
                 <div class="card-body p-4">
-                    <form method="post" action="{{ url_for('administrator.org_settings') }}" enctype="multipart/form-data">
+                    <form method="post" action="{{ url_for('administrator.org_settings') if url_for('administrator.org_settings') is defined else '#' }}">
                         <div class="row g-4">
                             <!-- Organization Name -->
                             <div class="col-md-6">
@@ -65,13 +65,18 @@
                                 <input type="email" class="form-control" name="email" value="{{ org.email|default('') }}" placeholder="shop@example.com">
                             </div>
 
-                            <!-- Logo URL -->
+                            <!-- Logo feltöltés -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-photo me-1"></i>
-                                    Logo URL
+                                    Logó feltöltése
                                 </label>
-                                <input type="url" class="form-control" name="logo_url" value="{{ org.logo_url|default('') }}" placeholder="https://example.com/logo.png">
+                                {% if org.logo_url %}
+                                <div class="mb-2">
+                                    <img src="{{ org.logo_url }}" alt="Logó" style="height:40px;">
+                                </div>
+                                {% endif %}
+                                <input type="file" class="form-control" name="logo_file" accept=".png,.jpg,.jpeg,.gif,.svg">
                             </div>
 
                             <!-- Tax Rate -->

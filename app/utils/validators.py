@@ -37,11 +37,11 @@ def validate_phone(phone: str) -> bool:
     if not phone or not isinstance(phone, str):
         return False
 
-    # Remove spaces and hyphens
-    clean_phone = phone.replace(' ', '').replace('-', '').replace('(', '').replace(')', '')
+    # Remove spaces, hyphens, plus sign
+    clean_phone = re.sub(r'[\s\-\(\)\+\.]', '', phone)
 
-    # Check if it's 10-11 digits
-    pattern = r'^\d{10,11}$'
+    # Check if it's 7-15 digits
+    pattern = r'^\d{7,15}$'
     return bool(re.match(pattern, clean_phone))
 
 
@@ -134,9 +134,6 @@ def sanitize_input(value: Any) -> str:
 
     # Convert to string
     text = str(value)
-
-    # HTML escape
-    text = html.escape(text)
 
     # Remove excess whitespace
     text = re.sub(r'\s+', ' ', text).strip()

@@ -677,6 +677,26 @@ def service_catalog():
                     db.session.rollback()
                     flash('Failed to add service', 'error')
 
+        elif action == 'edit':
+            service_id = request.form.get('service_id', type=int)
+            if service_id:
+                service = Service.find_by_id(service_id)
+                if service:
+                    service.service_name = sanitize_input(request.form.get('service_name', service.service_name))
+                    service.category = sanitize_input(request.form.get('category', service.category))
+                    try:
+                        service.cost = float(request.form.get('cost', service.cost))
+                    except (ValueError, TypeError):
+                        pass
+                    dur = request.form.get('estimated_duration')
+                    if dur:
+                        try:
+                            service.estimated_duration_minutes = int(dur)
+                        except (ValueError, TypeError):
+                            pass
+                    db.session.commit()
+                    flash('Szolgáltatás frissítve!', 'success')
+
         elif action == 'toggle':
             service_id = request.form.get('service_id', type=int)
             if service_id:

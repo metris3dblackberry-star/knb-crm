@@ -1,9 +1,113 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Szolgáltatás katalógus{% endblock %}
+{% block title %}Szolgáltatás katalógus
+{% for service in services|default([]) %}
+<div class="modal fade" id="editServiceModal{{ service.service_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Szolgáltatás szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.service_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="service_id" value="{{ service.service_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Szolgáltatás neve *</label>
+                            <input type="text" class="form-control" name="service_name" required value="{{ service.service_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if service.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Karbantartás" {% if service.category == 'Karbantartás' %}selected{% endif %}>Karbantartás</option>
+                                <option value="Javítás" {% if service.category == 'Javítás' %}selected{% endif %}>Javítás</option>
+                                <option value="Diagnosztika" {% if service.category == 'Diagnosztika' %}selected{% endif %}>Diagnosztika</option>
+                                <option value="Karosszéria" {% if service.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ service.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Becsült időtartam (perc)</label>
+                            <input type="number" class="form-control" name="estimated_duration" value="{{ service.estimated_duration_minutes or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
 <li class="breadcrumb-item active">Szolgáltatás katalógus</li>
+
+{% for service in services|default([]) %}
+<div class="modal fade" id="editServiceModal{{ service.service_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Szolgáltatás szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.service_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="service_id" value="{{ service.service_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Szolgáltatás neve *</label>
+                            <input type="text" class="form-control" name="service_name" required value="{{ service.service_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if service.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Karbantartás" {% if service.category == 'Karbantartás' %}selected{% endif %}>Karbantartás</option>
+                                <option value="Javítás" {% if service.category == 'Javítás' %}selected{% endif %}>Javítás</option>
+                                <option value="Diagnosztika" {% if service.category == 'Diagnosztika' %}selected{% endif %}>Diagnosztika</option>
+                                <option value="Karosszéria" {% if service.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ service.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Becsült időtartam (perc)</label>
+                            <input type="number" class="form-control" name="estimated_duration" value="{{ service.estimated_duration_minutes or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
 
 {% block admin_content %}
@@ -67,7 +171,7 @@
                                     </td>
                                     <td>{{ service.duration|default('N/A') }}</td>
                                     <td>
-                                        {% if service.active|default(true) %}
+                                        {% if service.is_active|default(true) %}
                                         <span class="badge bg-success">
                                             <i class="ti ti-circle-check me-1"></i>
                                             Aktív
@@ -81,14 +185,14 @@
                                     </td>
                                     <td>
                                         <div class="d-flex gap-1">
-                                            <button type="button" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" title="Szerkesztés" data-bs-toggle="modal" data-bs-target="#editServiceModal{{ service.service_id }}">
                                                 <i class="ti ti-pencil"></i>
                                             </button>
-                                            <form method="post" action="#" class="d-inline">
+                                            <form method="post" action="{{ url_for('administrator.service_catalog') }}" class="d-inline">
                                                 <input type="hidden" name="service_id" value="{{ service.id|default(service.service_id|default('')) }}">
                                                 <input type="hidden" name="action" value="toggle">
-                                                <button type="submit" class="btn btn-sm btn-outline-{% if service.active|default(true) %}warning{% else %}success{% endif %}" title="{% if service.active|default(true) %}Deaktiválás{% else %}Aktiválás{% endif %}">
-                                                    <i class="ti ti-{% if service.active|default(true) %}player-pause{% else %}player-play{% endif %}"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-{% if service.is_active|default(true) %}warning{% else %}success{% endif %}" title="{% if service.is_active|default(true) %}Deaktiválás{% else %}Aktiválás{% endif %}">
+                                                    <i class="ti ti-{% if service.is_active|default(true) %}player-pause{% else %}player-play{% endif %}"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -163,4 +267,56 @@
         </div>
     </div>
 </div>
+
+{% for service in services|default([]) %}
+<div class="modal fade" id="editServiceModal{{ service.service_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Szolgáltatás szerkesztése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.service_catalog') }}">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="service_id" value="{{ service.service_id }}">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Szolgáltatás neve *</label>
+                            <input type="text" class="form-control" name="service_name" required value="{{ service.service_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános" {% if service.category == 'Általános' %}selected{% endif %}>Általános</option>
+                                <option value="Karbantartás" {% if service.category == 'Karbantartás' %}selected{% endif %}>Karbantartás</option>
+                                <option value="Javítás" {% if service.category == 'Javítás' %}selected{% endif %}>Javítás</option>
+                                <option value="Diagnosztika" {% if service.category == 'Diagnosztika' %}selected{% endif %}>Diagnosztika</option>
+                                <option value="Karosszéria" {% if service.category == 'Karosszéria' %}selected{% endif %}>Karosszéria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="1" min="0" required value="{{ service.cost|int }}">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Becsült időtartam (perc)</label>
+                            <input type="number" class="form-control" name="estimated_duration" value="{{ service.estimated_duration_minutes or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Mentés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

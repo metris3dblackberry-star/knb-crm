@@ -505,10 +505,27 @@ def org_settings():
 
     if request.method == 'POST':
         try:
-            tenant.name = sanitize_input(request.form.get('name', tenant.name))
-            tenant.email = sanitize_input(request.form.get('email', '')) or tenant.email
-            tenant.phone = sanitize_input(request.form.get('phone', '')) or tenant.phone
-            tenant.address = sanitize_input(request.form.get('address', '')) or tenant.address
+            # Handle logo upload
+            import os
+            logo_url = tenant.logo_url
+            if 'logo_file' in request.files:
+                logo_file = request.files['logo_file']
+                if logo_file and logo_file.filename:
+                    import uuid
+                    ext = logo_file.filename.rsplit('.', 1)[-1].lower()
+                    if ext in ['png', 'jpg', 'jpeg', 'gif', 'svg']:
+                        filename = f'logo_{tenant_id}_{uuid.uuid4().hex[:8]}.{ext}'
+                        upload_path = os.path.join('app', 'static', 'images', filename)
+                        logo_file.save(upload_path)
+                        logo_url = f'/static/images/{filename}'
+
+            org_name = request.form.get('org_name', '').strip() or request.form.get('name', '').strip()
+            if org_name:
+                tenant.name = org_name
+            tenant.email = request.form.get('email', '').strip() or tenant.email
+            tenant.phone = request.form.get('phone', '').strip() or tenant.phone
+            tenant.address = request.form.get('address', '').strip() or tenant.address
+            tenant.logo_url = logo_url
 
             settings = tenant.settings or {}
             tax_rate = request.form.get('tax_rate')
@@ -517,16 +534,16 @@ def org_settings():
                     settings['tax_rate'] = float(tax_rate)
                 except ValueError:
                     pass
-            settings['currency'] = sanitize_input(request.form.get('currency', 'USD'))
+            settings['currency'] = request.form.get('currency', 'HUF')
             tenant.settings = settings
 
             session['current_tenant_name'] = tenant.name
             db.session.commit()
-            flash('Organization settings updated!', 'success')
+            flash('Beállítások mentve!', 'success')
         except Exception as e:
             logger.error(f"Failed to update org settings: {e}")
             db.session.rollback()
-            flash('Failed to update settings', 'error')
+            flash('Hiba a mentés során', 'error')
 
     return render_template('administrator/org_settings.html', tenant=tenant, org=tenant)
 

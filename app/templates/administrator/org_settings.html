@@ -1,23 +1,22 @@
 {% extends "base/layout_with_sidebar.html" %}
-{% block title %}Cégadatok - Administrator Portal{% endblock %}
+{% block title %}Szervezeti beállítások{% endblock %}
 
 {% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active">Cégadatok</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+<li class="breadcrumb-item active">Szervezeti beállítások</li>
 {% endblock %}
 
 {% block admin_content %}
 <div class="container-fluid py-4">
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-building text-primary"></i>
-                        Cégadatok
+                        Szervezeti beállítások
                     </h1>
-                    <p class="text-muted mb-0">Állítsa be műhelye adatait</p>
+                    <p class="text-muted mb-0">A műhely profiljának és beállításainak konfigurálása</p>
                 </div>
             </div>
         </div>
@@ -27,45 +26,36 @@
         <div class="col-lg-8">
             <div class="card" style="border-top: 3px solid var(--primary);">
                 <div class="card-body p-4">
-                    <form method="post" action="{{ url_for('administrator.org_settings') if url_for('administrator.org_settings') is defined else '#' }}">
+                    <form method="post" action="{{ url_for('administrator.org_settings') }}" enctype="multipart/form-data">
                         <div class="row g-4">
-                            <!-- Cégnév -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-building me-1"></i>
-                                    Cégnév
+                                    Szervezet neve
                                 </label>
-                                <input type="text" class="form-control" name="org_name" value="{{ org.name|default('') }}" placeholder="Your Shop Name" required>
+                                <input type="text" class="form-control" name="org_name" value="{{ org.name|default('') }}" placeholder="Műhely neve" required>
                             </div>
-
-                            <!-- Phone -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-phone me-1"></i>
-                                    Phone
+                                    Telefon
                                 </label>
-                                <input type="tel" class="form-control" name="phone" value="{{ org.phone|default('') }}" placeholder="(555) 123-4567">
+                                <input type="tel" class="form-control" name="phone" value="{{ org.phone|default('') }}" placeholder="+36701234567">
                             </div>
-
-                            <!-- Address -->
                             <div class="col-12">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-map-pin me-1"></i>
-                                    Address
+                                    Cím
                                 </label>
-                                <textarea class="form-control" name="address" rows="2" placeholder="123 Main Street, City, State ZIP">{{ org.address|default('') }}</textarea>
+                                <textarea class="form-control" name="address" rows="2" placeholder="1221 Budapest, Tordai út 17/B">{{ org.address|default('') }}</textarea>
                             </div>
-
-                            <!-- Email -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-mail me-1"></i>
-                                    Email
+                                    E-mail
                                 </label>
-                                <input type="email" class="form-control" name="email" value="{{ org.email|default('') }}" placeholder="shop@example.com">
+                                <input type="email" class="form-control" name="email" value="{{ org.email|default('') }}" placeholder="iroda@pelda.hu">
                             </div>
-
-                            <!-- Logo feltöltés -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-photo me-1"></i>
@@ -73,42 +63,35 @@
                                 </label>
                                 {% if org.logo_url %}
                                 <div class="mb-2">
-                                    <img src="{{ org.logo_url }}" alt="Logó" style="height:40px;">
+                                    <img src="{{ org.logo_url }}" alt="Logó" id="currentLogo" style="height:40px; max-width:200px;">
                                 </div>
                                 {% endif %}
-                                <input type="file" class="form-control" name="logo_file" accept=".png,.jpg,.jpeg,.gif,.svg">
+                                <input type="file" class="form-control" name="logo_file" accept=".png,.jpg,.jpeg,.gif,.svg" onchange="previewLogo(this)">
+                                <div id="logoPreview" class="mt-2"></div>
                             </div>
-
-                            <!-- Tax Rate -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-percentage me-1"></i>
-                                    Tax Rate (%)
+                                    Adókulcs (%)
                                 </label>
-                                <input type="number" class="form-control" name="tax_rate" step="0.01" min="0" max="100" value="{{ org.tax_rate|default('') }}" placeholder="8.25">
+                                <input type="number" class="form-control" name="tax_rate" step="0.01" min="0" max="100" value="{{ org.settings.get('tax_rate', '') if org.settings else '' }}" placeholder="27">
                             </div>
-
-                            <!-- Currency -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
                                     <i class="ti ti-currency-dollar me-1"></i>
-                                    Currency
+                                    Pénznem
                                 </label>
                                 <select class="form-select" name="currency">
-                                    <option value="USD" {% if org.currency|default('USD') == 'USD' %}selected{% endif %}>USD - USA Dollár</option>
-                                    <option value="EUR" {% if org.currency|default('') == 'EUR' %}selected{% endif %}>EUR - Euro</option>
-                                    <option value="GBP" {% if org.currency|default('') == 'GBP' %}selected{% endif %}>GBP - Angol Font</option>
-                                    <option value="CAD" {% if org.currency|default('') == 'CAD' %}selected{% endif %}>CAD - Kanadai Dollár</option>
-                                    <option value="AUD" {% if org.currency|default('') == 'HUF' %}selected{% endif %}>HUF - Magyar Forint</option>
+                                    <option value="HUF" {% if org.settings and org.settings.get('currency', 'HUF') == 'HUF' %}selected{% endif %}>HUF - Magyar forint</option>
+                                    <option value="EUR" {% if org.settings and org.settings.get('currency') == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                                    <option value="AUD" {% if org.settings and org.settings.get('currency') == 'AUD' %}selected{% endif %}>AUD - Ausztrál dollár</option>
                                 </select>
                             </div>
-
-                            <!-- Save Button -->
                             <div class="col-12">
                                 <hr class="my-2">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="ti ti-device-floppy me-1"></i>
-                                    Save Settings
+                                    Beállítások mentése
                                 </button>
                             </div>
                         </div>
@@ -117,7 +100,6 @@
             </div>
         </div>
 
-        <!-- Sidebar Info -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-body p-4">
@@ -126,21 +108,20 @@
                         A beállításokról
                     </h6>
                     <p class="text-muted small mb-3">
-                        Ezek a beállítások az egész szervezetre vonatkoznak. 
-A módosítások minden számlán, jelentésen és ügyfél felé megjelenő dokumentumon érvényesülnek.
+                        Ezek a beállítások az egész szervezetre vonatkoznak. A változások megjelennek az összes számlán, riporton és ügyfélfelületen.
                     </p>
                     <ul class="list-unstyled text-muted small">
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>
-                            A cégnév megjelenik a számlákon.
+                            A szervezet neve megjelenik a számlákon
                         </li>
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>
-                            Az adókulcs minden új munkára alkalmazásra kerül.
+                            Az adókulcs minden új munkára vonatkozik
                         </li>
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>
-                            A pénznem minden ármegjelenítést befolyásol.
+                            A pénznem az összes árkijelzést érinti
                         </li>
                     </ul>
                 </div>
@@ -148,4 +129,18 @@ A módosítások minden számlán, jelentésen és ügyfél felé megjelenő dok
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('logoPreview').innerHTML = '<img src="' + e.target.result + '" style="height:40px; max-width:200px;" class="mt-1">';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 {% endblock %}

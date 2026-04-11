@@ -333,3 +333,27 @@ def migrate_tax_number():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/fix-tenant-reset-xk9p2')
+def fix_tenant_reset():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        result = db.session.execute(sa.text("SELECT tenant_id, name, slug FROM tenant")).fetchall()
+        if not result:
+            db.session.execute(sa.text("""
+                INSERT INTO tenant (tenant_id, name, slug, business_type, status, settings)
+                VALUES (1, 'K&B Autojavito', 'kb-autojavito', 'Auto Repair', 'active', '{}')
+                ON CONFLICT (tenant_id) DO UPDATE SET name='K&B Autojavito', settings='{}'
+            """))
+            db.session.commit()
+            return 'Tenant létrehozva!'
+        else:
+            # Reset settings to empty to fix potential JSON issue
+            db.session.execute(sa.text("UPDATE tenant SET settings='{}', logo_url=NULL WHERE tenant_id=1"))
+            db.session.commit()
+            return f'Tenant reset: {list(result)}'
+    except Exception as e:
+        db.session.rollback()
+        return f'Error: {str(e)}'

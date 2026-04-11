@@ -370,3 +370,11 @@ def migrate_logo_column():
     except Exception as e:
         db.session.rollback()
         return f'Error: {str(e)}'
+
+
+@main_bp.route('/debug-tenant-xk9p2')
+def debug_tenant():
+    import sqlalchemy as sa
+    from app.extensions import db
+    result = db.session.execute(sa.text("SELECT tenant_id, name, settings, logo_url FROM tenant WHERE tenant_id=1")).fetchone()
+    return f'Tenant: id={result[0]} name={result[1]} settings={result[2]} logo={str(result[3])[:50] if result[3] else None}'

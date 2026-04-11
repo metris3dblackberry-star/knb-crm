@@ -51,6 +51,34 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
+                                    <i class="ti ti-file-invoice me-1"></i>
+                                    Adószám
+                                </label>
+                                <input type="text" class="form-control" name="tax_id" value="{{ org.settings.get('tax_id', '') if org.settings else '' }}" placeholder="12345678-1-42">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-world me-1"></i>
+                                    Közösségi adószám
+                                </label>
+                                <input type="text" class="form-control" name="eu_tax_id" value="{{ org.settings.get('eu_tax_id', '') if org.settings else '' }}" placeholder="HU12345678">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-building-bank me-1"></i>
+                                    Bankszámlaszám
+                                </label>
+                                <input type="text" class="form-control" name="bank_account" value="{{ org.settings.get('bank_account', '') if org.settings else '' }}" placeholder="12345678-12345678-12345678">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-certificate me-1"></i>
+                                    Cégjegyzékszám
+                                </label>
+                                <input type="text" class="form-control" name="company_reg" value="{{ org.settings.get('company_reg', '') if org.settings else '' }}" placeholder="01-09-123456">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
                                     <i class="ti ti-mail me-1"></i>
                                     E-mail
                                 </label>

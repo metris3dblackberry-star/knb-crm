@@ -539,6 +539,10 @@ def org_settings():
                 except ValueError:
                     pass
             settings['currency'] = request.form.get('currency', 'HUF')
+            for field in ['tax_id', 'eu_tax_id', 'bank_account', 'company_reg']:
+                val = request.form.get(field, '').strip()
+                if val:
+                    settings[field] = val
             tenant.settings = settings
             flag_modified(tenant, 'settings')
 

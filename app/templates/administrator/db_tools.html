@@ -1,0 +1,117 @@
+{% extends "base/layout.html" %}
+{% block title %}DB Eszközök{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+    <li class="breadcrumb-item active">DB Eszközök</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-2 d-flex align-items-center gap-2">
+            <i class="ti ti-database text-primary"></i> DB Eszközök
+        </h1>
+        <p class="text-muted mb-0">Adatbázis állapot és munkák visszaállítása</p>
+    </div>
+</div>
+
+<!-- Statisztikák -->
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body text-center">
+        <div class="subheader text-muted mb-1">MUNKÁK</div>
+        <div class="h1 {% if stats.jobs == 0 %}text-danger{% else %}text-success{% endif %}">{{ stats.jobs }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body text-center">
+        <div class="subheader text-muted mb-1">ÜGYFELEK</div>
+        <div class="h1 {% if stats.customers == 0 %}text-danger{% else %}text-success{% endif %}">{{ stats.customers }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body text-center">
+        <div class="subheader text-muted mb-1">SZOLGÁLTATÁSOK</div>
+        <div class="h1 {% if stats.services == 0 %}text-danger{% else %}text-success{% endif %}">{{ stats.services }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body text-center">
+        <div class="subheader text-muted mb-1">NOTES OSZLOP</div>
+        <div class="h1 {% if stats.notes_col %}text-success{% else %}text-danger{% endif %}">
+            {{ '✅' if stats.notes_col else '❌' }}
+        </div>
+    </div></div></div>
+</div>
+
+<!-- Migration futtatás -->
+<div class="card mb-4">
+    <div class="card-header"><h3 class="card-title"><i class="ti ti-database-cog me-2"></i>Migrációk futtatása</h3></div>
+    <div class="card-body">
+        <p class="text-muted">Csak <code>ADD COLUMN IF NOT EXISTS</code> — soha nem töröl adatot.</p>
+        <form method="POST" action="{{ url_for('administrator.db_migrate') }}">
+            <button type="submit" class="btn btn-outline-primary"
+                    onclick="return confirm('Futtatod a migrációkat?')">
+                <i class="ti ti-play me-2"></i>Migráció futtatása
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Munka visszaállítás -->
+{% if stats.customers > 0 %}
+<div class="card mb-4">
+    <div class="card-header"><h3 class="card-title"><i class="ti ti-file-plus me-2"></i>Elveszett munka visszaállítása</h3></div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('administrator.recover_job') }}" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Ügyfél</label>
+                <select name="customer_id" class="form-select" required>
+                    <option value="">-- Válassz ügyfelet --</option>
+                    {% for c in customers %}
+                    <option value="{{ c.customer_id }}">{{ c.first_name }} {{ c.family_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Munka dátuma</label>
+                <input type="date" name="job_date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Megjegyzés (opcionális)</label>
+                <input type="text" name="notes" class="form-control" placeholder="pl. Olajcsere, fékbetét">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="ti ti-plus"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Jelenlegi munkák -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="ti ti-list me-2"></i>Összes munka az adatbázisban</h3></div>
+    {% if jobs %}
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>Job ID</th><th>Ügyfél</th><th>Dátum</th><th>Összeg</th><th>Státusz</th></tr></thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td><a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}">#{{ job.job_id }}</a></td>
+                    <td>{{ job.customer_rel.first_name ~ ' ' ~ job.customer_rel.family_name if job.customer_rel else job.customer }}</td>
+                    <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</td>
+                    <td>{{ "%.0f"|format(job.total_cost|float) }} Ft</td>
+                    <td>
+                        {% if job.completed %}<span class="badge bg-success">Befejezett</span>
+                        {% else %}<span class="badge bg-warning">Folyamatban</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty"><div class="empty-icon"><i class="ti ti-inbox"></i></div>
+        <p class="empty-title text-danger">Nincs munka az adatbázisban!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

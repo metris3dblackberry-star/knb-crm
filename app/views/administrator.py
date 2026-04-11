@@ -1023,3 +1023,123 @@ def subscription_management():
                              subscription=None,
                              current_plan={'name': 'Ingyenes', 'status': 'active'},
                              usage={})
+
+
+# =============================================================================
+# DB TOOLS — adatbázis állapot ellenőrzés és munkák visszaállítása
+# =============================================================================
+
+@administrator_bp.route('/db-tools')
+@handle_database_errors
+def db_tools():
+    """Database status and recovery tool"""
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    from app.extensions import db
+    from app.models.job import Job
+    from app.models.customer import Customer
+    from app.models.service import Service
+    from app.models.part import Part
+
+    try:
+        tenant_id = session.get('current_tenant_id') or 1
+        jobs = db.session.execute(db.select(Job).where(Job.tenant_id == tenant_id)).scalars().all()
+        customers = db.session.execute(db.select(Customer).where(Customer.tenant_id == tenant_id)).scalars().all()
+        services = db.session.execute(db.select(Service).where(Service.tenant_id == tenant_id)).scalars().all()
+        parts = db.session.execute(db.select(Part).where(Part.tenant_id == tenant_id)).scalars().all()
+
+        # notes oszlop ellenőrzése
+        notes_col_exists = False
+        try:
+            db.session.execute(db.text("SELECT notes FROM job LIMIT 1"))
+            notes_col_exists = True
+        except Exception:
+            db.session.rollback()
+
+        stats = {
+            'jobs': len(jobs),
+            'customers': len(customers),
+            'services': len(services),
+            'parts': len(parts),
+            'notes_col': notes_col_exists,
+        }
+        return render_template('administrator/db_tools.html', stats=stats, jobs=jobs, customers=customers)
+
+    except Exception as e:
+        logger.error(f"DB tools error: {e}")
+        flash(f'Hiba: {e}', 'error')
+        return redirect(url_for('administrator.dashboard'))
+
+
+@administrator_bp.route('/db-tools/migrate', methods=['POST'])
+@handle_database_errors
+def db_migrate():
+    """Run safe migrations (ADD COLUMN only, never drops)"""
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    from app.extensions import db
+    results = []
+
+    migrations = [
+        ("notes oszlop (job)", "ALTER TABLE job ADD COLUMN IF NOT EXISTS notes TEXT"),
+    ]
+
+    for name, sql in migrations:
+        try:
+            db.session.execute(db.text(sql))
+            db.session.commit()
+            results.append(f"✅ {name}")
+        except Exception as e:
+            db.session.rollback()
+            results.append(f"⚠️ {name}: {e}")
+
+    flash(' | '.join(results), 'info')
+    return redirect(url_for('administrator.db_tools'))
+
+
+@administrator_bp.route('/db-tools/recover-job', methods=['POST'])
+@handle_database_errors
+def recover_job():
+    """Manually re-create a lost job"""
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    from app.extensions import db
+    from app.models.job import Job
+    from datetime import datetime
+
+    try:
+        customer_id = request.form.get('customer_id', type=int)
+        job_date_str = request.form.get('job_date', '')
+        notes = request.form.get('notes', '').strip()
+        tenant_id = session.get('current_tenant_id') or 1
+
+        if not customer_id or not job_date_str:
+            flash('Ügyfél és dátum kötelező!', 'error')
+            return redirect(url_for('administrator.db_tools'))
+
+        job_date = datetime.strptime(job_date_str, '%Y-%m-%d').date()
+        job = Job(
+            customer=customer_id,
+            job_date=job_date,
+            tenant_id=tenant_id,
+            total_cost=0.0,
+            completed=False,
+            paid=False,
+            notes=notes or None,
+        )
+        db.session.add(job)
+        db.session.commit()
+        flash(f'✅ Munka #{job.job_id} visszaállítva!', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Job recovery error: {e}")
+        flash(f'Hiba: {e}', 'error')
+
+    return redirect(url_for('administrator.db_tools'))

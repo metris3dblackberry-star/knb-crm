@@ -150,21 +150,26 @@ def generate_worksheet(job_id):
     parts = job.get_parts()
 
     # Unicode font
-    font_paths = [
-        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-    ]
     unicode_font = 'Helvetica'
     unicode_font_bold = 'Helvetica-Bold'
-    for path in font_paths:
-        if os.path.exists(path):
+    font_candidates = [
+        ('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
+        ('/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
+         '/usr/share/fonts/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
+        ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
+        ('/usr/share/fonts/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
+    ]
+    for reg_path, bold_path, fname in font_candidates:
+        if os.path.exists(reg_path):
             try:
-                pdfmetrics.registerFont(TTFont('DejaVuSans', path))
-                bold_path = path.replace('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf')
+                pdfmetrics.registerFont(TTFont(fname, reg_path))
                 if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
-                    unicode_font_bold = 'DejaVuSans-Bold'
-                unicode_font = 'DejaVuSans'
+                    pdfmetrics.registerFont(TTFont(fname+'-Bold', bold_path))
+                    unicode_font_bold = fname+'-Bold'
+                unicode_font = fname
             except Exception:
                 pass
             break
@@ -701,23 +706,26 @@ def generate_invoice(job_id):
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
     import os
-    font_paths = [
-        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
-        '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
-    ]
     unicode_font = 'Helvetica'
     unicode_font_bold = 'Helvetica-Bold'
-    for path in font_paths:
-        if os.path.exists(path):
+    font_candidates = [
+        ('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
+        ('/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
+         '/usr/share/fonts/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
+        ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
+        ('/usr/share/fonts/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
+    ]
+    for reg_path, bold_path, fname in font_candidates:
+        if os.path.exists(reg_path):
             try:
-                pdfmetrics.registerFont(TTFont('DejaVuSans', path))
-                bold_path = path.replace('DejaVuSans.ttf', 'DejaVuSans-Bold.ttf')
+                pdfmetrics.registerFont(TTFont(fname, reg_path))
                 if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
-                    unicode_font_bold = 'DejaVuSans-Bold'
-                unicode_font = 'DejaVuSans'
+                    pdfmetrics.registerFont(TTFont(fname+'-Bold', bold_path))
+                    unicode_font_bold = fname+'-Bold'
+                unicode_font = fname
             except Exception:
                 pass
             break

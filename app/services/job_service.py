@@ -107,9 +107,9 @@ class JobService:
             if job.completed:
                 return False, ["Cannot modify a completed job"]
 
-            service = Service.find_by_id(service_id)
+            service = db.session.get(Service, service_id)
             if not service:
-                return False, ["Service does not exist"]
+                return False, ["Szolgáltatás nem található"]
 
             job.add_service(service_id, quantity)
             self.logger.info(f"Added service {service.service_name} to job {job_id}")
@@ -146,9 +146,9 @@ class JobService:
             if job.completed:
                 return False, ["Cannot modify a completed job"]
 
-            part = Part.find_by_id(part_id)
+            part = db.session.get(Part, part_id)
             if not part:
-                return False, ["Part does not exist"]
+                return False, ["Alkatrész nem található"]
 
             job.add_part(part_id, quantity)
             self.logger.info(f"Added part {part.part_name} to job {job_id}")

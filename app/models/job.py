@@ -194,15 +194,16 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if not service:
             raise ValueError(f"Service {service_id} not found")
 
-        # Ha már szerepel, növeljük a mennyiséget
         existing = next((js for js in self.job_services if js.service_id == service_id), None)
         if existing:
             existing.qty += quantity
         else:
             job_service = JobService(job_id=self.job_id, service_id=service_id, qty=quantity)
             db.session.add(job_service)
+        db.session.flush()
         self._update_total_cost()
         db.session.commit()
+        db.session.expire(self)
         return True
 
     def add_part(self, part_id: int, quantity: int) -> bool:
@@ -220,8 +221,10 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         else:
             job_part = JobPart(job_id=self.job_id, part_id=part_id, qty=quantity)
             db.session.add(job_part)
+        db.session.flush()
         self._update_total_cost()
         db.session.commit()
+        db.session.expire(self)
         return True
 
     def mark_as_completed(self) -> bool:

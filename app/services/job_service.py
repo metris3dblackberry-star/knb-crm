@@ -120,7 +120,8 @@ class JobService:
         except Exception as e:
             self.logger.error(f"Failed to add service: {e}")
             db.session.rollback()
-            return False, ["System error, please try again"]
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
 
     def add_part_to_job(self, job_id: int, part_id: int, quantity: int) -> Tuple[bool, List[str]]:
         """
@@ -158,7 +159,8 @@ class JobService:
         except Exception as e:
             self.logger.error(f"Failed to add part: {e}")
             db.session.rollback()
-            return False, ["System error, please try again"]
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
 
     def mark_job_as_completed(self, job_id: int) -> Tuple[bool, List[str]]:
         """

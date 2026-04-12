@@ -45,9 +45,9 @@ class JobService:
             raise
 
     def get_job_by_id(self, job_id: int) -> Optional[Job]:
-        """Get job by ID"""
+        """Get job by ID - bypass tenant scope to avoid g.current_tenant_id issues"""
         try:
-            return Job.find_by_id(job_id)
+            return db.session.get(Job, job_id)
         except Exception as e:
             self.logger.error(f"Failed to get job (ID: {job_id}): {e}")
             raise

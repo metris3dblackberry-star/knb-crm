@@ -186,7 +186,7 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         ]
 
     def add_service(self, service_id: int, quantity: int) -> bool:
-        """Add a service to this job"""
+        """Add a service to this job, or increase qty if already exists"""
         if self.completed:
             raise ValueError("Cannot modify a completed job")
 
@@ -194,20 +194,23 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if not service:
             raise ValueError(f"Service {service_id} not found")
 
-        existing = next((js for js in self.job_services if js.service_id == service_id), None)
-        if existing:
-            existing.qty += quantity
-        else:
-            job_service = JobService(job_id=self.job_id, service_id=service_id, qty=quantity)
-            db.session.add(job_service)
+        db.session.execute(
+            db.text("""
+                INSERT INTO job_service (job_id, service_id, qty)
+                VALUES (:job_id, :service_id, :qty)
+                ON CONFLICT (job_id, service_id) DO UPDATE
+                SET qty = job_service.qty + :qty
+            """),
+            {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
+        )
         db.session.flush()
+        db.session.expire(self)
         self._update_total_cost()
         db.session.commit()
-        db.session.expire(self)
         return True
 
     def add_part(self, part_id: int, quantity: int) -> bool:
-        """Add a part to this job"""
+        """Add a part to this job, or increase qty if already exists"""
         if self.completed:
             raise ValueError("Cannot modify a completed job")
 
@@ -215,16 +218,19 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if not part:
             raise ValueError(f"Part {part_id} not found")
 
-        existing = next((jp for jp in self.job_parts if jp.part_id == part_id), None)
-        if existing:
-            existing.qty += quantity
-        else:
-            job_part = JobPart(job_id=self.job_id, part_id=part_id, qty=quantity)
-            db.session.add(job_part)
+        db.session.execute(
+            db.text("""
+                INSERT INTO job_part (job_id, part_id, qty)
+                VALUES (:job_id, :part_id, :qty)
+                ON CONFLICT (job_id, part_id) DO UPDATE
+                SET qty = job_part.qty + :qty
+            """),
+            {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
+        )
         db.session.flush()
+        db.session.expire(self)
         self._update_total_cost()
         db.session.commit()
-        db.session.expire(self)
         return True
 
     def mark_as_completed(self) -> bool:

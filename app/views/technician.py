@@ -284,7 +284,8 @@ def generate_worksheet(job_id):
     story.append(Spacer(1, 1.5*cm))
 
     if job.notes:
-        story.append(Paragraph('<b>Megjegyzés</b>', ParagraphStyle('h3', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        story.append(Paragraph('<b>Megjegyzés</b>', ParagraphStyle('h3', fontSize=11, fontName=unicode_font_bold, spaceAfter=14)))
+        story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(job.notes, ParagraphStyle('notes', fontSize=9, fontName=unicode_font, leading=14,
                                                           borderPadding=10, backColor=colors.HexColor('#fffbeb'),
                                                           borderColor=colors.HexColor('#f59e0b'), borderWidth=0.5)))

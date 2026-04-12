@@ -1214,3 +1214,77 @@ def mark_job_paid(job_id):
         db.session.rollback()
         logger.error(f"Mark paid failed: {e}")
         return jsonify({'error': str(e)}), 500
+
+
+# ── TÖRLÉS ROUTE-OK ──────────────────────────────────────────────────────────
+
+@technician_bp.route('/jobs/<int:job_id>/delete', methods=['POST'])
+@handle_database_errors
+def delete_job(job_id):
+    """Delete a job"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+    try:
+        from app.models.job import Job
+        from app.extensions import db
+        job = db.session.get(Job, job_id)
+        if not job:
+            flash('Munka nem található', 'error')
+            return redirect(url_for('technician.current_jobs'))
+        db.session.delete(job)
+        db.session.commit()
+        flash(f'Munka #{job_id} törölve!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Delete job failed: {e}")
+        flash(f'Törlési hiba: {str(e)}', 'error')
+    return redirect(url_for('technician.current_jobs'))
+
+
+@technician_bp.route('/services/<int:service_id>/delete', methods=['POST'])
+@handle_database_errors
+def delete_service(service_id):
+    """Delete a service"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+    try:
+        from app.models.service import Service
+        from app.extensions import db
+        service = db.session.get(Service, service_id)
+        if not service:
+            flash('Szolgáltatás nem található', 'error')
+            return redirect(url_for('technician.services'))
+        db.session.delete(service)
+        db.session.commit()
+        flash(f'Szolgáltatás törölve: {service.service_name}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Delete service failed: {e}")
+        flash(f'Törlési hiba: {str(e)}', 'error')
+    return redirect(url_for('technician.services'))
+
+
+@technician_bp.route('/parts/<int:part_id>/delete', methods=['POST'])
+@handle_database_errors
+def delete_part(part_id):
+    """Delete a part"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+    try:
+        from app.models.part import Part
+        from app.extensions import db
+        part = db.session.get(Part, part_id)
+        if not part:
+            flash('Alkatrész nem található', 'error')
+            return redirect(url_for('technician.parts'))
+        db.session.delete(part)
+        db.session.commit()
+        flash(f'Alkatrész törölve: {part.part_name}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Delete part failed: {e}")
+        flash(f'Törlési hiba: {str(e)}', 'error')
+    return redirect(url_for('technician.parts'))

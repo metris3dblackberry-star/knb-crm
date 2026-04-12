@@ -412,3 +412,25 @@ def check_fonts():
     result = subprocess.run(['find', '/usr/share/fonts', '-name', '*.ttf'], 
                           capture_output=True, text=True)
     return f'<pre>{result.stdout}</pre>'
+
+
+@main_bp.route('/customers/<int:customer_id>/delete', methods=['POST'])
+@handle_database_errors
+def delete_customer(customer_id):
+    """Delete a customer"""
+    from app.extensions import db
+    from app.models.customer import Customer
+    try:
+        customer = db.session.get(Customer, customer_id)
+        if not customer:
+            flash('Ügyfél nem található', 'error')
+            return redirect(url_for('main.customers'))
+        name = customer.full_name
+        db.session.delete(customer)
+        db.session.commit()
+        flash(f'Ügyfél törölve: {name}', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Delete customer failed: {e}")
+        flash(f'Törlési hiba: {str(e)}', 'error')
+    return redirect(url_for('main.customers'))

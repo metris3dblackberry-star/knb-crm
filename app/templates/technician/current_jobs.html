@@ -203,6 +203,13 @@
                                             onclick="viewJobDetails({{ record.job_id }})" title="Quick View">
                                         <i class="ti ti-eye"></i>
                                     </button>
+                                    <form method="POST" action="{{ url_for('technician.delete_job', job_id=record.job_id) }}"
+                                          class="d-inline" onsubmit="return confirm('Biztosan törlöd a Munka #{{ record.job_id }} munkát?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Törlés">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </form>
                                     {% if session.current_role in ('owner', 'admin') and record.paid == 0 %}
                                         <button type="button" class="btn btn-sm btn-outline-success"
                                                 onclick="markAsFizetve({{ record.job_id }})" title="Mark as Fizetve">

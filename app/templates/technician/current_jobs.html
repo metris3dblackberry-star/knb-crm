@@ -204,7 +204,7 @@
                                         <i class="ti ti-eye"></i>
                                     </button>
                                     <form method="POST" action="{{ url_for('technician.delete_job', job_id=record.job_id) }}"
-                                          class="d-inline" onsubmit="return confirm('Biztosan törlöd a Munka #{{ record.job_id }} munkát?')">
+                                          class="d-inline">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Törlés">
                                             <i class="ti ti-trash"></i>

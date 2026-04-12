@@ -120,8 +120,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form method="POST" action="{{ url_for('technician.delete_part', part_id=part.part_id) }}"
-                              onsubmit="return confirm('Biztosan törlöd: ' + '{{ part.part_name }}' + '?')">
+                        <form method="POST" action="{{ url_for('technician.delete_part', part_id=part.part_id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Törlés">
                                 <i class="ti ti-trash"></i>

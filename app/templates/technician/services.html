@@ -96,8 +96,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <form method="POST" action="{{ url_for('technician.delete_service', service_id=service.service_id) }}"
-                              onsubmit="return confirm('Biztosan törlöd: ' + '{{ service.service_name }}' + '?')">
+                        <form method="POST" action="{{ url_for('technician.delete_service', service_id=service.service_id) }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Törlés">
                                 <i class="ti ti-trash"></i>

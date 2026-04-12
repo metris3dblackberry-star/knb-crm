@@ -867,3 +867,330 @@ def generate_invoice(job_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=szamla-{invoice_num}.pdf'
     return response
+
+
+def _generate_invoice_pdf(job_id):
+    """Generate invoice PDF as bytes (reused by email sender)"""
+    from io import BytesIO
+    from flask import current_app
+    import importlib, sys
+
+    # Reuse the existing generate_invoice logic but return bytes
+    from app.models.job import Job
+    from app.extensions import db
+    job = db.session.get(Job, job_id)
+    if not job:
+        return None, None
+
+    # Build PDF using same code path — call the view and capture buffer
+    # We'll duplicate the buffer logic here cleanly
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    import datetime
+
+    unicode_font, unicode_font_bold = _load_unicode_font()
+    from flask import session
+    from app.models.tenant import Tenant
+    tenant_id = session.get('current_tenant_id') or 1
+    tenant = Tenant.find_by_id(tenant_id)
+    settings = tenant.settings or {} if tenant else {}
+    customer = job.customer_rel
+    services = job.get_services()
+    parts = job.get_parts()
+    all_items = [{'name': s['service_name'], 'qty': s['qty'], 'net': s['cost']} for s in services] + \
+                [{'name': p['part_name'], 'qty': p['qty'], 'net': p['cost']} for p in parts]
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                           rightMargin=1.5*cm, leftMargin=1.5*cm,
+                           topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    for style in styles.byName.values():
+        style.fontName = unicode_font
+    story = []
+    white = colors.white
+    accent_color = colors.HexColor('#e87e04')
+    primary_color = colors.HexColor('#1e3a5f')
+
+    invoice_num = f"KNB-{datetime.date.today().year}-{job_id:04d}"
+    header_data = [[
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="10"><b>Számla</b><br/>{invoice_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+    ]]
+    header_table = Table(header_data, colWidths=[10*cm, 8*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), accent_color),
+        ('TOPPADDING', (0,0), (-1,-1), 18), ('BOTTOMPADDING', (0,0), (-1,-1), 18),
+        ('LEFTPADDING', (0,0), (-1,-1), 16), ('RIGHTPADDING', (0,0), (-1,-1), 16),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('ALIGN', (1,0), (1,0), 'RIGHT'),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
+    seller = settings.get('seller_name', tenant.name if tenant else 'K&B Autójavító')
+    left = f'<b>Eladó</b><br/>{seller}<br/>{settings.get("reg_num","")}<br/>{settings.get("address","")}<br/>Adószám: {settings.get("tax_number","")}<br/>Bankszámlaszám: {settings.get("bank_account","")}'
+    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
+    right = f'<b>Vevő</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}'
+    info_data = [[Paragraph(left, info_style), Paragraph(right, info_style)]]
+    info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+    info_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('LINEAFTER', (0,0), (0,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 12), ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
+    cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
+    VAT = 0.27
+    rows = [[Paragraph(h, th_style) for h in ['Tétel', 'Menny.', 'Nettó', 'ÁFA 27%', 'Bruttó']]]
+    grand_net = grand_brutto = 0
+    for item in all_items:
+        net = item['net'] * item['qty']
+        vat_amt = round(net * VAT)
+        brutto = net + vat_amt
+        grand_net += net; grand_brutto += brutto
+        rows.append([Paragraph(item['name'], cell_style), Paragraph(f"{item['qty']} db", cell_style),
+                     Paragraph(f"{net:,.0f} Ft".replace(',', ' '), cell_style),
+                     Paragraph(f"{vat_amt:,.0f} Ft".replace(',', ' '), cell_style),
+                     Paragraph(f"{brutto:,.0f} Ft".replace(',', ' '), cell_style)])
+    t = Table(rows, colWidths=[7*cm, 2*cm, 3*cm, 2.5*cm, 3.5*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), primary_color),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 8), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ALIGN', (1,0), (-1,-1), 'RIGHT'),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 0.4*cm))
+    total_style = ParagraphStyle('total', fontSize=12, fontName=unicode_font_bold, alignment=TA_RIGHT)
+    story.append(Paragraph(f'<b>Bruttó összesen: {grand_brutto:,.0f} Ft</b>'.replace(',', ' '), total_style))
+    story.append(Spacer(1, 0.5*cm))
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.read(), invoice_num
+
+
+def _generate_worksheet_pdf(job_id):
+    """Generate worksheet PDF as bytes (reused by email sender)"""
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
+    import datetime
+
+    from app.models.job import Job
+    from app.extensions import db
+    from flask import session
+    from app.models.tenant import Tenant
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        return None, None
+
+    unicode_font, unicode_font_bold = _load_unicode_font()
+    tenant_id = session.get('current_tenant_id') or 1
+    tenant = Tenant.find_by_id(tenant_id)
+    customer = job.customer_rel
+    services = job.get_services()
+    parts = job.get_parts()
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                           rightMargin=1.5*cm, leftMargin=1.5*cm,
+                           topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    for style in styles.byName.values():
+        style.fontName = unicode_font
+    story = []
+    white = colors.white
+    primary_color = colors.HexColor('#1e3a5f')
+
+    ws_num = f"ML-{datetime.date.today().year}-{job_id:04d}"
+    header_data = [[
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="10"><b>Munkalap</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+    ]]
+    header_table = Table(header_data, colWidths=[10*cm, 8*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), primary_color),
+        ('TOPPADDING', (0,0), (-1,-1), 18), ('BOTTOMPADDING', (0,0), (-1,-1), 18),
+        ('LEFTPADDING', (0,0), (-1,-1), 16), ('RIGHTPADDING', (0,0), (-1,-1), 16),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('ALIGN', (1,0), (1,0), 'RIGHT'),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
+    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
+    info_data = [[
+        Paragraph(f'<b>Ügyfél adatai</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}', info_style),
+        Paragraph(f'<b>Munka adatai</b><br/>Munkalap sz.: {ws_num}<br/>Dátum: {job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A"}<br/>Státusz: {"Befejezett" if job.completed else "Folyamatban"}', info_style),
+    ]]
+    info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+    info_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('LINEAFTER', (0,0), (0,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 12), ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#f8fafc')),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
+    cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
+
+    if services:
+        story.append(Paragraph('<b>Elvégzett munkák</b>', ParagraphStyle('h', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        svc_data = [[Paragraph('Megnevezés', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        for s in services:
+            svc_data.append([Paragraph(s['service_name'], cell_style), Paragraph(str(s['qty']), cell_style), Paragraph('', cell_style)])
+        t = Table(svc_data, colWidths=[9*cm, 2.5*cm, 6.5*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), primary_color),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+            ('PADDING', (0,0), (-1,-1), 8), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 0.4*cm))
+
+    if parts:
+        story.append(Paragraph('<b>Felhasznált alkatrészek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        parts_data = [[Paragraph('Alkatrész', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        for p in parts:
+            parts_data.append([Paragraph(p['part_name'], cell_style), Paragraph(str(p['qty']), cell_style), Paragraph('', cell_style)])
+        t = Table(parts_data, colWidths=[9*cm, 2.5*cm, 6.5*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), primary_color),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+            ('PADDING', (0,0), (-1,-1), 8), ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(t)
+        story.append(Spacer(1, 0.4*cm))
+
+    story.append(Spacer(1, 1.5*cm))
+    if job.notes:
+        story.append(Paragraph('<b>Megjegyzés</b>', ParagraphStyle('h3', fontSize=11, fontName=unicode_font_bold, spaceAfter=14)))
+        story.append(Spacer(1, 0.3*cm))
+        story.append(Paragraph(job.notes, ParagraphStyle('notes', fontSize=9, fontName=unicode_font, leading=14,
+                                                          borderPadding=10, backColor=colors.HexColor('#fffbeb'),
+                                                          borderColor=colors.HexColor('#f59e0b'), borderWidth=0.5)))
+        story.append(Spacer(1, 1.2*cm))
+
+    sign_data = [[
+        Paragraph('Szerelő aláírása: ________________________', cell_style),
+        Paragraph('Ügyfél aláírása: ________________________', cell_style),
+    ]]
+    sign_table = Table(sign_data, colWidths=[9*cm, 9*cm])
+    sign_table.setStyle(TableStyle([('PADDING', (0,0), (-1,-1), 4)]))
+    story.append(sign_table)
+    story.append(Spacer(1, 0.5*cm))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.read(), ws_num
+
+
+@technician_bp.route('/jobs/<int:job_id>/send-email', methods=['POST'])
+@handle_database_errors
+def send_job_email(job_id):
+    """Send invoice and worksheet PDF to customer via email"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+
+    import smtplib
+    import os
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.application import MIMEApplication
+    from app.models.job import Job
+    from app.extensions import db
+
+    try:
+        job = db.session.get(Job, job_id)
+        if not job:
+            flash('Munka nem található', 'error')
+            return redirect(url_for('technician.current_jobs'))
+
+        customer = job.customer_rel
+        if not customer or not customer.email:
+            flash('Az ügyfélnek nincs email címe!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
+
+        gmail_user = os.environ.get('GMAIL_USER', '')
+        gmail_pass = os.environ.get('GMAIL_APP_PASSWORD', '')
+        if not gmail_user or not gmail_pass:
+            flash('Gmail beállítások hiányoznak (GMAIL_USER, GMAIL_APP_PASSWORD)!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
+
+        # PDF-ek generálása
+        invoice_bytes, invoice_num = _generate_invoice_pdf(job_id)
+        worksheet_bytes, ws_num = _generate_worksheet_pdf(job_id)
+
+        if not invoice_bytes or not worksheet_bytes:
+            flash('PDF generálási hiba!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
+
+        # Email összeállítása
+        msg = MIMEMultipart()
+        msg['From'] = gmail_user
+        msg['To'] = customer.email
+        msg['Subject'] = f'Számla és munkalap – {invoice_num}'
+
+        buyer_name = f"{customer.first_name} {customer.family_name}"
+        body = f"""Tisztelt {buyer_name}!
+
+Mellékletben megküldjük a elvégzett munkáról szóló számlát és munkalapot.
+
+Számlaszám: {invoice_num}
+Munkalap: {ws_num}
+Összeg: {job.total_cost:,.0f} Ft
+
+Köszönjük bizalmát!
+
+Üdvözlettel,
+K&B Autójavító csapata
+""".replace(',', ' ')
+
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+        # Csatolmányok
+        inv_attachment = MIMEApplication(invoice_bytes, _subtype='pdf')
+        inv_attachment.add_header('Content-Disposition', 'attachment', filename=f'szamla-{invoice_num}.pdf')
+        msg.attach(inv_attachment)
+
+        ws_attachment = MIMEApplication(worksheet_bytes, _subtype='pdf')
+        ws_attachment.add_header('Content-Disposition', 'attachment', filename=f'munkalap-{ws_num}.pdf')
+        msg.attach(ws_attachment)
+
+        # Küldés
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(gmail_user, gmail_pass)
+            server.sendmail(gmail_user, customer.email, msg.as_string())
+
+        flash(f'Email elküldve: {customer.email}', 'success')
+        logger.info(f"Email sent to {customer.email} for job {job_id}")
+
+    except Exception as e:
+        logger.error(f"Email send failed: {e}")
+        flash(f'Email küldési hiba: {str(e)}', 'error')
+
+    return redirect(url_for('technician.job_detail', job_id=job_id))

@@ -39,6 +39,14 @@
         <a href="{{ url_for('technician.generate_worksheet', job_id=data.job_id) }}" class="btn btn-outline-secondary" target="_blank">
             <i class="ti ti-clipboard-text me-2"></i>Munkalap PDF
         </a>
+        {% if data.email %}
+        <form action="{{ url_for('technician.send_job_email', job_id=data.job_id) }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-outline-success"
+                    onclick="return confirm('Elküldjük a számlát és munkalapot erre a címre: {{ data.email }}?')">
+                <i class="ti ti-mail me-2"></i>Küldés emailben
+            </button>
+        </form>
+        {% endif %}
         <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-secondary">
             <i class="ti ti-arrow-left me-2"></i>Vissza a munkákhoz
         </a>

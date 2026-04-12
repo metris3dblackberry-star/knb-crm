@@ -371,23 +371,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.querySelector('#jobsTable tbody');
         const rows = Array.from(tbody.querySelectorAll('.job-row'));
 
+        function parseHunDate(str) {
+            // "2026. 04. 12." → Date
+            const m = str.trim().match(/(\d{4})\.\s*(\d{2})\.\s*(\d{2})/);
+            return m ? new Date(m[1], m[2]-1, m[3]) : new Date(0);
+        }
+        function parseAmount(str) {
+            return parseFloat(str.replace(/[^\d.]/g, '')) || 0;
+        }
+
         rows.sort((a, b) => {
             switch (sortValue) {
                 case 'date_asc':
-                    return new Date(a.querySelector('td:nth-child(4)').textContent) -
-                           new Date(b.querySelector('td:nth-child(4)').textContent);
+                    return parseHunDate(a.querySelector('td:nth-child(4)').textContent) -
+                           parseHunDate(b.querySelector('td:nth-child(4)').textContent);
                 case 'date_desc':
-                    return new Date(b.querySelector('td:nth-child(4)').textContent) -
-                           new Date(a.querySelector('td:nth-child(4)').textContent);
+                    return parseHunDate(b.querySelector('td:nth-child(4)').textContent) -
+                           parseHunDate(a.querySelector('td:nth-child(4)').textContent);
                 case 'customer':
-                    return a.querySelector('td:nth-child(2)').textContent.localeCompare(
-                           b.querySelector('td:nth-child(2)').textContent);
+                    return a.querySelector('td:nth-child(3)').textContent.trim().localeCompare(
+                           b.querySelector('td:nth-child(3)').textContent.trim(), 'hu');
                 case 'amount_desc':
-                    return parseFloat(b.querySelector('td:nth-child(5)').textContent.replace('$', '')) -
-                           parseFloat(a.querySelector('td:nth-child(5)').textContent.replace('$', ''));
+                    return parseAmount(b.querySelector('td:nth-child(5)').textContent) -
+                           parseAmount(a.querySelector('td:nth-child(5)').textContent);
                 case 'amount_asc':
-                    return parseFloat(a.querySelector('td:nth-child(5)').textContent.replace('$', '')) -
-                           parseFloat(b.querySelector('td:nth-child(5)').textContent.replace('$', ''));
+                    return parseAmount(a.querySelector('td:nth-child(5)').textContent) -
+                           parseAmount(b.querySelector('td:nth-child(5)').textContent);
                 default:
                     return 0;
             }
@@ -419,10 +428,14 @@ function viewJobDetails(jobId) {
 }
 
 function markAsFizetve(jobId) {
-    if (confirm('Mark this job as paid?')) {
-        // Implementation for marking as paid
-        console.log('Marking job', jobId, 'as paid');
-        // You can implement the actual API call here
+    if (confirm('Biztosan fizetettenek jelölöd ezt a munkát?')) {
+        fetch(`/technician/jobs/${jobId}/mark-paid`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+        }).then(r => {
+            if (r.ok) { window.location.reload(); }
+            else { alert('Hiba történt!'); }
+        }).catch(() => alert('Hiba történt!'));
     }
 }
 </script>

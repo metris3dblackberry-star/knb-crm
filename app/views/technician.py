@@ -1196,3 +1196,25 @@ K&B Autójavító csapata
         flash(f'Email küldési hiba: {str(e)}', 'error')
 
     return redirect(url_for('technician.job_detail', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/mark-paid', methods=['POST'])
+@handle_database_errors
+def mark_job_paid(job_id):
+    """Mark job as paid via AJAX"""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        from app.models.job import Job
+        from app.extensions import db
+        job = db.session.get(Job, job_id)
+        if not job:
+            return jsonify({'error': 'Not found'}), 404
+        job.paid = True
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Mark paid failed: {e}")
+        return jsonify({'error': str(e)}), 500

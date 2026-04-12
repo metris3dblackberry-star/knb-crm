@@ -404,3 +404,11 @@ def migrate_numeric():
     except Exception as e:
         db.session.rollback()
         return f'Hiba: {e}'
+
+
+@main_bp.route('/check-fonts-xk9p2')
+def check_fonts():
+    import os, subprocess
+    result = subprocess.run(['find', '/usr/share/fonts', '-name', '*.ttf'], 
+                          capture_output=True, text=True)
+    return f'<pre>{result.stdout}</pre>'

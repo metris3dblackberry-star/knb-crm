@@ -347,30 +347,30 @@ def add_service_to_job(job_id):
 
     try:
         service_id = request.form.get('service_id', type=int)
-        quantity = request.form.get('quantity', type=int)
+        quantity = request.form.get('quantity', type=int) or 1
 
-        if not service_id or not validate_positive_integer(service_id):
-            flash('Please select a valid service', 'error')
-            return redirect(url_for('technician.modify_job', job_id=job_id))
+        if not service_id or service_id <= 0:
+            flash('Válassz érvényes szolgáltatást!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        if not quantity or not validate_positive_integer(quantity):
-            flash('Please enter a valid quantity', 'error')
-            return redirect(url_for('technician.modify_job', job_id=job_id))
+        if not quantity or quantity <= 0:
+            flash('Érvényes mennyiséget adj meg!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
 
         success, errors = job_service.add_service_to_job(job_id, service_id, quantity)
 
         if success:
-            flash('Service added successfully!', 'success')
+            flash('Szolgáltatás hozzáadva!', 'success')
         else:
             for error in errors:
                 flash(error, 'error')
 
-        return redirect(url_for('technician.modify_job', job_id=job_id))
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
     except Exception as e:
         logger.error(f"Failed to add service: {e}")
-        flash('Failed to add service, please try again later', 'error')
-        return redirect(url_for('technician.modify_job', job_id=job_id))
+        flash('Hiba a szolgáltatás hozzáadásakor', 'error')
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
 
 @technician_bp.route('/jobs/<int:job_id>/add-part', methods=['POST'])
@@ -383,30 +383,30 @@ def add_part_to_job(job_id):
 
     try:
         part_id = request.form.get('part_id', type=int)
-        quantity = request.form.get('quantity', type=int)
+        quantity = request.form.get('quantity', type=int) or 1
 
-        if not part_id or not validate_positive_integer(part_id):
-            flash('Please select a valid part', 'error')
-            return redirect(url_for('technician.modify_job', job_id=job_id))
+        if not part_id or part_id <= 0:
+            flash('Válassz érvényes alkatrészt!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        if not quantity or not validate_positive_integer(quantity):
-            flash('Please enter a valid quantity', 'error')
-            return redirect(url_for('technician.modify_job', job_id=job_id))
+        if not quantity or quantity <= 0:
+            flash('Érvényes mennyiséget adj meg!', 'error')
+            return redirect(url_for('technician.job_detail', job_id=job_id))
 
         success, errors = job_service.add_part_to_job(job_id, part_id, quantity)
 
         if success:
-            flash('Part added successfully!', 'success')
+            flash('Alkatrész hozzáadva!', 'success')
         else:
             for error in errors:
                 flash(error, 'error')
 
-        return redirect(url_for('technician.modify_job', job_id=job_id))
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
     except Exception as e:
         logger.error(f"Failed to add part: {e}")
-        flash('Failed to add part, please try again later', 'error')
-        return redirect(url_for('technician.modify_job', job_id=job_id))
+        flash('Hiba az alkatrész hozzáadásakor', 'error')
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
 
 @technician_bp.route('/jobs/<int:job_id>/complete', methods=['POST'])

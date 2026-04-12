@@ -1113,16 +1113,13 @@ def _generate_worksheet_pdf(job_id):
 @technician_bp.route('/jobs/<int:job_id>/send-email', methods=['POST'])
 @handle_database_errors
 def send_job_email(job_id):
-    """Send invoice and worksheet PDF to customer via email"""
+    """Send invoice and worksheet PDF to customer via Mailgun API"""
     redirect_response = require_technician_login()
     if redirect_response:
         return redirect_response
 
-    import smtplib
     import os
-    from email.mime.multipart import MIMEMultipart
-    from email.mime.text import MIMEText
-    from email.mime.application import MIMEApplication
+    import requests
     from app.models.job import Job
     from app.extensions import db
 
@@ -1137,10 +1134,12 @@ def send_job_email(job_id):
             flash('Az ügyfélnek nincs email címe!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        gmail_user = os.environ.get('GMAIL_USER', '')
-        gmail_pass = os.environ.get('GMAIL_APP_PASSWORD', '')
-        if not gmail_user or not gmail_pass:
-            flash('Gmail beállítások hiányoznak (GMAIL_USER, GMAIL_APP_PASSWORD)!', 'error')
+        mg_api_key = os.environ.get('MAILGUN_API_KEY', '')
+        mg_domain = os.environ.get('MAILGUN_DOMAIN', 'starlabs.hu')
+        from_email = os.environ.get('GMAIL_USER', f'noreply@{mg_domain}')
+
+        if not mg_api_key:
+            flash('MAILGUN_API_KEY hiányzik a Railway Variables-ből!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
         # PDF-ek generálása
@@ -1151,47 +1150,42 @@ def send_job_email(job_id):
             flash('PDF generálási hiba!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        # Email összeállítása
-        msg = MIMEMultipart()
-        msg['From'] = gmail_user
-        msg['To'] = customer.email
-        msg['Subject'] = f'Számla és munkalap – {invoice_num}'
-
         buyer_name = f"{customer.first_name} {customer.family_name}"
+        total = f"{float(job.total_cost):,.0f}".replace(',', ' ') if job.total_cost else '0'
         body = f"""Tisztelt {buyer_name}!
 
-Mellékletben megküldjük a elvégzett munkáról szóló számlát és munkalapot.
+Mellékletben megküldjük az elvégzett munkáról szóló számlát és munkalapot.
 
 Számlaszám: {invoice_num}
 Munkalap: {ws_num}
-Összeg: {job.total_cost:,.0f} Ft
+Összeg: {total} Ft
 
 Köszönjük bizalmát!
 
 Üdvözlettel,
-K&B Autójavító csapata
-""".replace(',', ' ')
+K&B Autójavító csapata"""
 
-        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        response = requests.post(
+            f'https://api.eu.mailgun.net/v3/{mg_domain}/messages',
+            auth=('api', mg_api_key),
+            files=[
+                ('attachment', (f'szamla-{invoice_num}.pdf', invoice_bytes, 'application/pdf')),
+                ('attachment', (f'munkalap-{ws_num}.pdf', worksheet_bytes, 'application/pdf')),
+            ],
+            data={
+                'from': f'K&B Autójavító <{from_email}>',
+                'to': customer.email,
+                'subject': f'Számla és munkalap – {invoice_num}',
+                'text': body,
+            }
+        )
 
-        # Csatolmányok
-        inv_attachment = MIMEApplication(invoice_bytes, _subtype='pdf')
-        inv_attachment.add_header('Content-Disposition', 'attachment', filename=f'szamla-{invoice_num}.pdf')
-        msg.attach(inv_attachment)
-
-        ws_attachment = MIMEApplication(worksheet_bytes, _subtype='pdf')
-        ws_attachment.add_header('Content-Disposition', 'attachment', filename=f'munkalap-{ws_num}.pdf')
-        msg.attach(ws_attachment)
-
-        # Küldés
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, customer.email, msg.as_string())
-
-        flash(f'Email elküldve: {customer.email}', 'success')
-        logger.info(f"Email sent to {customer.email} for job {job_id}")
+        if response.status_code == 200:
+            flash(f'Email elküldve: {customer.email}', 'success')
+            logger.info(f"Email sent via Mailgun to {customer.email} for job {job_id}")
+        else:
+            logger.error(f"Mailgun error: {response.status_code} {response.text}")
+            flash(f'Mailgun hiba: {response.text}', 'error')
 
     except Exception as e:
         logger.error(f"Email send failed: {e}")

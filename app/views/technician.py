@@ -1182,7 +1182,9 @@ K&B Autójavító csapata
         msg.attach(ws_attachment)
 
         # Küldés
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(gmail_user, gmail_pass)
             server.sendmail(gmail_user, customer.email, msg.as_string())
 

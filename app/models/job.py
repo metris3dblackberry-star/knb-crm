@@ -61,7 +61,7 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
     )
     job_date: Mapped[date] = mapped_column(Date, nullable=False)
     customer: Mapped[int] = mapped_column(ForeignKey('customer.customer_id', onupdate='CASCADE'), nullable=False)
-    total_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(6, 2), nullable=True)
+    total_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2), nullable=True)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     paid: Mapped[bool] = mapped_column(Boolean, default=False)
     assigned_to: Mapped[Optional[int]] = mapped_column(
@@ -224,15 +224,21 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if not part:
             raise ValueError(f"Part {part_id} not found")
 
-        db.session.execute(
-            db.text("""
-                INSERT INTO job_part (job_id, part_id, qty)
-                VALUES (:job_id, :part_id, :qty)
-                ON CONFLICT (job_id, part_id) DO UPDATE
-                SET qty = job_part.qty + :qty
-            """),
-            {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
-        )
+        existing = db.session.execute(
+            db.text("SELECT qty FROM job_part WHERE job_id=:job_id AND part_id=:part_id"),
+            {'job_id': self.job_id, 'part_id': part_id}
+        ).fetchone()
+
+        if existing:
+            db.session.execute(
+                db.text("UPDATE job_part SET qty=qty+:qty WHERE job_id=:job_id AND part_id=:part_id"),
+                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
+            )
+        else:
+            db.session.execute(
+                db.text("INSERT INTO job_part (job_id, part_id, qty) VALUES (:job_id, :part_id, :qty)"),
+                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
+            )
         db.session.flush()
         db.session.expire(self)
         self._update_total_cost()
@@ -308,6 +314,8 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
             data['first_name'] = self.customer_rel.first_name
             data['family_name'] = self.customer_rel.family_name
             data['customer_id'] = self.customer_rel.customer_id
+            data['email'] = self.customer_rel.email
+            data['phone'] = self.customer_rel.phone
         return data
 
 

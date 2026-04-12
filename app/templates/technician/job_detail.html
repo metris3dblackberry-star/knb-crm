@@ -29,7 +29,7 @@
         </a>
         <form action="{{ url_for('technician.complete_job', job_id=data.job_id) }}" method="POST" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-success" onclick="return confirm('Biztosan befejezettnek jelöli ezt a munkát? Ez a művelet nem vonható vissza.')">
+            <button type="submit" class="btn btn-success" >
                 <i class="ti ti-circle-check me-2"></i>Befejezettnek jelöl
             </button>
         </form>
@@ -44,7 +44,7 @@
         <form action="{{ url_for('technician.send_job_email', job_id=data.job_id) }}" method="POST" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-success"
-                    onclick="return confirm('Elküldjük a számlát és munkalapot erre a címre: {{ data.email }}?')">
+                    >
                 <i class="ti ti-mail me-2"></i>Küldés emailben
             </button>
         </form>

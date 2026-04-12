@@ -240,10 +240,24 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         return True
 
     def _update_total_cost(self) -> None:
-        """Recalculate and update total cost"""
-        service_total = sum(js.total_cost for js in self.job_services)
-        part_total = sum(jp.total_cost for jp in self.job_parts)
-        self.total_cost = service_total + part_total
+        """Recalculate and update total cost from DB"""
+        from sqlalchemy import select, func
+        from app.models.service import Service
+        from app.models.part import Part
+
+        service_total = db.session.execute(
+            select(func.coalesce(func.sum(Service.cost * JobService.qty), 0))
+            .join(JobService, Service.service_id == JobService.service_id)
+            .where(JobService.job_id == self.job_id)
+        ).scalar() or 0
+
+        part_total = db.session.execute(
+            select(func.coalesce(func.sum(Part.cost * JobPart.qty), 0))
+            .join(JobPart, Part.part_id == JobPart.part_id)
+            .where(JobPart.job_id == self.job_id)
+        ).scalar() or 0
+
+        self.total_cost = Decimal(str(service_total)) + Decimal(str(part_total))
 
     @hybrid_property
     def is_overdue(self) -> bool:

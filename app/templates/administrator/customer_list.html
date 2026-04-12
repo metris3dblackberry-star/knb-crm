@@ -162,6 +162,13 @@
                                             <button type="button" class="btn btn-sm btn-outline-info">
                                                 <i class="ti ti-eye"></i>
                                             </button>
+                                            <form method="POST" action="{{ url_for('main.delete_customer', customer_id=customer.customer_id) }}"
+                                                  class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Törlés">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                     {% endfor %}

@@ -275,19 +275,19 @@ def generate_worksheet(job_id):
         story.append(parts_table)
         story.append(Spacer(1, 0.4*cm))
 
-    # Megjegyzés
+    # Aláírás sor — megjegyzés felette, több space-szel
+    story.append(Spacer(1, 1.5*cm))
+
     if job.notes:
         story.append(Paragraph('<b>Megjegyzés</b>', ParagraphStyle('h3', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
         story.append(Paragraph(job.notes, ParagraphStyle('notes', fontSize=9, fontName=unicode_font, leading=14,
                                                           borderPadding=10, backColor=colors.HexColor('#fffbeb'),
                                                           borderColor=colors.HexColor('#f59e0b'), borderWidth=0.5)))
-        story.append(Spacer(1, 0.4*cm))
+        story.append(Spacer(1, 1.2*cm))
 
-    # Aláírás sor
-    story.append(Spacer(1, 1*cm))
     sign_data = [[
-        Paragraph('Szerelő aláírása: ________________________', cell_style),
-        Paragraph('Ügyfél aláírása: ________________________', cell_style),
+        Paragraph('Szerel\u0151 al\u00e1\u00edr\u00e1sa: ________________________', cell_style),
+        Paragraph('\u00dcgyf\u00e9l al\u00e1\u00edr\u00e1sa: ________________________', cell_style),
     ]]
     sign_table = Table(sign_data, colWidths=[9*cm, 9*cm])
     sign_table.setStyle(TableStyle([('PADDING', (0,0), (-1,-1), 4)]))

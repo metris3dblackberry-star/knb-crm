@@ -21,6 +21,33 @@ job_service = JobService()
 customer_service = CustomerService()
 
 
+def _load_unicode_font():
+    """Load a Unicode-capable TTF font, downloading DejaVu if not present locally."""
+    import os
+    import urllib.request
+
+    reg_path = '/tmp/DejaVuSans.ttf'
+    bold_path = '/tmp/DejaVuSans-Bold.ttf'
+
+    if not os.path.exists(reg_path):
+        urllib.request.urlretrieve(
+            'https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf',
+            reg_path
+        )
+    if not os.path.exists(bold_path):
+        urllib.request.urlretrieve(
+            'https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf',
+            bold_path
+        )
+
+    try:
+        pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
+        return 'DejaVuSans', 'DejaVuSans-Bold'
+    except Exception:
+        return 'Helvetica', 'Helvetica-Bold'
+
+
 def require_technician_login():
     """Check technician login status"""
     if not session.get('logged_in'):
@@ -130,8 +157,6 @@ def generate_worksheet(job_id):
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
     from app.models.job import Job
     from app.models.tenant import Tenant
     from app.extensions import db
@@ -150,29 +175,7 @@ def generate_worksheet(job_id):
     parts = job.get_parts()
 
     # Unicode font
-    unicode_font = 'Helvetica'
-    unicode_font_bold = 'Helvetica-Bold'
-    font_candidates = [
-        ('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
-        ('/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
-         '/usr/share/fonts/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
-        ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
-        ('/usr/share/fonts/dejavu/DejaVuSans.ttf',
-         '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
-    ]
-    for reg_path, bold_path, fname in font_candidates:
-        if os.path.exists(reg_path):
-            try:
-                pdfmetrics.registerFont(TTFont(fname, reg_path))
-                if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont(fname+'-Bold', bold_path))
-                    unicode_font_bold = fname+'-Bold'
-                unicode_font = fname
-            except Exception:
-                pass
-            break
+    unicode_font, unicode_font_bold = _load_unicode_font()
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
@@ -704,32 +707,8 @@ def generate_invoice(job_id):
         return redirect(url_for('technician.current_jobs'))
 
     # Register Unicode font (DejaVu supports Hungarian chars: á, é, í, ó, ö, ő, ú, ü, ű)
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
     import os
-    unicode_font = 'Helvetica'
-    unicode_font_bold = 'Helvetica-Bold'
-    font_candidates = [
-        ('/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
-        ('/usr/share/fonts/liberation/LiberationSans-Regular.ttf',
-         '/usr/share/fonts/liberation/LiberationSans-Bold.ttf', 'LiberationSans'),
-        ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
-        ('/usr/share/fonts/dejavu/DejaVuSans.ttf',
-         '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf', 'DejaVuSans'),
-    ]
-    for reg_path, bold_path, fname in font_candidates:
-        if os.path.exists(reg_path):
-            try:
-                pdfmetrics.registerFont(TTFont(fname, reg_path))
-                if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont(fname+'-Bold', bold_path))
-                    unicode_font_bold = fname+'-Bold'
-                unicode_font = fname
-            except Exception:
-                pass
-            break
+    unicode_font, unicode_font_bold = _load_unicode_font()
 
     # Load tenant settings
     tenant_id = session.get('current_tenant_id') or 1

@@ -22,31 +22,25 @@ customer_service = CustomerService()
 
 
 def _load_unicode_font():
-    """Load a Unicode-capable TTF font, downloading DejaVu if not present locally."""
+    """Load Unicode TTF font from project static/fonts folder."""
     import os
-    import urllib.request
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
 
-    reg_path = '/tmp/DejaVuSans.ttf'
-    bold_path = '/tmp/DejaVuSans-Bold.ttf'
-
-    if not os.path.exists(reg_path):
-        urllib.request.urlretrieve(
-            'https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf',
-            reg_path
-        )
-    if not os.path.exists(bold_path):
-        urllib.request.urlretrieve(
-            'https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf',
-            bold_path
-        )
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    reg_path = os.path.join(base_dir, 'static', 'fonts', 'DejaVuSans.ttf')
+    bold_path = os.path.join(base_dir, 'static', 'fonts', 'DejaVuSans-Bold.ttf')
 
     try:
-        pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))
-        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
-        return 'DejaVuSans', 'DejaVuSans-Bold'
+        if os.path.exists(reg_path):
+            pdfmetrics.registerFont(TTFont('DejaVuSans', reg_path))
+            if os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', bold_path))
+                return 'DejaVuSans', 'DejaVuSans-Bold'
+            return 'DejaVuSans', 'DejaVuSans'
     except Exception:
-        return 'Helvetica', 'Helvetica-Bold'
-
+        pass
+    return 'Helvetica', 'Helvetica-Bold'
 
 def require_technician_login():
     """Check technician login status"""

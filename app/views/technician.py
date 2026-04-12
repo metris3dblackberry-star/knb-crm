@@ -104,6 +104,7 @@ def save_notes(job_id):
         return redirect_response
     try:
         from app.models.job import Job
+        from app.extensions import db
         job = db.session.get(Job, job_id)
         if not job:
             flash('Munka nem található', 'error')

@@ -422,20 +422,22 @@ def complete_job(job_id):
         return redirect_response
 
     try:
-        success, errors = job_service.mark_job_as_completed(job_id)
-
-        if success:
-            flash('Work order marked as completed!', 'success')
-            return redirect(url_for('technician.job_detail', job_id=job_id))
-        else:
-            for error in errors:
-                flash(error, 'error')
-            return redirect(url_for('technician.modify_job', job_id=job_id))
+        from app.models.job import Job
+        from app.extensions import db
+        job = db.session.get(Job, job_id)
+        if not job:
+            flash('Munka nem található', 'error')
+            return redirect(url_for('technician.current_jobs'))
+        job.completed = True
+        db.session.commit()
+        flash('Munka befejezettnek jelölve!', 'success')
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
     except Exception as e:
         logger.error(f"Failed to mark work order as completed: {e}")
-        flash('Failed to mark as completed, please try again later', 'error')
-        return redirect(url_for('technician.modify_job', job_id=job_id))
+        db.session.rollback()
+        flash('Hiba a befejezés során', 'error')
+        return redirect(url_for('technician.job_detail', job_id=job_id))
 
 
 @technician_bp.route('/jobs/new', methods=['GET', 'POST'])

@@ -194,15 +194,21 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if not service:
             raise ValueError(f"Service {service_id} not found")
 
-        db.session.execute(
-            db.text("""
-                INSERT INTO job_service (job_id, service_id, qty)
-                VALUES (:job_id, :service_id, :qty)
-                ON CONFLICT (job_id, service_id) DO UPDATE
-                SET qty = job_service.qty + :qty
-            """),
-            {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
-        )
+        existing = db.session.execute(
+            db.text("SELECT qty FROM job_service WHERE job_id=:job_id AND service_id=:service_id"),
+            {'job_id': self.job_id, 'service_id': service_id}
+        ).fetchone()
+
+        if existing:
+            db.session.execute(
+                db.text("UPDATE job_service SET qty=qty+:qty WHERE job_id=:job_id AND service_id=:service_id"),
+                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
+            )
+        else:
+            db.session.execute(
+                db.text("INSERT INTO job_service (job_id, service_id, qty) VALUES (:job_id, :service_id, :qty)"),
+                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
+            )
         db.session.flush()
         db.session.expire(self)
         self._update_total_cost()

@@ -391,3 +391,16 @@ def migrate_notes():
     except Exception as e:
         db.session.rollback()
         return f'Hiba: {e}'
+
+
+@main_bp.route('/migrate-numeric-xk9p2')
+def migrate_numeric():
+    import sqlalchemy as sa
+    from app.extensions import db
+    try:
+        db.session.execute(sa.text('ALTER TABLE job ALTER COLUMN total_cost TYPE NUMERIC(12,2)'))
+        db.session.commit()
+        return 'OK! total_cost mező kibővítve.'
+    except Exception as e:
+        db.session.rollback()
+        return f'Hiba: {e}'

@@ -20,15 +20,15 @@ def handle_database_errors(func: Callable) -> Callable:
         except DatabaseError as e:
             logging.error(f"Database error in {func.__name__}: {e}")
             flash(f"Database operation failed: {e}", 'error')
-            return None
+            return redirect(request.referrer or url_for('main.dashboard'))
         except ValidationError as e:
             logging.warning(f"Validation error in {func.__name__}: {e}")
             flash(f"Data validation failed: {e}", 'warning')
-            return None
+            return redirect(request.referrer or url_for('main.dashboard'))
         except Exception as e:
-            logging.error(f"Unknown error in {func.__name__}: {e}")
-            flash("System error, please try again later", 'error')
-            return None
+            logging.error(f"Unknown error in {func.__name__}: {e}", exc_info=True)
+            flash(f"Rendszerhiba: {str(e)}", 'error')
+            return redirect(request.referrer or url_for('main.dashboard'))
 
     return wrapper
 

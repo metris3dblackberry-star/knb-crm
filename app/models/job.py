@@ -190,13 +190,17 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if self.completed:
             raise ValueError("Cannot modify a completed job")
 
-        from app.models.service import Service
-        service = Service.find_by_id(service_id)
+        service = db.session.get(Service, service_id)
         if not service:
             raise ValueError(f"Service {service_id} not found")
 
-        job_service = JobService(job_id=self.job_id, service_id=service_id, qty=quantity)
-        db.session.add(job_service)
+        # Ha már szerepel, növeljük a mennyiséget
+        existing = next((js for js in self.job_services if js.service_id == service_id), None)
+        if existing:
+            existing.qty += quantity
+        else:
+            job_service = JobService(job_id=self.job_id, service_id=service_id, qty=quantity)
+            db.session.add(job_service)
         self._update_total_cost()
         db.session.commit()
         return True
@@ -206,13 +210,16 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         if self.completed:
             raise ValueError("Cannot modify a completed job")
 
-        from app.models.part import Part
-        part = Part.find_by_id(part_id)
+        part = db.session.get(Part, part_id)
         if not part:
             raise ValueError(f"Part {part_id} not found")
 
-        job_part = JobPart(job_id=self.job_id, part_id=part_id, qty=quantity)
-        db.session.add(job_part)
+        existing = next((jp for jp in self.job_parts if jp.part_id == part_id), None)
+        if existing:
+            existing.qty += quantity
+        else:
+            job_part = JobPart(job_id=self.job_id, part_id=part_id, qty=quantity)
+            db.session.add(job_part)
         self._update_total_cost()
         db.session.commit()
         return True

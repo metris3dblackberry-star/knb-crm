@@ -199,32 +199,43 @@ def billing_management():
 @handle_database_errors
 @log_function_call
 def overdue_bills():
-    """Overdue bills page"""
+    """Overdue bills - completed jobs with services and/or parts"""
     redirect_response = require_admin_login()
     if redirect_response:
         return redirect_response
 
     try:
-        # Get overdue days threshold
-        days_threshold = request.args.get('days', 14, type=int)
-        if days_threshold < 1:
-            days_threshold = 14
+        from app.extensions import db
+        from app.models.job import Job, JobService, JobPart
+        from flask import session
+        from sqlalchemy import and_, or_, exists
 
-        # Get overdue bills
-        overdue_bills_list = billing_service.get_overdue_bills(days_threshold)
+        tenant_id = session.get('current_tenant_id') or 1
 
-        # Calculate total amount
-        total_overdue_amount = sum(float(bill.get('total_cost', 0)) for bill in overdue_bills_list)
+        # Befejezett munkák amiknek van legalább 1 szolgáltatása VAGY alkatrésze
+        has_service = exists().where(JobService.job_id == Job.job_id)
+        has_part = exists().where(JobPart.job_id == Job.job_id)
+
+        query = db.select(Job).where(
+            and_(
+                Job.completed == True,
+                Job.tenant_id == tenant_id,
+                or_(has_service, has_part)
+            )
+        ).order_by(Job.job_id.desc())
+
+        overdue_bills_list = list(db.session.execute(query).scalars())
+        total_overdue_amount = sum(float(j.total_cost or 0) for j in overdue_bills_list)
 
         return render_template('administrator/overdue_bills.html',
                              overdue_bills=overdue_bills_list,
                              total_overdue_amount=total_overdue_amount,
-                             days_threshold=days_threshold,
+                             days_threshold=14,
                              total_count=len(overdue_bills_list))
 
     except Exception as e:
         logger.error(f"Overdue bills page loading failed: {e}")
-        flash('Failed to load overdue bills page', 'error')
+        flash(f'Hiba: {str(e)}', 'error')
         return render_template('administrator/overdue_bills.html',
                              overdue_bills=[],
                              total_overdue_amount=0,

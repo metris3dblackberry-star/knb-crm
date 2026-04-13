@@ -49,7 +49,7 @@ Számlatörténet és Lejárt számlák
                         <div class="flex-grow-1 ms-3">
                             <div class="small text-muted">Lejárt számlák</div>
                             <div class="h4 mb-0">
-                                {{ jobs|selectattr('overdue')|list|length if jobs else 0 }}
+                                {{ overdue_bills|selectattr('is_overdue')|list|length if overdue_bills else 0 }}
                             </div>
                         </div>
                     </div>
@@ -65,7 +65,7 @@ Számlatörténet és Lejárt számlák
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <div class="small text-muted">Számlák száma</div>
-                            <div class="h4 mb-0">{{ jobs|length if jobs else 0 }}</div>
+                            <div class="h4 mb-0">{{ overdue_bills|length if overdue_bills else 0 }}</div>
                         </div>
                     </div>
                 </div>
@@ -81,7 +81,7 @@ Számlatörténet és Lejárt számlák
                         <div class="flex-grow-1 ms-3">
                             <div class="small text-muted">Fizetve</div>
                             <div class="h4 mb-0">
-                                {{ jobs|selectattr('paid')|list|length if jobs else 0 }}
+                                {{ overdue_bills|selectattr('paid')|list|length if overdue_bills else 0 }}
                             </div>
                         </div>
                     </div>
@@ -98,8 +98,8 @@ Számlatörténet és Lejárt számlák
                         <div class="flex-grow-1 ms-3">
                             <div class="small text-muted">Total Revenue</div>
                             <div class="h4 mb-0">
-                                {% if jobs %}
-                                    {{ "%.2f"|format(jobs|selectattr('paid')|sum(attribute='total_cost')|float) }} Ft
+                                {% if overdue_bills %}
+                                    {{ "%.0f"|format(total_overdue_amount) }} Ft
                                 {% else %}
                                     0.00Ft
                                 {% endif %}
@@ -214,7 +214,7 @@ Számlatörténet és Lejárt számlák
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% if jobs %}
+                    {% if overdue_bills %}
                         <div class="table-responsive">
                             <table class="table table-vcenter card-table">
                                 <thead class="table-light">
@@ -229,10 +229,10 @@ Számlatörténet és Lejárt számlák
                                 </tr>
                                 </thead>
                                 <tbody>
-                                    {% for job in jobs %}
+                                    {% for job in overdue_bills %}
                                         {% if selected_customer %}
                                             {% if job.customer_id == selected_customer.customer_id %}
-                                            <tr class="{% if job.overdue %}table-warning{% elif job.paid == 1 %}table-light{% endif %}">
+                                            <tr class="{% if job.is_overdue %}table-warning{% elif job.paid == 1 %}table-light{% endif %}">
                                                 <td>
                                                     <span class="badge bg-primary">#{{ job.job_id }}</span>
                                                 </td>
@@ -240,14 +240,14 @@ Számlatörténet és Lejárt számlák
                                                     <div class="d-flex align-items-center">
                                                         <i class="ti ti-user-circle text-primary me-2"></i>
                                                         <div>
-                                                            <strong>{{ job.first_name }} {{ job.family_name }}</strong>
-                                                            <small class="text-muted d-block">ID: {{ job.customer_id }}</small>
+                                                            <strong>{{ job.customer_rel.first_name if job.customer_rel else "" }} {{ job.customer_rel.family_name if job.customer_rel else "N/A" }}</strong>
+                                                            <small class="text-muted d-block">ID: #{{ job.customer }}</small>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <i class="ti ti-calendar-event text-muted me-1"></i>
-                                                    {{ job.job_date }}
+                                                    {{ job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A" }}
                                                 </td>
                                                 <td>
                                                     <span class="fw-bold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span>
@@ -272,7 +272,7 @@ Számlatörténet és Lejárt számlák
                                                             Fizetve
                                                         </span>
                                                     {% else %}
-                                                        {% if job.overdue %}
+                                                        {% if job.is_overdue %}
                                                             <span class="badge bg-danger">
                                                                 <i class="ti ti-alert-triangle me-1"></i>
                                                                 Overdue
@@ -287,7 +287,7 @@ Számlatörténet és Lejárt számlák
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2">
-                                                        <a href="{{ url_for('technician.modify_job', job_id=job.job_id) }}" class="btn btn-sm btn-outline-info">
+                                                        <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="btn btn-sm btn-outline-info">
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}
@@ -301,7 +301,7 @@ Számlatörténet és Lejárt számlák
                                             {% endif %}
                                         {% else %}
                                             <!-- Display jobs for all customers -->
-                                            <tr class="{% if job.overdue %}table-warning{% elif job.paid == 1 %}table-light{% endif %}">
+                                            <tr class="{% if job.is_overdue %}table-warning{% elif job.paid == 1 %}table-light{% endif %}">
                                                 <td>
                                                     <span class="badge bg-primary">#{{ job.job_id }}</span>
                                                 </td>
@@ -309,14 +309,14 @@ Számlatörténet és Lejárt számlák
                                                     <div class="d-flex align-items-center">
                                                         <i class="ti ti-user-circle text-primary me-2"></i>
                                                         <div>
-                                                            <strong>{{ job.first_name }} {{ job.family_name }}</strong>
-                                                            <small class="text-muted d-block">ID: {{ job.customer_id }}</small>
+                                                            <strong>{{ job.customer_rel.first_name if job.customer_rel else "" }} {{ job.customer_rel.family_name if job.customer_rel else "N/A" }}</strong>
+                                                            <small class="text-muted d-block">ID: #{{ job.customer }}</small>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <i class="ti ti-calendar-event text-muted me-1"></i>
-                                                    {{ job.job_date }}
+                                                    {{ job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A" }}
                                                 </td>
                                                 <td>
                                                     <span class="fw-bold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span>
@@ -341,7 +341,7 @@ Számlatörténet és Lejárt számlák
                                                             Fizetve
                                                         </span>
                                                     {% else %}
-                                                        {% if job.overdue %}
+                                                        {% if job.is_overdue %}
                                                             <span class="badge bg-danger">
                                                                 <i class="ti ti-alert-triangle me-1"></i>
                                                                 Overdue
@@ -356,7 +356,7 @@ Számlatörténet és Lejárt számlák
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2">
-                                                        <a href="{{ url_for('technician.modify_job', job_id=job.job_id) }}" class="btn btn-sm btn-outline-info">
+                                                        <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="btn btn-sm btn-outline-info">
                                                             <i class="ti ti-eye"></i>
                                                         </a>
                                                         {% if not job.paid %}

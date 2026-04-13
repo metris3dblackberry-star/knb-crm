@@ -600,27 +600,58 @@ def dashboard():
         return redirect_response
 
     try:
-        job_stats = job_service.get_job_statistics()
-        today = date.today()
-        recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=10)
+        from app.extensions import db
+        from app.models.job import Job
+        from sqlalchemy import and_
+        from flask import session
+        import datetime as dt
 
-        today_jobs = [job for job in recent_jobs
-                     if getattr(job, 'job_date', None) == today]
+        tenant_id = session.get('current_tenant_id') or 1
+        today = date.today()
+        week_start = today - dt.timedelta(days=today.weekday())
+
+        # Aktív munkák
+        active_jobs_q = db.select(db.func.count()).select_from(Job).where(
+            and_(Job.completed == False, Job.tenant_id == tenant_id)
+        )
+        active_jobs = db.session.execute(active_jobs_q).scalar() or 0
+
+        # Mai munkák
+        todays_jobs_q = db.select(db.func.count()).select_from(Job).where(
+            and_(Job.job_date == today, Job.tenant_id == tenant_id)
+        )
+        todays_jobs = db.session.execute(todays_jobs_q).scalar() or 0
+
+        # Ezen a héten befejezett
+        completed_week_q = db.select(db.func.count()).select_from(Job).where(
+            and_(Job.completed == True, Job.job_date >= week_start, Job.tenant_id == tenant_id)
+        )
+        completed_this_week = db.session.execute(completed_week_q).scalar() or 0
+
+        # Legutóbbi munkák
+        recent_q = db.select(Job).where(Job.tenant_id == tenant_id).order_by(Job.job_id.desc()).limit(5)
+        recent_jobs = list(db.session.execute(recent_q).scalars())
+
+        # Mai beosztás
+        todays_schedule_q = db.select(Job).where(
+            and_(Job.job_date == today, Job.tenant_id == tenant_id)
+        ).order_by(Job.job_id.desc())
+        todays_schedule = list(db.session.execute(todays_schedule_q).scalars())
 
         return render_template('technician/dashboard.html',
-                             job_stats=job_stats,
-                             recent_jobs=recent_jobs[:5],
-                             today_jobs=today_jobs,
+                             active_jobs=active_jobs,
+                             todays_jobs=todays_jobs,
+                             completed_this_week=completed_this_week,
+                             recent_jobs=recent_jobs,
+                             todays_schedule=todays_schedule,
                              current_date=today)
 
     except Exception as e:
         logger.error(f"Technician dashboard loading failed: {e}")
-        flash('Failed to load dashboard', 'error')
+        flash(f'Hiba: {str(e)}', 'error')
         return render_template('technician/dashboard.html',
-                             job_stats={},
-                             recent_jobs=[],
-                             today_jobs=[],
-                             current_date=date.today())
+                             active_jobs=0, todays_jobs=0, completed_this_week=0,
+                             recent_jobs=[], todays_schedule=[], current_date=date.today())
 
 
 # API endpoints

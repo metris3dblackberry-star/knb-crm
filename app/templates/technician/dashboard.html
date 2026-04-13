@@ -104,7 +104,7 @@
                                 <i class="ti ti-user text-primary"></i>
                             </div>
                             <div>
-                                <div class="fw-semibold">{{ job.first_name }} {{ job.family_name }}</div>
+                                <div class="fw-semibold">{{ job.customer_rel.first_name if job.customer_rel else "" }} {{ job.customer_rel.family_name if job.customer_rel else "N/A" }}</div>
                             </div>
                         </div>
                     </td>
@@ -196,7 +196,7 @@
                         </a>
                     </td>
                     <td>
-                        <div class="fw-semibold">{{ job.first_name }} {{ job.family_name }}</div>
+                        <div class="fw-semibold">{{ job.customer_rel.first_name if job.customer_rel else "" }} {{ job.customer_rel.family_name if job.customer_rel else "N/A" }}</div>
                     </td>
                     <td>
                         {% if job.completed %}

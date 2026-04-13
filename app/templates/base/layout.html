@@ -126,6 +126,16 @@
                             </li>
                         {% endif %}
 
+                        {% if session.current_role in ('owner', 'admin') %}
+                        <!-- Üzleti Központ -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and 'business' in request.endpoint %}active{% endif %}" href="{{ url_for('business.hub') }}">
+                                <i class="ti ti-briefcase me-1"></i>
+                                <span>Üzleti Központ</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
                         <!-- Common Menu Items -->
                         <li class="nav-item">
                             <a class="nav-link {% if request.endpoint == 'main.customers' %}active{% endif %}" href="{{ url_for('main.customers') }}">

@@ -61,7 +61,6 @@ def logout():
 
 @main_bp.route('/dashboard')
 @require_auth()
-@handle_database_errors
 @log_function_call
 def dashboard():
     if not session.get('logged_in'):

@@ -10,6 +10,7 @@ from app.services.customer_service import CustomerService
 from app.services.job_service import JobService
 from app.extensions import db as ext_db
 from app.models.job import Job as AdminJob, JobService as JobServiceModel, JobPart
+from sqlalchemy import and_, or_, exists
 from app.services.billing_service import BillingService
 from app.utils.decorators import handle_database_errors, log_function_call, validate_pagination
 from app.utils.validators import sanitize_input, validate_positive_integer, validate_service_data, validate_part_data
@@ -79,7 +80,6 @@ def dashboard():
 
         billing_stats['monthly_revenue'] = monthly_revenue
         from app.models.job import Job as _Job
-        from sqlalchemy import and_
         from flask import session as _session
         _tenant_id = _session.get('current_tenant_id') or 1
         _overdue_q = ext_db.select(_Job).where(
@@ -237,7 +237,6 @@ def overdue_bills():
         from app.extensions import db
         from app.models.job import Job, JobService, JobPart
         from flask import session
-        from sqlalchemy import and_, or_, exists
 
         tenant_id = session.get('current_tenant_id') or 1
 

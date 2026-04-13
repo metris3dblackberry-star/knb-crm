@@ -37,7 +37,7 @@
                 <i class="ti ti-info-circle"></i>
                 <div>
                     <strong>Riport időszak:</strong>
-                    {{ report_data.period_info.start_date|default('N/A') }} to {{ report_data.period_info.end_date|default('N/A') }}
+                    {{ report_data.period_info.current_month|default('N/A') }} | Generálva: {{ report_data.period_info.generated_date|default('N/A') }}
                     {% if report_data.period_info.comparison %}
                     &mdash; Összehasonlítva ezzel: {{ report_data.period_info.comparison }}
                     {% endif %}
@@ -62,25 +62,25 @@
                     <div class="row g-4">
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
-                                <div class="h2 mb-0 text-primary">{{ js.total|default(0) }}</div>
+                                <div class="h2 mb-0 text-primary">{{ js.total_jobs|default(0) }}</div>
                                 <small class="text-muted">Összes munka</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
-                                <div class="h2 mb-0 text-success">{{ js.completed|default(0) }}</div>
+                                <div class="h2 mb-0 text-success">{{ js.completed_jobs|default(0) }}</div>
                                 <small class="text-muted">Befejezett</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
-                                <div class="h2 mb-0 text-warning">{{ js.in_progress|default(0) }}</div>
+                                <div class="h2 mb-0 text-warning">{{ js.pending_jobs|default(0) }}</div>
                                 <small class="text-muted">Folyamatban</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(107,114,128,0.1);">
-                                <div class="h2 mb-0 text-secondary">{{ js.pending|default(0) }}</div>
+                                <div class="h2 mb-0 text-secondary">{{ 0 }}</div>
                                 <small class="text-muted">Várakozó</small>
                             </div>
                         </div>
@@ -105,25 +105,25 @@
                     <div class="row g-4">
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
-                                <div class="h2 mb-0 text-primary">{{ "%.2f"|format(bs.total_revenue|default(0)|float) }}</div>
+                                <div class="h2 mb-0 text-primary">{{ "%.0f"|format(bs.total_amount|default(0)|float) }} Ft</div>
                                 <small class="text-muted">Összes bevétel</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
-                                <div class="h2 mb-0 text-success">{{ "%.2f"|format(bs.total_paid|default(0)|float) }}</div>
+                                <div class="h2 mb-0 text-success">{{ "%.0f"|format(bs.paid_amount|default(0)|float) }} Ft</div>
                                 <small class="text-muted">Befolyt</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
-                                <div class="h2 mb-0 text-warning">{{ "%.2f"|format(bs.total_unpaid|default(0)|float) }}</div>
+                                <div class="h2 mb-0 text-warning">{{ "%.0f"|format(bs.unpaid_amount|default(0)|float) }} Ft</div>
                                 <small class="text-muted">Kintlévőség</small>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="text-center p-3 rounded" style="background: rgba(220,38,38,0.1);">
-                                <div class="h2 mb-0 text-danger">{{ "%.2f"|format(bs.total_overdue|default(0)|float) }}</div>
+                                <div class="h2 mb-0 text-danger">{{ "%.0f"|format(bs.overdue_amount|default(0)|float) }} Ft</div>
                                 <small class="text-muted">Lejárt</small>
                             </div>
                         </div>
@@ -148,19 +148,19 @@
                     <div class="row g-4">
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: var(--primary-bg);">
-                                <div class="h2 mb-0 text-primary">{{ cs.total|default(0) }}</div>
+                                <div class="h2 mb-0 text-primary">{{ cs.total_customers|default(0) }}</div>
                                 <small class="text-muted">Összes ügyfél</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: rgba(22,163,74,0.1);">
-                                <div class="h2 mb-0 text-success">{{ cs.active|default(0) }}</div>
+                                <div class="h2 mb-0 text-success">{{ cs.total_customers|default(0) }}</div>
                                 <small class="text-muted">Aktív ügyfelek</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center p-3 rounded" style="background: rgba(245,158,11,0.1);">
-                                <div class="h2 mb-0 text-warning">{{ cs.with_unpaid|default(0) }}</div>
+                                <div class="h2 mb-0 text-warning">{{ cs.customers_with_unpaid|default(0) }}</div>
                                 <small class="text-muted">Kifizetetlen számlával</small>
                             </div>
                         </div>

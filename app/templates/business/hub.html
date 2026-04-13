@@ -766,7 +766,10 @@
 <script>
 // ── CASHFLOW GRAFIKON ────────────────────────────────────────────
 (function() {
-  const raw = {{ cashflow_days | tojson }};
+  var raw;
+  try {
+    raw = {{ cashflow_days | tojson | safe }};
+  } catch(e) { raw = []; }
   if (!raw || !raw.length) return;
 
   const labels   = raw.map(d => d.date);

@@ -814,8 +814,16 @@ def add_worker():
         last_name = sanitize_input(request.form.get('last_name', ''))
         full_name = f"{first_name} {last_name}".strip() or email.split('@')[0]
 
+        # Username egyediség biztosítása
+        base_username = full_name
+        username = base_username
+        counter = 1
+        while db.session.execute(db.select(User).where(User.username == username)).scalar_one_or_none():
+            username = f"{base_username} {counter}"
+            counter += 1
+
         user = User(
-            username=full_name,
+            username=username,
             email=email,
             password_hash=generate_password_hash(password_raw),
             is_active=True,

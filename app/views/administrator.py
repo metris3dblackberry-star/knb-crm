@@ -236,26 +236,30 @@ def overdue_bills():
 @handle_database_errors
 @log_function_call
 def pay_bills():
-    """Payment processing page"""
+    """Payment processing page - shows completed jobs"""
     redirect_response = require_admin_login()
     if redirect_response:
         return redirect_response
 
     try:
-        # Get customer name filter parameter
         customer_name = sanitize_input(request.args.get('customer', ''))
+        completed_jobs = billing_service.get_completed_jobs()
 
-        # Get unpaid bills
-        unpaid_bills = billing_service.get_unpaid_bills(customer_name if customer_name != 'Choose...' else None)
+        # Filter by customer name if provided
+        if customer_name and customer_name != 'Choose...':
+            completed_jobs = [
+                j for j in completed_jobs
+                if j.customer_rel and
+                f"{j.customer_rel.first_name} {j.customer_rel.family_name}".strip() == customer_name
+            ]
 
-        # Get customer name list
         customers = customer_service.get_all_customers()
-        customer_names = [f"{c.first_name} {c.family_name}".strip() for c in customers]
-        customer_names = list(set(customer_names))
-        customer_names.sort()
+        customer_names = sorted(set(
+            f"{c.first_name} {c.family_name}".strip() for c in customers
+        ))
 
         return render_template('administrator/pay_bills.html',
-                             unpaid_bills=unpaid_bills,
+                             unpaid_bills=completed_jobs,
                              customer_name=customer_name,
                              customer_names=customer_names)
 

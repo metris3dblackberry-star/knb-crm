@@ -22,6 +22,19 @@ class BillingService:
         """Get current tenant ID from Flask g context"""
         return getattr(g, 'current_tenant_id', None)
 
+    def get_completed_jobs(self) -> List[Job]:
+        """Get completed (finished) jobs for invoice display"""
+        try:
+            from flask import session
+            from sqlalchemy import and_
+            tenant_id = self._current_tenant_id() or session.get('current_tenant_id') or 1
+            filters = [Job.completed == True, Job.tenant_id == tenant_id]
+            query = db.select(Job).where(and_(*filters)).order_by(Job.job_id.desc())
+            return list(db.session.execute(query).scalars())
+        except Exception as e:
+            self.logger.error(f"Failed to get completed jobs: {e}")
+            return []
+
     def get_unpaid_bills(self, customer_name: Optional[str] = None) -> List[Job]:
         """
         Get unpaid bills

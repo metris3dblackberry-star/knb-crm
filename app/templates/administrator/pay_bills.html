@@ -1,283 +1,105 @@
-{% extends "base/layout_with_sidebar.html" %}
-{% block title %}
-Számlázás kezelése
-{% endblock %}
+{% extends "base/layout.html" %}
+{% block title %}Befejezett munkák – Számlázás{% endblock %}
 
 {% block breadcrumb_items %}
-    <li class="breadcrumb-item">
-        <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
-    </li>
-    <li class="breadcrumb-item active">Számlázás kezelése</li>
+    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
+    <li class="breadcrumb-item active">Befejezett munkák</li>
 {% endblock %}
 
-{% block admin_content %}
-<div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h1 class="h3 mb-0 d-flex align-items-center gap-2">
-                        <i class="ti ti-credit-card text-primary"></i>
-                        Számlázás kezelése
-                    </h1>
-                    <p class="text-muted mb-0">Kifizetetlen számlák kezelése és fizetések feldolgozása</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ url_for('administrator.customer_list') }}" class="btn btn-outline-primary">
-                        <i class="ti ti-users me-1"></i>
-                        Ügyfélkezelés
-                    </a>
-                    <a href="{{ url_for('administrator.overdue_bills') }}" class="btn btn-outline-warning">
-                        <i class="ti ti-alert-triangle me-1"></i>
-                        Lejárt számlák
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Billing Statistics -->
-    <div class="row mb-4">
-        <div class="col-sm-6 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-danger-lt me-2"><i class="ti ti-alert-triangle"></i></span>
-                        <div class="subheader">Kifizetetlen számlák</div>
-                    </div>
-                    <div class="h1 mb-0">{{ customer_info|length }}</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-success-lt me-2"><i class="ti ti-currency-dollar"></i></span>
-                        <div class="subheader">Összes kintlévőség</div>
-                    </div>
-                    <div class="h1 mb-0">
-                        {{ "%.0f"|format(customer_info|sum(attribute='total_cost')|float) }} Ft
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-primary-lt me-2"><i class="ti ti-circle-check"></i></span>
-                        <div class="subheader">Befejezett munkák</div>
-                    </div>
-                    <div class="h1 mb-0">
-                        {{ customer_info|selectattr('completed')|list|length }}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-info-lt me-2"><i class="ti ti-users"></i></span>
-                        <div class="subheader">Egyedi ügyfelek</div>
-                    </div>
-                    <div class="h1 mb-0">{{ customers|length }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Ügyfél Filter -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <label class="form-label d-flex align-items-center gap-1">
-                        <i class="ti ti-filter"></i>
-                        Szűrés ügyfél szerint
-                    </label>
-                    <form method="post" class="d-flex gap-3 align-items-end" style="flex-grow: 1;">
-                        <select class="form-select" name="selected_customer" style="max-width: 400px;">
-                            <option value="">Összes ügyfél...</option>
-                            {% for customer in customers %}
-                            <option value="{{ customer.full_name if customer.full_name.strip() else 'none' }}">
-                                {{ customer.full_name if customer.full_name.strip() else 'Névtelen ügyfél' }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <button class="btn btn-primary" type="submit">
-                            <i class="ti ti-search me-1"></i>
-                            Szűrés
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Kifizetetlen számlák Table -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header" style="background: var(--error); color: white;">
-                    <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
-                        <i class="ti ti-credit-card"></i>
-                        Kifizetetlen számlák
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if customer_info %}
-                        <form method="post" action="/administrator_mark_paid">
-                            <div class="table-responsive">
-                                <table class="table table-vcenter card-table">
-                                    <thead class="table-light">
-                                    <tr>
-                                            <th width="50">Kiválaszt</th>
-                                            <th>Ügyfél</th>
-                                            <th>Munka részletei</th>
-                                            <th>Összeg</th>
-                                            <th>Státusz</th>
-                                            <th>Műveletek</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {% for customer in customer_info %}
-                                    <tr>
-                                            <td>
-                                                <input type="radio" name="bill_select" value="{{ customer.customer_id }}" class="form-check-input">
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti ti-user text-primary me-2"></i>
-                                                    <div>
-                                                        <strong>{{ customer.first_name }} {{ customer.family_name }}</strong>
-                                                        <small class="text-muted d-block">ID: {{ customer.customer_id }}</small>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti ti-briefcase text-info me-2"></i>
-                                                    <div>
-                                                        <strong>Job #{{ customer.job_id }}</strong>
-                                                        <small class="text-muted d-block d-flex align-items-center gap-1">
-                                                            <i class="ti ti-calendar"></i>
-                                                            {{ customer.job_date }}
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="ti ti-currency-dollar text-success me-2"></i>
-                                                    <span class="h5 mb-0 text-success">
-                                                        {{ "%.0f"|format(customer.total_cost|float) }} Ft
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex flex-column gap-1">
-                                                    {% if customer.completed %}
-                                                        <span class="badge bg-success">
-                                                            <i class="ti ti-circle-check me-1"></i>
-                                                            Befejezett
-                                                        </span>
-                                                    {% else %}
-                                                        <span class="badge bg-warning">
-                                                            <i class="ti ti-clock me-1"></i>
-                                                            Folyamatban
-                                                        </span>
-                                                    {% endif %}
-                                                    {% if customer.paid %}
-                                                        <span class="badge bg-success">
-                                                            <i class="ti ti-credit-card me-1"></i>
-                                                            Fizetve
-                                                        </span>
-                                                    {% else %}
-                                                        <span class="badge bg-danger">
-                                                            <i class="ti ti-alert-triangle me-1"></i>
-                                                            Kifizetetlen
-                                                        </span>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex gap-2">
-                                                    <a href="{{ url_for('technician.modify_job', job_id=customer.job_id) }}" class="btn btn-sm btn-outline-info">
-                                                        <i class="ti ti-eye"></i>
-                                                    </a>
-                                                    {% if not customer.paid %}
-                                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="markAsFizetve({{ customer.customer_id }})">
-                                                            <i class="ti ti-circle-check"></i>
-                                                        </button>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
-                                    </tr>
-                                    {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Bulk Műveletek -->
-                            <div class="d-flex justify-content-between align-items-center mt-3 p-3">
-                                <div class="text-muted d-flex align-items-center gap-1">
-                                    <i class="ti ti-info-circle"></i>
-                                    Kiválaszt a bill to mark as paid
-                                </div>
-                                <button type="submit" class="btn btn-accent btn-lg" onclick="return confirm('Biztosan fizetetté jelöli a kiválasztott számlát?')">
-                                    <i class="ti ti-circle-check me-2"></i>
-                                    Mark as Fizetve
-                                </button>
-                            </div>
-                        </form>
-                    {% else %}
-                        <!-- Empty State -->
-                        <div class="empty py-5">
-                            <div class="empty-icon">
-                                <i class="ti ti-circle-check text-success" style="font-size: 48px;"></i>
-                            </div>
-                            <div class="empty-title">Minden Számla Fizetve!</div>
-                            <div class="empty-subtitle text-secondary">Jelenleg nincs kifizetetlen számla.</div>
-                            <a href="{{ url_for('administrator.customer_list') }}" class="btn btn-accent">
-                                <i class="ti ti-circle-plus me-1"></i>
-                                Új munka ütemezése
-                            </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-2 d-flex align-items-center gap-2">
+            <i class="ti ti-file-invoice text-primary"></i>
+            Befejezett munkák – Számlázás
+        </h1>
+        <p class="text-muted mb-0">Befejezett munkák számláinak kezelése és kiküldése</p>
     </div>
 </div>
 
-<script>
-function markAsFizetve(customerId) {
-    if (confirm('Biztosan fizetetté jelöli ezt a számlát?')) {
-        // Set the radio button for this customer
-        const radioButton = document.queryKiválasztor(`input[name="bill_select"][value="${customerId}"]`);
-        if (radioButton) {
-            radioButton.checked = true;
-        }
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Szűrés ügyfélre</label>
+                <select name="customer" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Összes ügyfél --</option>
+                    {% for name in customer_names %}
+                    <option value="{{ name }}" {% if customer_name == name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
 
-        // Submit the form
-        const form = document.queryKiválasztor('form[action="/administrator_mark_paid"]');
-        if (form) {
-            form.submit();
-        }
-    }
-}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-list me-2"></i>Befejezett munkák</h3>
+        <div class="card-actions"><span class="text-muted">{{ unpaid_bills|length }} munka</span></div>
+    </div>
 
-// Auto-refresh every 30 seconds to show updated payment status
-setInterval(function() {
-    if (document.hidden) return; // Don't refresh if tab is not active
-
-    // Only refresh if there are unpaid bills
-    if (document.queryKiválasztorAll('.badge.bg-danger').length > 0) {
-        location.reload();
-    }
-}, 30000);
-</script>
+    {% if unpaid_bills %}
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr>
+                    <th>Munka #</th>
+                    <th>Ügyfél</th>
+                    <th>Dátum</th>
+                    <th class="text-end">Összeg</th>
+                    <th>Fizetés</th>
+                    <th class="text-center">Műveletek</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in unpaid_bills %}
+                <tr>
+                    <td><a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="fw-semibold">#{{ job.job_id }}</a></td>
+                    <td>
+                        {% if job.customer_rel %}
+                        <div class="fw-semibold">{{ job.customer_rel.first_name }} {{ job.customer_rel.family_name }}</div>
+                        <small class="text-muted">{{ job.customer_rel.email or '' }}</small>
+                        {% else %}<span class="text-muted">N/A</span>{% endif %}
+                    </td>
+                    <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</td>
+                    <td class="text-end fw-semibold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</td>
+                    <td>
+                        {% if job.paid %}
+                        <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Fizetve</span>
+                        {% else %}
+                        <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>Kifizetetlen</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex gap-1 justify-content-center">
+                            <a href="{{ url_for('technician.generate_invoice', job_id=job.job_id) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Számla PDF"><i class="ti ti-file-invoice"></i></a>
+                            <a href="{{ url_for('technician.generate_worksheet', job_id=job.job_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" title="Munkalap PDF"><i class="ti ti-clipboard-text"></i></a>
+                            {% if job.customer_rel and job.customer_rel.email %}
+                            <form method="POST" action="{{ url_for('technician.send_job_email', job_id=job.job_id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Küldés emailben"><i class="ti ti-mail"></i></button>
+                            </form>
+                            {% endif %}
+                            {% if not job.paid %}
+                            <form method="POST" action="{{ url_for('administrator.pay_single_bill', job_id=job.job_id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-success" title="Fizetettenek jelöl"><i class="ti ti-credit-card"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty">
+        <div class="empty-icon"><i class="ti ti-file-invoice"></i></div>
+        <p class="empty-title">Nincs befejezett munka</p>
+        <p class="empty-subtitle text-secondary">Még nincs befejezettnek jelölt munkamegrendelés.</p>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

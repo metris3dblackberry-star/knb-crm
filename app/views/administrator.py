@@ -57,7 +57,25 @@ def dashboard():
         # Get recent activities
         recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=5)
 
-        # Befejezett de kifizetetlen munkák mint "lejárt számlák"
+        # Havi bevétel az aktuális évre
+        from app.models.job import Job as _Job2
+        import datetime as _dt
+        current_year = date.today().year
+        monthly_revenue = [0.0] * 12
+        monthly_q = _db.select(
+            _db.func.extract('month', _Job2.job_date).label('month'),
+            _db.func.coalesce(_db.func.sum(_Job2.total_cost), 0).label('revenue')
+        ).where(
+            and_(
+                _db.func.extract('year', _Job2.job_date) == current_year,
+                _Job2.tenant_id == _tenant_id,
+                _Job2.total_cost > 0
+            )
+        ).group_by(_db.func.extract('month', _Job2.job_date))
+        for row in _db.session.execute(monthly_q):
+            monthly_revenue[int(row.month) - 1] = float(row.revenue)
+
+        billing_stats['monthly_revenue'] = monthly_revenue
         from app.extensions import db as _db
         from app.models.job import Job as _Job
         from sqlalchemy import and_

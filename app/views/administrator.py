@@ -56,7 +56,17 @@ def dashboard():
 
         # Get recent activities
         recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=5)
-        overdue_bills = billing_service.get_overdue_bills()[:5]
+
+        # Befejezett de kifizetetlen munkák mint "lejárt számlák"
+        from app.extensions import db as _db
+        from app.models.job import Job as _Job
+        from sqlalchemy import and_
+        from flask import session as _session
+        _tenant_id = _session.get('current_tenant_id') or 1
+        _overdue_q = _db.select(_Job).where(
+            and_(_Job.completed == True, _Job.paid == False, _Job.tenant_id == _tenant_id)
+        ).order_by(_Job.job_id.desc()).limit(5)
+        overdue_bills = list(_db.session.execute(_overdue_q).scalars())
 
         return render_template('administrator/dashboard.html',
                              job_stats=job_stats,

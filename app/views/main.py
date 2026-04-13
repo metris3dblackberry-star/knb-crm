@@ -12,6 +12,8 @@ from app.utils.decorators import handle_database_errors, log_function_call
 from app.utils.validators import validate_customer_data, sanitize_input
 from app.utils.security import require_auth, InputSanitizer, SQLInjectionProtection
 from app.utils.error_handler import ValidationError, BusinessLogicError
+from app.extensions import db as main_db
+from app.models.job import Job as MainJob
 
 main_bp = Blueprint('main', __name__)
 logger = logging.getLogger(__name__)
@@ -67,10 +69,10 @@ def dashboard():
         flash('Please login first', 'warning')
         return redirect(url_for('auth.login'))
     try:
-        from app.extensions import db
-        from app.models.job import Job
         from sqlalchemy import and_
         import datetime as dt
+        Job = MainJob
+        db = main_db
 
         user_type = session.get('current_role', 'technician')
         tenant_id = session.get('current_tenant_id') or 1
@@ -317,7 +319,7 @@ def help_page():
 @main_bp.route('/fix-tenant-data2-xk9p2')
 def fix_tenant_data2():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         r1 = db.session.execute(sa.text("DELETE FROM customer WHERE tenant_id IS NULL AND email IN (SELECT email FROM customer WHERE tenant_id=1)"))
         r2 = db.session.execute(sa.text("UPDATE customer SET tenant_id=1 WHERE tenant_id IS NULL"))
@@ -344,7 +346,7 @@ def internal_error(error):
 @main_bp.route('/fix-tenant-data3-xk9p2')
 def fix_tenant_data3():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         # Delete ALL null tenant customers (they're duplicates)
         r1 = db.session.execute(sa.text("DELETE FROM job WHERE tenant_id IS NULL"))
@@ -361,7 +363,7 @@ def fix_tenant_data3():
 @main_bp.route('/debug-jobs-xk9p2')
 def debug_jobs():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     from flask import session
     jobs = db.session.execute(sa.text('SELECT job_id, tenant_id, completed, customer FROM job')).fetchall()
     return f'Session tenant: {session.get("current_tenant_id")} | Jobs: {list(jobs)}'
@@ -370,7 +372,7 @@ def debug_jobs():
 @main_bp.route('/debug-customers-xk9p2')
 def debug_customers():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     customers = db.session.execute(sa.text('SELECT customer_id, tenant_id, first_name, family_name FROM customer')).fetchall()
     return f'Customers: {list(customers)}'
 
@@ -378,7 +380,7 @@ def debug_customers():
 @main_bp.route('/fix-tenant-name-xk9p2')
 def fix_tenant_name():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         db.session.execute(sa.text("UPDATE tenant SET name='K&B Autojavito' WHERE tenant_id=1"))
         db.session.commit()
@@ -392,7 +394,7 @@ def fix_tenant_name():
 @main_bp.route('/migrate-tax-number-xk9p2')
 def migrate_tax_number():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         db.session.execute(sa.text("ALTER TABLE customer ADD COLUMN IF NOT EXISTS tax_number VARCHAR(20)"))
         db.session.commit()
@@ -405,7 +407,7 @@ def migrate_tax_number():
 @main_bp.route('/fix-tenant-reset-xk9p2')
 def fix_tenant_reset():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         result = db.session.execute(sa.text("SELECT tenant_id, name, slug FROM tenant")).fetchall()
         if not result:
@@ -429,7 +431,7 @@ def fix_tenant_reset():
 @main_bp.route('/migrate-logo-column-xk9p2')
 def migrate_logo_column():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         db.session.execute(sa.text("ALTER TABLE tenant ALTER COLUMN logo_url TYPE TEXT"))
         db.session.commit()
@@ -442,7 +444,7 @@ def migrate_logo_column():
 @main_bp.route('/debug-tenant-xk9p2')
 def debug_tenant():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     result = db.session.execute(sa.text("SELECT tenant_id, name, settings, logo_url FROM tenant WHERE tenant_id=1")).fetchone()
     return f'Tenant: id={result[0]} name={result[1]} settings={result[2]} logo={str(result[3])[:50] if result[3] else None}'
 
@@ -450,7 +452,7 @@ def debug_tenant():
 @main_bp.route('/migrate-notes-xk9p2')
 def migrate_notes():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         db.session.execute(sa.text('ALTER TABLE job ADD COLUMN IF NOT EXISTS notes TEXT'))
         db.session.commit()
@@ -463,7 +465,7 @@ def migrate_notes():
 @main_bp.route('/migrate-numeric-xk9p2')
 def migrate_numeric():
     import sqlalchemy as sa
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     try:
         db.session.execute(sa.text('ALTER TABLE job ALTER COLUMN total_cost TYPE NUMERIC(12,2)'))
         db.session.commit()
@@ -485,7 +487,7 @@ def check_fonts():
 @handle_database_errors
 def delete_customer(customer_id):
     """Delete a customer"""
-    from app.extensions import db
+    from app.extensions import db as _ext_db
     from app.models.customer import Customer
     try:
         customer = db.session.get(Customer, customer_id)

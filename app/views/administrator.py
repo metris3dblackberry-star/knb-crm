@@ -8,6 +8,8 @@ from datetime import date, timedelta
 import logging
 from app.services.customer_service import CustomerService
 from app.services.job_service import JobService
+from app.extensions import db as ext_db
+from app.models.job import Job as AdminJob, JobService as JobServiceModel, JobPart
 from app.services.billing_service import BillingService
 from app.utils.decorators import handle_database_errors, log_function_call, validate_pagination
 from app.utils.validators import sanitize_input, validate_positive_integer, validate_service_data, validate_part_data
@@ -62,29 +64,28 @@ def dashboard():
         import datetime as _dt
         current_year = date.today().year
         monthly_revenue = [0.0] * 12
-        monthly_q = _db.select(
-            _db.func.extract('month', _Job2.job_date).label('month'),
-            _db.func.coalesce(_db.func.sum(_Job2.total_cost), 0).label('revenue')
+        monthly_q = ext_db.select(
+            ext_db.func.extract('month', _Job2.job_date).label('month'),
+            ext_db.func.coalesce(ext_db.func.sum(_Job2.total_cost), 0).label('revenue')
         ).where(
             and_(
-                _db.func.extract('year', _Job2.job_date) == current_year,
+                ext_db.func.extract('year', _Job2.job_date) == current_year,
                 _Job2.tenant_id == _tenant_id,
                 _Job2.total_cost > 0
             )
-        ).group_by(_db.func.extract('month', _Job2.job_date))
-        for row in _db.session.execute(monthly_q):
+        ).group_by(ext_db.func.extract('month', _Job2.job_date))
+        for row in ext_db.session.execute(monthly_q):
             monthly_revenue[int(row.month) - 1] = float(row.revenue)
 
         billing_stats['monthly_revenue'] = monthly_revenue
-        from app.extensions import db as _db
         from app.models.job import Job as _Job
         from sqlalchemy import and_
         from flask import session as _session
         _tenant_id = _session.get('current_tenant_id') or 1
-        _overdue_q = _db.select(_Job).where(
+        _overdue_q = ext_db.select(_Job).where(
             and_(_Job.completed == True, _Job.paid == False, _Job.tenant_id == _tenant_id)
         ).order_by(_Job.job_id.desc()).limit(5)
-        overdue_bills = list(_db.session.execute(_overdue_q).scalars())
+        overdue_bills = list(ext_db.session.execute(_overdue_q).scalars())
 
         return render_template('administrator/dashboard.html',
                              job_stats=job_stats,

@@ -210,7 +210,7 @@ def hub():
                                 func.extract('year', Job.job_date) == today.year))
                 ).scalar() or 0
                 worker_stats.append({
-                    'name': f"{getattr(w, 'first_name', '')} {getattr(w, 'last_name', '')}".strip() or getattr(w, 'username', 'Ismeretlen'),
+                    'name': getattr(w, 'username', 'Ismeretlen'),
                     'job_count': job_count,
                     'revenue': float(revenue),
                 })
@@ -810,13 +810,14 @@ def add_worker():
             return redirect(next_url)
 
         password_raw = request.form.get('password', '')
+        first_name = sanitize_input(request.form.get('first_name', ''))
+        last_name = sanitize_input(request.form.get('last_name', ''))
+        full_name = f"{first_name} {last_name}".strip() or email.split('@')[0]
+
         user = User(
-            first_name=sanitize_input(request.form.get('first_name', '')),
-            last_name=sanitize_input(request.form.get('last_name', '')),
+            username=full_name,
             email=email,
-            username=email,
             password_hash=generate_password_hash(password_raw),
-            phone=sanitize_input(request.form.get('phone', '')),
             is_active=True,
         )
         db.session.add(user)
@@ -830,7 +831,7 @@ def add_worker():
         )
         db.session.add(membership)
         db.session.commit()
-        flash(f'Munkás hozzáadva: {user.first_name} {user.last_name}', 'success')
+        flash(f'Munkás hozzáadva: {full_name}', 'success')
     except Exception as ex:
         db.session.rollback()
         flash(f'Hiba: {ex}', 'error')

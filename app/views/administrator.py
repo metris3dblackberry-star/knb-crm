@@ -60,9 +60,12 @@ def dashboard():
         # Get recent activities
         recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=5)
 
+        from app.models.job import Job as _Job
+        from flask import session as _session
+        _tenant_id = _session.get('current_tenant_id') or 1
+
         # Havi bevétel az aktuális évre
-        from app.models.job import Job as _Job2
-        import datetime as _dt
+        _Job2 = _Job
         current_year = date.today().year
         monthly_revenue = [0.0] * 12
         monthly_q = ext_db.select(
@@ -79,9 +82,7 @@ def dashboard():
             monthly_revenue[int(row.month) - 1] = float(row.revenue)
 
         billing_stats['monthly_revenue'] = monthly_revenue
-        from app.models.job import Job as _Job
-        from flask import session as _session
-        _tenant_id = _session.get('current_tenant_id') or 1
+
         _overdue_q = ext_db.select(_Job).where(
             and_(_Job.completed == True, _Job.paid == False, _Job.tenant_id == _tenant_id)
         ).order_by(_Job.job_id.desc()).limit(5)

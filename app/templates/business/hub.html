@@ -119,6 +119,9 @@
   <button class="btn-quick btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalPayment">
     <i class="ti ti-plus"></i> Kifizetés rögzítése
   </button>
+  <button class="btn-quick btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalWorker">
+    <i class="ti ti-plus"></i> Új munkás
+  </button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -699,6 +702,59 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: ÚJ MUNKÁS
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalWorker" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('business.add_worker') }}">
+        <input type="hidden" name="next" value="{{ url_for('business.hub') }}">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-user-plus me-2 text-info"></i>Új munkás hozzáadása</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Keresztnév *</label>
+              <input type="text" name="first_name" class="form-control" placeholder="pl. János" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Vezetéknév *</label>
+              <input type="text" name="last_name" class="form-control" placeholder="pl. Kovács" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Email *</label>
+              <input type="email" name="email" class="form-control" placeholder="pl. kovacs.janos@gmail.com" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Telefon</label>
+              <input type="text" name="phone" class="form-control" placeholder="+36 ...">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Szerepkör</label>
+              <select name="role" class="form-select">
+                <option value="technician">Szerelő</option>
+                <option value="manager">Vezető szerelő</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Ideiglenes jelszó *</label>
+              <input type="text" name="password" class="form-control" placeholder="Legalább 6 karakter" required minlength="6">
+              <small class="text-muted">A munkás első bejelentkezéskor megváltoztathatja.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn btn-info text-white"><i class="ti ti-check me-1"></i>Hozzáadás</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

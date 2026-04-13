@@ -784,3 +784,55 @@ def approve_confirmation(conf_id):
         db.session.commit()
         flash('Teljesítési igazolás jóváhagyva!', 'success')
     return redirect(url_for('business.confirmations'))
+
+
+# ─────────────────────────────────────────────────────────────────
+# ÚJ MUNKÁS HOZZÁADÁSA
+# ─────────────────────────────────────────────────────────────────
+
+@business_bp.route('/business-hub/workers/add', methods=['POST'])
+@handle_database_errors
+def add_worker():
+    r = require_login()
+    if r: return r
+    from app.models.user import User
+    from app.models.tenant_membership import TenantMembership
+    from werkzeug.security import generate_password_hash
+    try:
+        email = sanitize_input(request.form.get('email', ''))
+        # Email egyediség ellenőrzés
+        existing = db.session.execute(
+            db.select(User).where(User.email == email)
+        ).scalar_one_or_none()
+        if existing:
+            flash(f'Ez az email cím már foglalt: {email}', 'error')
+            next_url = request.form.get('next', url_for('business.hub'))
+            return redirect(next_url)
+
+        password_raw = request.form.get('password', '')
+        user = User(
+            first_name=sanitize_input(request.form.get('first_name', '')),
+            last_name=sanitize_input(request.form.get('last_name', '')),
+            email=email,
+            username=email,
+            password_hash=generate_password_hash(password_raw),
+            phone=sanitize_input(request.form.get('phone', '')),
+            is_active=True,
+        )
+        db.session.add(user)
+        db.session.flush()  # user.user_id generálás
+
+        membership = TenantMembership(
+            tenant_id=get_tenant_id(),
+            user_id=user.user_id,
+            role=request.form.get('role', 'technician'),
+            status='active',
+        )
+        db.session.add(membership)
+        db.session.commit()
+        flash(f'Munkás hozzáadva: {user.first_name} {user.last_name}', 'success')
+    except Exception as ex:
+        db.session.rollback()
+        flash(f'Hiba: {ex}', 'error')
+    next_url = request.form.get('next', url_for('business.hub'))
+    return redirect(next_url)

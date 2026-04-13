@@ -169,5 +169,361 @@
             </div>
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         GRAFIKAI ÖSSZEFOGLALÓ
+    ══════════════════════════════════════════════════════ -->
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4 class="mb-3 d-flex align-items-center gap-2">
+                <i class="ti ti-chart-pie text-primary"></i>
+                Grafikai összefoglaló
+            </h4>
+        </div>
+    </div>
+
+    <!-- Sor 1: két donut süti -->
+    <div class="row g-3 mb-3">
+
+        <!-- Munka státusz donut -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-1 px-4">
+                    <h6 class="mb-0"><i class="ti ti-chart-donut me-2 text-primary"></i>Munkák megoszlása</h6>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center gap-4 flex-wrap py-3">
+                    <div style="position:relative; width:160px; height:160px;">
+                        <canvas id="jobDonut"></canvas>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                            <div style="font-size:1.5rem;font-weight:700;line-height:1;">
+                                {% set js = report_data.job_stats if report_data else {} %}
+                                {{ js.total_jobs|default(0) }}
+                            </div>
+                            <div style="font-size:.72rem;color:#64748b;">összesen</div>
+                        </div>
+                    </div>
+                    <div style="font-size:.83rem;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#2fb344;display:inline-block;"></span>
+                            Befejezett: <strong>{{ js.completed_jobs|default(0) }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#f59f00;display:inline-block;"></span>
+                            Folyamatban: <strong>{{ js.pending_jobs|default(0) }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#adb5bd;display:inline-block;"></span>
+                            Várakozó: <strong>0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Számlázás donut -->
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-1 px-4">
+                    <h6 class="mb-0"><i class="ti ti-chart-donut me-2 text-info"></i>Számlázás megoszlása</h6>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center gap-4 flex-wrap py-3">
+                    {% set bs = report_data.billing_stats if report_data else {} %}
+                    <div style="position:relative; width:160px; height:160px;">
+                        <canvas id="billingDonut"></canvas>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+                            <div style="font-size:.9rem;font-weight:700;line-height:1.2;">
+                                {{ "%.0f"|format(bs.total_amount|default(0)|float) }}
+                            </div>
+                            <div style="font-size:.65rem;color:#64748b;">Ft össz.</div>
+                        </div>
+                    </div>
+                    <div style="font-size:.83rem;">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#2fb344;display:inline-block;"></span>
+                            Befolyt: <strong>{{ "%.0f"|format(bs.paid_amount|default(0)|float) }} Ft</strong>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#f59f00;display:inline-block;"></span>
+                            Kintlévőség: <strong>{{ "%.0f"|format(bs.unpaid_amount|default(0)|float) }} Ft</strong>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="width:12px;height:12px;border-radius:3px;background:#d63939;display:inline-block;"></span>
+                            Lejárt: <strong>{{ "%.0f"|format(bs.overdue_amount|default(0)|float) }} Ft</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sor 2: havi bevétel bar chart -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3 pb-1 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="ti ti-chart-bar me-2 text-success"></i>Havi bevétel vs kiadás</h6>
+                    <span class="text-muted" style="font-size:.78rem;">Utolsó 6 hónap</span>
+                </div>
+                <div class="card-body px-4 pb-4 pt-2">
+                    <canvas id="monthlyBar" style="max-height:240px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sor 3: ügyfél aktivitás + top szolgáltatások -->
+    <div class="row g-3 mb-4">
+
+        <!-- Ügyfél aktivitás vonal -->
+        <div class="col-12 col-md-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-1 px-4">
+                    <h6 class="mb-0"><i class="ti ti-users me-2 text-success"></i>Ügyfél aktivitás</h6>
+                </div>
+                <div class="card-body px-4 pb-3 pt-1">
+                    <canvas id="customerLine" style="max-height:200px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Összefoglaló KPI kártyák -->
+        <div class="col-12 col-md-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-1 px-4">
+                    <h6 class="mb-0"><i class="ti ti-target me-2 text-warning"></i>KPI összefoglaló</h6>
+                </div>
+                <div class="card-body px-4 pb-3 pt-2">
+                    {% set js = report_data.job_stats if report_data else {} %}
+                    {% set bs = report_data.billing_stats if report_data else {} %}
+                    {% set cs = report_data.customer_stats if report_data else {} %}
+
+                    {% set total = js.total_jobs|default(0)|int %}
+                    {% set done  = js.completed_jobs|default(0)|int %}
+                    {% set completion_pct = ((done / total * 100)|round(1)) if total > 0 else 0 %}
+
+                    {% set total_amt = bs.total_amount|default(0)|float %}
+                    {% set paid_amt  = bs.paid_amount|default(0)|float %}
+                    {% set collection_pct = ((paid_amt / total_amt * 100)|round(1)) if total_amt > 0 else 0 %}
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.83rem;">
+                            <span>Munkák teljesítési ráta</span>
+                            <strong>{{ completion_pct }}%</strong>
+                        </div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar bg-success" style="width:{{ completion_pct }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.83rem;">
+                            <span>Behajtási ráta</span>
+                            <strong>{{ collection_pct }}%</strong>
+                        </div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar bg-primary" style="width:{{ collection_pct }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.83rem;">
+                            <span>Ügyfelek kintlévőséggel</span>
+                            <strong>{{ cs.customers_with_unpaid|default(0) }} / {{ cs.total_customers|default(1) }}</strong>
+                        </div>
+                        {% set unpaid_pct = ((cs.customers_with_unpaid|default(0)|int / cs.total_customers|default(1)|int * 100)|round(1)) %}
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar bg-warning" style="width:{{ unpaid_pct }}%"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-top text-center">
+                        <span style="font-size:.78rem;color:#64748b;">Átlagos munkaérték</span>
+                        <div style="font-size:1.2rem;font-weight:700;color:#1e293b;">
+                            {% if total > 0 %}
+                                {{ "%.0f"|format(total_amt / total) }} Ft
+                            {% else %}
+                                — Ft
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+{% block extra_js %}
+<script>
+// ── CHART DEFAULTS ────────────────────────────────────────────
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 12;
+
+// ── MUNKA STÁTUSZ DONUT ───────────────────────────────────────
+(function() {
+    {% set js = report_data.job_stats if report_data else {} %}
+    var done    = {{ js.completed_jobs|default(0)|int }};
+    var pending = {{ js.pending_jobs|default(0)|int }};
+    var total   = {{ js.total_jobs|default(0)|int }};
+    var waiting = Math.max(0, total - done - pending);
+    var ctx = document.getElementById('jobDonut');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Befejezett', 'Folyamatban', 'Várakozó'],
+            datasets: [{
+                data: [done, pending, waiting],
+                backgroundColor: ['#2fb344', '#f59f00', '#adb5bd'],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` }
+            }},
+            animation: { animateRotate: true, duration: 800 }
+        }
+    });
+})();
+
+// ── SZÁMLÁZÁS DONUT ───────────────────────────────────────────
+(function() {
+    {% set bs = report_data.billing_stats if report_data else {} %}
+    var paid    = {{ bs.paid_amount|default(0)|float }};
+    var unpaid  = {{ bs.unpaid_amount|default(0)|float }};
+    var overdue = {{ bs.overdue_amount|default(0)|float }};
+    var ctx = document.getElementById('billingDonut');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Befolyt', 'Kintlévőség', 'Lejárt'],
+            datasets: [{
+                data: [paid, unpaid, overdue],
+                backgroundColor: ['#2fb344', '#f59f00', '#d63939'],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString('hu-HU')} Ft` }
+            }},
+            animation: { animateRotate: true, duration: 800 }
+        }
+    });
+})();
+
+// ── HAVI BEVÉTEL BAR ──────────────────────────────────────────
+(function() {
+    var monthly = {{ monthly_revenue_data | tojson | safe if monthly_revenue_data is defined else '[]' }};
+    var ctx = document.getElementById('monthlyBar');
+    if (!ctx) return;
+
+    // Ha nincs adat a backendtől, placeholder hónapok
+    if (!monthly || !monthly.length) {
+        var now = new Date();
+        monthly = [];
+        for (var i = 5; i >= 0; i--) {
+            var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            monthly.push({ label: d.toLocaleString('hu-HU', { month: 'short' }), revenue: 0, expense: 0 });
+        }
+    }
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: monthly.map(d => d.label),
+            datasets: [
+                {
+                    label: 'Bevétel',
+                    data: monthly.map(d => d.revenue),
+                    backgroundColor: 'rgba(47,179,68,.75)',
+                    borderRadius: 5,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'Kiadás',
+                    data: monthly.map(d => d.expense || 0),
+                    backgroundColor: 'rgba(214,57,57,.65)',
+                    borderRadius: 5,
+                    borderSkipped: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 12, padding: 12 } },
+                tooltip: { callbacks: {
+                    label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString('hu-HU')} Ft`
+                }}
+            },
+            scales: {
+                y: {
+                    ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'e' : v },
+                    grid: { color: 'rgba(0,0,0,.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+})();
+
+// ── ÜGYFÉL AKTIVITÁS VONAL ────────────────────────────────────
+(function() {
+    var data = {{ customer_activity_data | tojson | safe if customer_activity_data is defined else '[]' }};
+    var ctx = document.getElementById('customerLine');
+    if (!ctx) return;
+
+    if (!data || !data.length) {
+        var now = new Date();
+        data = [];
+        for (var i = 5; i >= 0; i--) {
+            var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            data.push({ label: d.toLocaleString('hu-HU', { month: 'short' }), new_customers: 0, jobs: 0 });
+        }
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.label),
+            datasets: [
+                {
+                    label: 'Új ügyfelek',
+                    data: data.map(d => d.new_customers),
+                    borderColor: '#2fb344',
+                    backgroundColor: 'rgba(47,179,68,.1)',
+                    tension: .35, fill: true, pointRadius: 4, borderWidth: 2,
+                },
+                {
+                    label: 'Munkák száma',
+                    data: data.map(d => d.jobs),
+                    borderColor: '#1d6ef5',
+                    backgroundColor: 'rgba(29,110,245,.05)',
+                    tension: .35, fill: false, pointRadius: 4, borderWidth: 2,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 12, padding: 10 } }
+            },
+            scales: {
+                y: { ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+})();
+</script>
 {% endblock %}
+

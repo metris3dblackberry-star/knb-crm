@@ -408,8 +408,82 @@ def reports():
             }
         }
 
+        # Havi bevétel + kiadás az utolsó 6 hónapra
+        import calendar
+        from app.models.job import Job as JobModel
+        from app.extensions import db
+        from sqlalchemy import func, extract
+
+        tenant_id = session.get('current_tenant_id') or 1
+        monthly_revenue_data = []
+        customer_activity_data = []
+
+        for i in range(5, -1, -1):
+            ref = today.replace(day=1) - timedelta(days=1)
+            # i hónappal ezelőtti hónap első napja
+            month_date = (today.replace(day=1) - timedelta(days=1))
+            # Számítsuk ki az i-edik hónapot visszafelé
+            year = today.year
+            month = today.month - i
+            while month <= 0:
+                month += 12
+                year -= 1
+
+            rev = db.session.execute(
+                db.select(func.coalesce(func.sum(JobModel.total_cost), 0))
+                .where(and_(
+                    JobModel.tenant_id == tenant_id,
+                    JobModel.completed == True,
+                    extract('year', JobModel.job_date) == year,
+                    extract('month', JobModel.job_date) == month,
+                ))
+            ).scalar() or 0
+
+            job_count = db.session.execute(
+                db.select(func.count())
+                .select_from(JobModel)
+                .where(and_(
+                    JobModel.tenant_id == tenant_id,
+                    extract('year', JobModel.job_date) == year,
+                    extract('month', JobModel.job_date) == month,
+                ))
+            ).scalar() or 0
+
+            try:
+                from app.models.expense import Expense
+                exp = db.session.execute(
+                    db.select(func.coalesce(func.sum(Expense.amount), 0))
+                    .where(and_(
+                        Expense.tenant_id == tenant_id,
+                        extract('year', Expense.expense_date) == year,
+                        extract('month', Expense.expense_date) == month,
+                    ))
+                ).scalar() or 0
+            except Exception:
+                exp = 0
+
+            try:
+                from app.models.customer import Customer
+                new_customers = db.session.execute(
+                    db.select(func.count())
+                    .select_from(Customer)
+                    .where(and_(
+                        Customer.tenant_id == tenant_id,
+                        extract('year', Customer.created_at) == year,
+                        extract('month', Customer.created_at) == month,
+                    ))
+                ).scalar() or 0
+            except Exception:
+                new_customers = 0
+
+            label = date(year, month, 1).strftime('%b')
+            monthly_revenue_data.append({'label': label, 'revenue': float(rev), 'expense': float(exp)})
+            customer_activity_data.append({'label': label, 'new_customers': new_customers, 'jobs': job_count})
+
         return render_template('administrator/reports.html',
-                             report_data=report_data)
+                             report_data=report_data,
+                             monthly_revenue_data=monthly_revenue_data,
+                             customer_activity_data=customer_activity_data)
 
     except Exception as e:
         logger.error(f"Reports page loading failed: {e}")

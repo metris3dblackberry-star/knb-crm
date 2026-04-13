@@ -449,7 +449,7 @@ def expenses():
         db.select(Expense).where(Expense.tenant_id == tenant_id).order_by(Expense.expense_date.desc())
     ).scalars().all()
     workers = get_workers()
-    return render_template('business/expenses.html', expenses=items, workers=workers)
+    return render_template('business/expenses.html', expenses=items, workers=workers, today=date.today())
 
 
 @business_bp.route('/business-hub/expenses/add', methods=['POST'])
@@ -521,7 +521,7 @@ def worker_payments():
     ).scalars().all()
 
     return render_template('business/worker_payments.html',
-        workers=workers, payments=payments, payment_totals=payment_totals)
+        workers=workers, payments=payments, payment_totals=payment_totals, today=date.today())
 
 
 @business_bp.route('/business-hub/worker-payments/add', methods=['POST'])
@@ -531,9 +531,14 @@ def add_worker_payment():
     if r: return r
     from app.models.worker_payment import WorkerPayment
     try:
+        worker_id = request.form.get('worker_id', type=int)
+        if not worker_id:
+            flash('Munkás kiválasztása kötelező!', 'error')
+            next_url = request.form.get('next', url_for('business.worker_payments'))
+            return redirect(next_url)
         p = WorkerPayment(
             tenant_id=get_tenant_id(),
-            worker_id=request.form.get('worker_id', type=int),
+            worker_id=worker_id,
             amount=float(request.form.get('amount', 0)),
             payment_date=date.fromisoformat(request.form.get('payment_date', str(date.today()))),
             notes=sanitize_input(request.form.get('notes', '')),
@@ -578,7 +583,7 @@ def leads():
         db.select(Lead).where(Lead.tenant_id == tenant_id).order_by(Lead.created_date.desc())
     ).scalars().all()
     workers = get_workers()
-    return render_template('business/leads.html', leads=all_leads, stages=LEAD_STAGES, workers=workers)
+    return render_template('business/leads.html', leads=all_leads, stages=LEAD_STAGES, workers=workers, today=date.today())
 
 
 @business_bp.route('/business-hub/leads/add', methods=['POST'])
@@ -659,7 +664,7 @@ def tasks():
         db.select(Job).where(Job.tenant_id == tenant_id).order_by(Job.job_id.desc()).limit(50)
     ).scalars().all()
 
-    return render_template('business/tasks.html', tasks=all_tasks, workers=workers, jobs=jobs)
+    return render_template('business/tasks.html', tasks=all_tasks, workers=workers, jobs=jobs, today=date.today())
 
 
 @business_bp.route('/business-hub/tasks/add', methods=['POST'])
@@ -733,7 +738,7 @@ def confirmations():
         .order_by(PerformanceConfirmation.month.desc())
     ).scalars().all()
     workers = get_workers()
-    return render_template('business/confirmations.html', confirmations=items, workers=workers)
+    return render_template('business/confirmations.html', confirmations=items, workers=workers, today=date.today())
 
 
 @business_bp.route('/business-hub/confirmations/add', methods=['POST'])

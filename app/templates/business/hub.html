@@ -654,9 +654,15 @@
               <select name="worker_id" class="form-select" required>
                 <option value="">Válassz munkást...</option>
                 {% for w in workers %}
-                <option value="{{ w.user_id }}">{{ w.first_name or '' }} {{ w.last_name or w.username }}</option>
+                <option value="{{ w.user_id }}">{{ w.username }}</option>
                 {% endfor %}
               </select>
+            </div>
+            {% else %}
+            <div class="col-12">
+              <div class="alert alert-warning py-2 mb-0" style="font-size:.85rem;">
+                <i class="ti ti-alert-triangle me-1"></i>Nincs munkás a rendszerben. Először adj hozzá munkást!
+              </div>
             </div>
             {% endif %}
             <div class="col-8">

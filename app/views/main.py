@@ -68,19 +68,87 @@ def dashboard():
         flash('Please login first', 'warning')
         return redirect(url_for('auth.login'))
     try:
+        from app.extensions import db
+        from app.models.job import Job
+        from sqlalchemy import and_
+        import datetime as dt
+
         user_type = session.get('current_role', 'technician')
-        template = 'administrator/dashboard.html' if user_type in ('owner', 'admin') else 'technician/dashboard.html'
+        tenant_id = session.get('current_tenant_id') or 1
+        today = dt.date.today()
+
         job_stats = job_service.get_job_statistics()
         billing_stats = billing_service.get_billing_statistics()
-        recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=10)
-        overdue_bills = billing_service.get_overdue_bills()
-        return render_template(template, user_type=user_type, job_stats=job_stats,
-                             billing_stats=billing_stats, recent_jobs=recent_jobs, overdue_bills=overdue_bills)
+        recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=5)
+
+        # ORM overdue_bills (befejezett, kifizetetlen)
+        overdue_q = db.select(Job).where(
+            and_(Job.completed == True, Job.paid == False, Job.tenant_id == tenant_id)
+        ).order_by(Job.job_id.desc()).limit(5)
+        overdue_bills = list(db.session.execute(overdue_q).scalars())
+
+        total_customers = len(customer_service.get_all_customers())
+
+        # Monthly revenue for chart
+        monthly_revenue = [0.0] * 12
+        monthly_q = db.select(
+            db.func.extract('month', Job.job_date).label('month'),
+            db.func.coalesce(db.func.sum(Job.total_cost), 0).label('revenue')
+        ).where(
+            and_(
+                db.func.extract('year', Job.job_date) == today.year,
+                Job.tenant_id == tenant_id,
+                Job.total_cost > 0
+            )
+        ).group_by(db.func.extract('month', Job.job_date))
+        for row in db.session.execute(monthly_q):
+            monthly_revenue[int(row.month) - 1] = float(row.revenue)
+        billing_stats['monthly_revenue'] = monthly_revenue
+
+        # Technician dashboard extras
+        week_start = today - dt.timedelta(days=today.weekday())
+        active_jobs = db.session.execute(
+            db.select(db.func.count()).select_from(Job).where(
+                and_(Job.completed == False, Job.tenant_id == tenant_id)
+            )
+        ).scalar() or 0
+        todays_jobs = db.session.execute(
+            db.select(db.func.count()).select_from(Job).where(
+                and_(Job.job_date == today, Job.tenant_id == tenant_id)
+            )
+        ).scalar() or 0
+        completed_this_week = db.session.execute(
+            db.select(db.func.count()).select_from(Job).where(
+                and_(Job.completed == True, Job.job_date >= week_start, Job.tenant_id == tenant_id)
+            )
+        ).scalar() or 0
+        todays_schedule = list(db.session.execute(
+            db.select(Job).where(and_(Job.job_date == today, Job.tenant_id == tenant_id))
+        ).scalars())
+
+        template = 'administrator/dashboard.html' if user_type in ('owner', 'admin') else 'technician/dashboard.html'
+
+        return render_template(template,
+                             user_type=user_type,
+                             job_stats=job_stats,
+                             billing_stats=billing_stats,
+                             recent_jobs=recent_jobs,
+                             overdue_bills=overdue_bills,
+                             total_customers=total_customers,
+                             customers_with_unpaid=0,
+                             customers_with_overdue=0,
+                             active_jobs=active_jobs,
+                             todays_jobs=todays_jobs,
+                             completed_this_week=completed_this_week,
+                             todays_schedule=todays_schedule,
+                             current_date=today)
     except Exception as e:
-        logger.error(f"Dashboard loading failed: {e}")
-        flash('Failed to load dashboard', 'error')
+        logger.error(f"Dashboard loading failed: {e}", exc_info=True)
+        flash(f'Hiba: {str(e)}', 'error')
         return render_template('technician/dashboard.html', user_type='technician',
-                             job_stats={}, billing_stats={}, recent_jobs=[], overdue_bills=[])
+                             job_stats={}, billing_stats={}, recent_jobs=[], overdue_bills=[],
+                             active_jobs=0, todays_jobs=0, completed_this_week=0,
+                             todays_schedule=[], current_date=dt.date.today())
 
 
 @main_bp.route('/api/search/customers')

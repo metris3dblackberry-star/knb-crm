@@ -3,7 +3,7 @@
 ERP kiegészítő modul: kiadások, munkás kifizetések, leadek, feladatok, teljesítési igazolások
 """
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
-from datetime import date
+from datetime import date, datetime, timedelta
 import logging
 from app.extensions import db
 from app.utils.decorators import handle_database_errors, log_function_call
@@ -25,7 +25,6 @@ def get_tenant_id():
 
 
 def get_workers():
-    """Get all active workers for the current tenant"""
     from app.models.user import User
     from app.models.tenant_membership import TenantMembership
     from sqlalchemy import and_
@@ -54,9 +53,9 @@ def get_workers():
 @business_bp.route('/business-hub')
 @handle_database_errors
 def hub():
-    """Üzleti Központ főoldal"""
     r = require_login()
     if r: return r
+
     tenant_id = get_tenant_id()
     today = date.today()
 
@@ -64,10 +63,12 @@ def hub():
         from app.models.expense import Expense
         from app.models.lead import Lead
         from app.models.task import Task
-        from app.models.worker_payment import WorkerPayment
-        from sqlalchemy import and_, func
+        from app.models.worker_payment import WorkerPayment, PerformanceConfirmation
+        from app.models.job import Job
+        from app.models.user import User
+        from sqlalchemy import and_, func, case
 
-        # Összesítők
+        # ── HAVI ÖSSZESÍTŐK ────────────────────────────────────────
         total_expenses = db.session.execute(
             db.select(func.coalesce(func.sum(Expense.amount), 0))
             .where(and_(Expense.tenant_id == tenant_id,
@@ -92,8 +93,6 @@ def hub():
             .where(and_(Task.tenant_id == tenant_id, Task.done == False))
         ).scalar() or 0
 
-        # Bevétel becslés (munkák összege adott hónapban)
-        from app.models.job import Job
         monthly_revenue = db.session.execute(
             db.select(func.coalesce(func.sum(Job.total_cost), 0))
             .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
@@ -101,24 +100,337 @@ def hub():
                         func.extract('year', Job.job_date) == today.year))
         ).scalar() or 0
 
-        profit_estimate = float(monthly_revenue) - float(total_expenses) - float(total_payouts)
+        # ── PROFIT RÉSZLETEZÉS ─────────────────────────────────────
+        # Anyagköltség (alkatrészek)
+        try:
+            from app.models.job import JobPart
+            material_cost = db.session.execute(
+                db.select(func.coalesce(
+                    func.sum(JobPart.quantity * JobPart.unit_price), 0))
+                .join(Job, JobPart.job_id == Job.job_id)
+                .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                            func.extract('month', Job.job_date) == today.month,
+                            func.extract('year', Job.job_date) == today.year))
+            ).scalar() or 0
+        except Exception:
+            material_cost = 0
+
+        labor_cost = float(total_payouts)
+        net_profit = float(monthly_revenue) - float(total_expenses) - labor_cost
+        profit_pct = round((net_profit / float(monthly_revenue) * 100), 1) if float(monthly_revenue) > 0 else 0
+
+        # ── MAI TEENDŐK ────────────────────────────────────────────
+        today_jobs = db.session.execute(
+            db.select(func.count()).select_from(Job)
+            .where(and_(Job.tenant_id == tenant_id,
+                        Job.job_date == today,
+                        Job.completed == False))
+        ).scalar() or 0
+
+        overdue_tasks = db.session.execute(
+            db.select(Task)
+            .where(and_(Task.tenant_id == tenant_id,
+                        Task.done == False,
+                        Task.deadline != None,
+                        Task.deadline <= today))
+            .order_by(Task.deadline)
+            .limit(5)
+        ).scalars().all()
+
+        today_tasks = db.session.execute(
+            db.select(Task)
+            .where(and_(Task.tenant_id == tenant_id,
+                        Task.done == False,
+                        Task.deadline == today))
+        ).scalars().all()
+
+        # Lejárt/fizetetlen számlák (jobs where completed but not invoiced / old)
+        try:
+            unpaid_jobs = db.session.execute(
+                db.select(Job)
+                .where(and_(Job.tenant_id == tenant_id,
+                            Job.completed == True,
+                            Job.job_date <= today - timedelta(days=30)))
+                .order_by(Job.job_date.asc())
+                .limit(5)
+            ).scalars().all()
+        except Exception:
+            unpaid_jobs = []
+
+        # Kifizetendő munkások (van-e PerformanceConfirmation 'Beadva' státuszban)
+        try:
+            pending_confirmations = db.session.execute(
+                db.select(func.count()).select_from(PerformanceConfirmation)
+                .where(and_(PerformanceConfirmation.tenant_id == tenant_id,
+                            PerformanceConfirmation.status == 'Beadva'))
+            ).scalar() or 0
+        except Exception:
+            pending_confirmations = 0
+
+        # ── CASHFLOW ADATOK (30 nap) ───────────────────────────────
+        cashflow_days = []
+        for i in range(29, -1, -1):
+            d = today - timedelta(days=i)
+            rev = db.session.execute(
+                db.select(func.coalesce(func.sum(Job.total_cost), 0))
+                .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                            Job.job_date == d))
+            ).scalar() or 0
+            exp = db.session.execute(
+                db.select(func.coalesce(func.sum(Expense.amount), 0))
+                .where(and_(Expense.tenant_id == tenant_id,
+                            Expense.expense_date == d))
+            ).scalar() or 0
+            cashflow_days.append({
+                'date': d.strftime('%m.%d'),
+                'revenue': float(rev),
+                'expense': float(exp),
+                'profit': float(rev) - float(exp)
+            })
+
+        # ── TOP MUNKÁSOK ───────────────────────────────────────────
+        workers = get_workers()
+        top_workers = []
+        avg_jobs = 0
+        try:
+            worker_stats = []
+            for w in workers:
+                job_count = db.session.execute(
+                    db.select(func.count()).select_from(Job)
+                    .where(and_(Job.tenant_id == tenant_id,
+                                Job.completed == True,
+                                func.extract('month', Job.job_date) == today.month,
+                                func.extract('year', Job.job_date) == today.year))
+                ).scalar() or 0
+                revenue = db.session.execute(
+                    db.select(func.coalesce(func.sum(Job.total_cost), 0))
+                    .where(and_(Job.tenant_id == tenant_id,
+                                Job.completed == True,
+                                func.extract('month', Job.job_date) == today.month,
+                                func.extract('year', Job.job_date) == today.year))
+                ).scalar() or 0
+                worker_stats.append({
+                    'name': f"{getattr(w, 'first_name', '')} {getattr(w, 'last_name', '')}".strip() or getattr(w, 'username', 'Ismeretlen'),
+                    'job_count': job_count,
+                    'revenue': float(revenue),
+                })
+            worker_stats.sort(key=lambda x: x['job_count'], reverse=True)
+            top_workers = worker_stats[:3]
+            if worker_stats:
+                avg_jobs = sum(s['job_count'] for s in worker_stats) / len(worker_stats)
+        except Exception as e:
+            logger.warning(f"top_workers error: {e}")
+
+        # ── FIGYELMEZTETÉSEK ───────────────────────────────────────
+        warnings = []
+
+        # Hiányzó teljesítési igazolások
+        if pending_confirmations > 0:
+            warnings.append({
+                'type': 'danger',
+                'icon': 'ti-file-alert',
+                'text': f'{pending_confirmations} teljesítési igazolás jóváhagyásra vár',
+                'url': url_for('business.confirmations')
+            })
+
+        # Lejárt feladatok
+        overdue_count = len(overdue_tasks)
+        if overdue_count > 0:
+            warnings.append({
+                'type': 'warning',
+                'icon': 'ti-clock-exclamation',
+                'text': f'{overdue_count} lejárt feladat',
+                'url': url_for('business.tasks')
+            })
+
+        # Negatív profit
+        if net_profit < 0:
+            warnings.append({
+                'type': 'danger',
+                'icon': 'ti-trending-down',
+                'text': f'Negatív havi profit: {int(net_profit):,} Ft'.replace(',', ' '),
+                'url': url_for('business.expenses')
+            })
+
+        # Sok lead veszteség
+        lost_leads = db.session.execute(
+            db.select(func.count()).select_from(Lead)
+            .where(and_(Lead.tenant_id == tenant_id, Lead.stage == 'Elveszett',
+                        func.extract('month', Lead.created_date) == today.month))
+        ).scalar() or 0
+        if lost_leads >= 3:
+            warnings.append({
+                'type': 'warning',
+                'icon': 'ti-user-x',
+                'text': f'{lost_leads} elveszett lead ebben a hónapban',
+                'url': url_for('business.leads')
+            })
+
+        # ── LEGUTÓBBI AKTIVITÁSOK ──────────────────────────────────
+        recent_activities = []
+
+        # Utolsó 5 kiadás
+        recent_expenses = db.session.execute(
+            db.select(Expense).where(Expense.tenant_id == tenant_id)
+            .order_by(Expense.expense_date.desc()).limit(3)
+        ).scalars().all()
+        for e in recent_expenses:
+            recent_activities.append({
+                'icon': 'ti-receipt',
+                'color': 'danger',
+                'text': f'Kiadás rögzítve: {int(e.amount):,} Ft ({e.category or "egyéb"})'.replace(',', ' '),
+                'date': e.expense_date.strftime('%m.%d') if e.expense_date else '',
+                'sort_date': e.expense_date or date.min
+            })
+
+        # Utolsó 3 befejezett munka
+        recent_jobs = db.session.execute(
+            db.select(Job).where(and_(Job.tenant_id == tenant_id, Job.completed == True))
+            .order_by(Job.job_date.desc()).limit(3)
+        ).scalars().all()
+        for j in recent_jobs:
+            recent_activities.append({
+                'icon': 'ti-check',
+                'color': 'success',
+                'text': f'Munka lezárva: {int(j.total_cost or 0):,} Ft'.replace(',', ' '),
+                'date': j.job_date.strftime('%m.%d') if j.job_date else '',
+                'sort_date': j.job_date or date.min
+            })
+
+        # Utolsó 2 lead
+        recent_leads_list = db.session.execute(
+            db.select(Lead).where(Lead.tenant_id == tenant_id)
+            .order_by(Lead.created_date.desc()).limit(2)
+        ).scalars().all()
+        for l in recent_leads_list:
+            recent_activities.append({
+                'icon': 'ti-user-plus',
+                'color': 'primary',
+                'text': f'Új lead: {l.name} ({l.stage})',
+                'date': l.created_date.strftime('%m.%d') if l.created_date else '',
+                'sort_date': l.created_date or date.min
+            })
+
+        recent_activities.sort(key=lambda x: x['sort_date'], reverse=True)
+        recent_activities = recent_activities[:8]
 
         return render_template('business/hub.html',
+            # Havi összesítők
             total_expenses=float(total_expenses),
             total_payouts=float(total_payouts),
             open_leads=open_leads,
             open_tasks=open_tasks,
             monthly_revenue=float(monthly_revenue),
-            profit_estimate=profit_estimate,
+            profit_estimate=net_profit,
             current_month=today.strftime('%Y. %B'),
+            # Profit részletezés
+            material_cost=float(material_cost),
+            labor_cost=labor_cost,
+            net_profit=net_profit,
+            profit_pct=profit_pct,
+            # Mai teendők
+            today_jobs=today_jobs,
+            overdue_tasks=overdue_tasks,
+            today_tasks=today_tasks,
+            unpaid_jobs=unpaid_jobs,
+            pending_confirmations=pending_confirmations,
+            # Cashflow
+            cashflow_days=cashflow_days,
+            # Top munkások
+            top_workers=top_workers,
+            avg_jobs=avg_jobs,
+            # Figyelmeztetések
+            warnings=warnings,
+            # Aktivitások
+            recent_activities=recent_activities,
+            # Workers (modal-hoz)
+            workers=workers,
+            today=today,
         )
+
     except Exception as e:
         logger.error(f"Business hub error: {e}", exc_info=True)
-        flash(f'Hiba: {e}', 'error')
+        flash(f'Dashboard hiba: {e}', 'error')
         return render_template('business/hub.html',
-            total_expenses=0, total_payouts=0, open_leads=0,
-            open_tasks=0, monthly_revenue=0, profit_estimate=0,
-            current_month=today.strftime('%Y. %B'))
+            total_expenses=0, total_payouts=0, open_leads=0, open_tasks=0,
+            monthly_revenue=0, profit_estimate=0, current_month=today.strftime('%Y. %B'),
+            material_cost=0, labor_cost=0, net_profit=0, profit_pct=0,
+            today_jobs=0, overdue_tasks=[], today_tasks=[], unpaid_jobs=[],
+            pending_confirmations=0, cashflow_days=[], top_workers=[], avg_jobs=0,
+            warnings=[], recent_activities=[], workers=[], today=today)
+
+
+# ─────────────────────────────────────────────────────────────────
+# NAPI ZÁRÁS API
+# ─────────────────────────────────────────────────────────────────
+
+@business_bp.route('/business-hub/daily-close', methods=['POST'])
+@handle_database_errors
+def daily_close():
+    r = require_login()
+    if r: return jsonify({'error': 'Nincs bejelentkezve'}), 401
+
+    tenant_id = get_tenant_id()
+    today = date.today()
+    issues = []
+    ok = []
+
+    try:
+        from app.models.task import Task
+        from app.models.expense import Expense
+        from app.models.job import Job
+        from sqlalchemy import and_, func
+
+        # Nyitott feladatok ma
+        open_tasks_count = db.session.execute(
+            db.select(func.count()).select_from(Task)
+            .where(and_(Task.tenant_id == tenant_id, Task.done == False,
+                        Task.deadline != None, Task.deadline <= today))
+        ).scalar() or 0
+
+        if open_tasks_count > 0:
+            issues.append(f'⚠️ {open_tasks_count} lejárt feladat maradt nyitva')
+        else:
+            ok.append('✅ Minden lejárt feladat elvégezve')
+
+        # Mai befejezetlen munkák
+        open_jobs = db.session.execute(
+            db.select(func.count()).select_from(Job)
+            .where(and_(Job.tenant_id == tenant_id, Job.completed == False,
+                        Job.job_date == today))
+        ).scalar() or 0
+
+        if open_jobs > 0:
+            issues.append(f'⚠️ {open_jobs} mai munka nincs lezárva')
+        else:
+            ok.append('✅ Minden mai munka lezárva')
+
+        # Rögzítetlen kiadások ellenőrzése (ha nincs egyetlen mai kiadás sem, és van munka)
+        today_expenses = db.session.execute(
+            db.select(func.count()).select_from(Expense)
+            .where(and_(Expense.tenant_id == tenant_id, Expense.expense_date == today))
+        ).scalar() or 0
+
+        today_completed = db.session.execute(
+            db.select(func.count()).select_from(Job)
+            .where(and_(Job.tenant_id == tenant_id, Job.completed == True, Job.job_date == today))
+        ).scalar() or 0
+
+        if today_completed > 0 and today_expenses == 0:
+            issues.append('💡 Tipp: Volt munka ma, de nem lett kiadás rögzítve')
+        elif today_expenses > 0:
+            ok.append(f'✅ {today_expenses} kiadás rögzítve ma')
+
+        status = 'ok' if len(issues) == 0 else 'warning'
+        return jsonify({
+            'status': status,
+            'issues': issues,
+            'ok': ok,
+            'date': today.strftime('%Y. %m. %d.')
+        })
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'issues': [str(e)], 'ok': []}), 500
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -163,7 +475,8 @@ def add_expense():
     except Exception as ex:
         db.session.rollback()
         flash(f'Hiba: {ex}', 'error')
-    return redirect(url_for('business.expenses'))
+    next_url = request.form.get('next', url_for('business.expenses'))
+    return redirect(next_url)
 
 
 @business_bp.route('/business-hub/expenses/<int:expense_id>/delete', methods=['POST'])
@@ -194,7 +507,6 @@ def worker_payments():
     tenant_id = get_tenant_id()
     workers = get_workers()
 
-    # Összesítés workerenként
     payment_totals = {}
     for w in workers:
         total = db.session.execute(
@@ -223,10 +535,8 @@ def add_worker_payment():
             tenant_id=get_tenant_id(),
             worker_id=request.form.get('worker_id', type=int),
             amount=float(request.form.get('amount', 0)),
-            currency=request.form.get('currency', 'HUF'),
-            payment_source=sanitize_input(request.form.get('payment_source', '')),
-            notes=sanitize_input(request.form.get('notes', '')),
             payment_date=date.fromisoformat(request.form.get('payment_date', str(date.today()))),
+            notes=sanitize_input(request.form.get('notes', '')),
         )
         db.session.add(p)
         db.session.commit()
@@ -234,6 +544,21 @@ def add_worker_payment():
     except Exception as ex:
         db.session.rollback()
         flash(f'Hiba: {ex}', 'error')
+    next_url = request.form.get('next', url_for('business.worker_payments'))
+    return redirect(next_url)
+
+
+@business_bp.route('/business-hub/worker-payments/<int:payment_id>/delete', methods=['POST'])
+@handle_database_errors
+def delete_worker_payment(payment_id):
+    r = require_login()
+    if r: return r
+    from app.models.worker_payment import WorkerPayment
+    p = db.session.get(WorkerPayment, payment_id)
+    if p:
+        db.session.delete(p)
+        db.session.commit()
+        flash('Kifizetés törölve!', 'success')
     return redirect(url_for('business.worker_payments'))
 
 
@@ -280,7 +605,8 @@ def add_lead():
     except Exception as ex:
         db.session.rollback()
         flash(f'Hiba: {ex}', 'error')
-    return redirect(url_for('business.leads'))
+    next_url = request.form.get('next', url_for('business.leads'))
+    return redirect(next_url)
 
 
 @business_bp.route('/business-hub/leads/<int:lead_id>/stage', methods=['POST'])
@@ -360,7 +686,8 @@ def add_task():
     except Exception as ex:
         db.session.rollback()
         flash(f'Hiba: {ex}', 'error')
-    return redirect(url_for('business.tasks'))
+    next_url = request.form.get('next', url_for('business.tasks'))
+    return redirect(next_url)
 
 
 @business_bp.route('/business-hub/tasks/<int:task_id>/toggle', methods=['POST'])
@@ -417,7 +744,6 @@ def add_confirmation():
     from app.models.worker_payment import PerformanceConfirmation
     import os
     from werkzeug.utils import secure_filename
-
     try:
         file = request.files.get('file')
         file_path = None
@@ -428,7 +754,6 @@ def add_confirmation():
             full_path = os.path.join(upload_dir, filename)
             file.save(full_path)
             file_path = f'/static/uploads/confirmations/{filename}'
-
         c = PerformanceConfirmation(
             tenant_id=get_tenant_id(),
             worker_id=request.form.get('worker_id', type=int),

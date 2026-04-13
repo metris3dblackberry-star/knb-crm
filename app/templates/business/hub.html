@@ -1,119 +1,835 @@
 {% extends "base/layout.html" %}
-{% block title %}Üzleti Központ{% endblock %}
+
+{% block title %}Üzleti Központ — RepairOS{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── QUICK ACTION GOMBOK ── */
+  .quick-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .btn-quick {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .45rem .9rem; border-radius: 8px; font-size: .85rem;
+    font-weight: 600; border: none; cursor: pointer; transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-quick:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+  /* ── MAI TEENDŐK ── */
+  .todo-card {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .65rem .9rem; border-radius: 8px; margin-bottom: .4rem;
+    text-decoration: none; color: inherit; transition: background .1s;
+    border-left: 3px solid transparent;
+  }
+  .todo-card:hover { background: rgba(0,0,0,.04); color: inherit; }
+  .todo-card.green  { border-left-color: #2fb344; }
+  .todo-card.yellow { border-left-color: #f59f00; }
+  .todo-card.red    { border-left-color: #d63939; }
+  .todo-badge {
+    min-width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem;
+  }
+
+  /* ── WARNING PANEL ── */
+  .warning-item {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .5rem .75rem; border-radius: 7px; margin-bottom: .3rem;
+    text-decoration: none; font-size: .855rem; font-weight: 500;
+    transition: opacity .15s;
+  }
+  .warning-item:hover { opacity: .8; }
+  .warning-item.danger  { background: #fff0f0; color: #b91c1c; }
+  .warning-item.warning { background: #fffbeb; color: #92400e; }
+
+  /* ── TIMELINE ── */
+  .timeline-item { display: flex; gap: .75rem; padding: .5rem 0; }
+  .timeline-item + .timeline-item { border-top: 1px solid #f0f0f0; }
+  .timeline-dot {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: .75rem;
+  }
+  .timeline-dot.success { background: #d1fae5; color: #065f46; }
+  .timeline-dot.danger  { background: #fee2e2; color: #991b1b; }
+  .timeline-dot.primary { background: #dbeafe; color: #1e40af; }
+
+  /* ── TOP MUNKÁSOK ── */
+  .worker-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 0; }
+  .worker-row + .worker-row { border-top: 1px solid #f0f0f0; }
+  .worker-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .8rem; flex-shrink: 0; color: #475569;
+  }
+
+  /* ── PROFIT KÁRTYÁK ── */
+  .profit-row { display: flex; justify-content: space-between; padding: .35rem 0; }
+  .profit-row + .profit-row { border-top: 1px solid #f3f4f6; }
+  .profit-row .label { color: #64748b; font-size: .835rem; }
+  .profit-row .value { font-weight: 600; font-size: .875rem; }
+
+  /* ── CASHFLOW CHART ── */
+  #cashflowChart { max-height: 200px; }
+
+  /* ── NAPI ZÁRÁS ── */
+  #dailyCloseResult { font-size: .875rem; }
+  #dailyCloseResult .ok-item   { color: #059669; }
+  #dailyCloseResult .warn-item { color: #d97706; }
+
+  /* ── MOBIL ── */
+  @media (max-width: 767px) {
+    .quick-actions { gap: .4rem; }
+    .btn-quick { flex: 1 1 calc(50% - .4rem); justify-content: center; padding: .55rem .5rem; }
+    .today-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active">Üzleti Központ</li>
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold mb-2 d-flex align-items-center gap-2">
-            <i class="ti ti-building-store text-primary"></i>
-            Üzleti Központ
-        </h1>
-        <p class="text-muted mb-0">{{ current_month }} — havi összesítő</p>
-    </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FEJLÉC + QUICK ACTION GOMBOK
+═══════════════════════════════════════════════════════════════ -->
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <div>
+    <h2 class="mb-0"><i class="ti ti-building me-2"></i>Üzleti Központ</h2>
+    <small class="text-muted">{{ current_month }} — havi összesítő</small>
+  </div>
+  <button class="btn btn-outline-secondary btn-sm" id="dailyCloseBtn">
+    <i class="ti ti-moon me-1"></i>Nap lezárása
+  </button>
 </div>
 
-<!-- Havi összesítő kártyák -->
-<div class="row mb-4">
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge bg-success-lt me-2"><i class="ti ti-trending-up"></i></span>
-                    <div class="subheader">Havi bevétel</div>
-                </div>
-                <div class="h1 mb-0 text-success">{{ "%.0f"|format(monthly_revenue) }} Ft</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge bg-danger-lt me-2"><i class="ti ti-cash"></i></span>
-                    <div class="subheader">Havi kiadások</div>
-                </div>
-                <div class="h1 mb-0 text-danger">{{ "%.0f"|format(total_expenses) }} Ft</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge bg-warning-lt me-2"><i class="ti ti-users"></i></span>
-                    <div class="subheader">Munkás kifizetések</div>
-                </div>
-                <div class="h1 mb-0 text-warning">{{ "%.0f"|format(total_payouts) }} Ft</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-lg-3 mb-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-2">
-                    <span class="badge {% if profit_estimate >= 0 %}bg-success-lt{% else %}bg-danger-lt{% endif %} me-2">
-                        <i class="ti ti-chart-line"></i>
-                    </span>
-                    <div class="subheader">Becsült profit</div>
-                </div>
-                <div class="h1 mb-0 {% if profit_estimate >= 0 %}text-success{% else %}text-danger{% endif %}">
-                    {{ "%.0f"|format(profit_estimate) }} Ft
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Quick Action gombok -->
+<div class="quick-actions">
+  <button class="btn-quick btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalExpense">
+    <i class="ti ti-plus"></i> Kiadás rögzítése
+  </button>
+  <button class="btn-quick btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTask">
+    <i class="ti ti-plus"></i> Új feladat
+  </button>
+  <button class="btn-quick btn btn-success" data-bs-toggle="modal" data-bs-target="#modalLead">
+    <i class="ti ti-plus"></i> Új lead
+  </button>
+  <button class="btn-quick btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalPayment">
+    <i class="ti ti-plus"></i> Kifizetés rögzítése
+  </button>
 </div>
 
-<!-- Modulok -->
-<div class="row g-3">
-    <div class="col-md-4">
-        <a href="{{ url_for('business.expenses') }}" class="card card-link text-decoration-none">
-            <div class="card-body text-center py-4">
-                <div class="mb-3" style="font-size: 2.5rem;">💸</div>
-                <h3 class="fw-bold mb-1">Kiadások</h3>
-                <p class="text-muted mb-0">Kiadások rögzítése és nyomonkövetése</p>
-            </div>
-        </a>
+<!-- ═══════════════════════════════════════════════════════════════
+     MAI TEENDŐK
+═══════════════════════════════════════════════════════════════ -->
+<div class="card mb-3 border-0 shadow-sm">
+  <div class="card-header bg-white border-0 pb-1 pt-3 px-3">
+    <h5 class="mb-0"><i class="ti ti-checklist me-2 text-primary"></i>Mai teendők</h5>
+  </div>
+  <div class="card-body pt-2 pb-3 px-3">
+    <div class="row g-2" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+
+      <!-- Mai munkák -->
+      <a href="{{ url_for('technician.current_jobs') }}" class="todo-card {{ 'green' if today_jobs == 0 else 'yellow' }}">
+        <div class="todo-badge {{ 'bg-success text-white' if today_jobs == 0 else 'bg-warning text-white' }}">
+          {{ today_jobs }}
+        </div>
+        <div>
+          <div class="fw-semibold" style="font-size:.875rem;">Nyitott mai munka</div>
+          <div class="text-muted" style="font-size:.78rem;">
+            {{ 'Minden lezárva ✓' if today_jobs == 0 else 'Aktív munkák' }}
+          </div>
+        </div>
+        <i class="ti ti-chevron-right ms-auto text-muted"></i>
+      </a>
+
+      <!-- Lejárt feladatok -->
+      <a href="{{ url_for('business.tasks') }}" class="todo-card {{ 'green' if overdue_tasks|length == 0 else 'red' }}">
+        <div class="todo-badge {{ 'bg-success text-white' if overdue_tasks|length == 0 else 'bg-danger text-white' }}">
+          {{ overdue_tasks|length }}
+        </div>
+        <div>
+          <div class="fw-semibold" style="font-size:.875rem;">Lejárt feladat</div>
+          <div class="text-muted" style="font-size:.78rem;">
+            {% if overdue_tasks %}{{ overdue_tasks[0].title[:30] }}{% else %}Minden rendben ✓{% endif %}
+          </div>
+        </div>
+        <i class="ti ti-chevron-right ms-auto text-muted"></i>
+      </a>
+
+      <!-- Jóváhagyásra váró igazolások -->
+      <a href="{{ url_for('business.confirmations') }}" class="todo-card {{ 'green' if pending_confirmations == 0 else 'yellow' }}">
+        <div class="todo-badge {{ 'bg-success text-white' if pending_confirmations == 0 else 'bg-warning text-white' }}">
+          {{ pending_confirmations }}
+        </div>
+        <div>
+          <div class="fw-semibold" style="font-size:.875rem;">Jóváhagyásra vár</div>
+          <div class="text-muted" style="font-size:.78rem;">Teljesítési igazolások</div>
+        </div>
+        <i class="ti ti-chevron-right ms-auto text-muted"></i>
+      </a>
+
+      <!-- Lejárt számlák -->
+      <a href="{{ url_for('administrator.dashboard') }}" class="todo-card {{ 'green' if unpaid_jobs|length == 0 else 'red' }}">
+        <div class="todo-badge {{ 'bg-success text-white' if unpaid_jobs|length == 0 else 'bg-danger text-white' }}">
+          {{ unpaid_jobs|length }}
+        </div>
+        <div>
+          <div class="fw-semibold" style="font-size:.875rem;">Régi lezárt munka</div>
+          <div class="text-muted" style="font-size:.78rem;">30+ napja befejezett</div>
+        </div>
+        <i class="ti ti-chevron-right ms-auto text-muted"></i>
+      </a>
+
     </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('business.worker_payments') }}" class="card card-link text-decoration-none">
-            <div class="card-body text-center py-4">
-                <div class="mb-3" style="font-size: 2.5rem;">👷</div>
-                <h3 class="fw-bold mb-1">Munkás kifizetések</h3>
-                <p class="text-muted mb-0">Munkások bérének és kifizetéseinek kezelése</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('business.leads') }}" class="card card-link text-decoration-none">
-            <div class="card-body text-center py-4">
-                <div class="mb-3" style="font-size: 2.5rem;">📊</div>
-                <h3 class="fw-bold mb-1">Lead követés</h3>
-                <p class="text-muted mb-0">{{ open_leads }} nyitott érdeklődő</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('business.tasks') }}" class="card card-link text-decoration-none">
-            <div class="card-body text-center py-4">
-                <div class="mb-3" style="font-size: 2.5rem;">✅</div>
-                <h3 class="fw-bold mb-1">Feladatok</h3>
-                <p class="text-muted mb-0">{{ open_tasks }} nyitott feladat</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="{{ url_for('business.confirmations') }}" class="card card-link text-decoration-none">
-            <div class="card-body text-center py-4">
-                <div class="mb-3" style="font-size: 2.5rem;">📄</div>
-                <h3 class="fw-bold mb-1">Teljesítési igazolások</h3>
-                <p class="text-muted mb-0">Havi igazolások kezelése</p>
-            </div>
-        </a>
-    </div>
+  </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HAVI ÖSSZESÍTŐ KÁRTYÁK
+═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="text-uppercase text-muted fw-semibold" style="font-size:.7rem; letter-spacing:.05em;">
+          <i class="ti ti-trending-up me-1 text-success"></i>Havi bevétel
+        </div>
+        <div class="text-success fw-bold mt-1" style="font-size:1.35rem;">
+          {{ "{:,.0f}".format(monthly_revenue).replace(',', ' ') }} Ft
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="text-uppercase text-muted fw-semibold" style="font-size:.7rem; letter-spacing:.05em;">
+          <i class="ti ti-receipt me-1 text-danger"></i>Havi kiadások
+        </div>
+        <div class="text-danger fw-bold mt-1" style="font-size:1.35rem;">
+          {{ "{:,.0f}".format(total_expenses).replace(',', ' ') }} Ft
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="text-uppercase text-muted fw-semibold" style="font-size:.7rem; letter-spacing:.05em;">
+          <i class="ti ti-users me-1 text-warning"></i>Munkás kifizetések
+        </div>
+        <div class="text-warning fw-bold mt-1" style="font-size:1.35rem;">
+          {{ "{:,.0f}".format(total_payouts).replace(',', ' ') }} Ft
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body p-3">
+        <div class="text-uppercase text-muted fw-semibold" style="font-size:.7rem; letter-spacing:.05em;">
+          <i class="ti ti-chart-bar me-1 {{ 'text-success' if net_profit >= 0 else 'text-danger' }}"></i>Becsült profit
+        </div>
+        <div class="{{ 'text-success' if net_profit >= 0 else 'text-danger' }} fw-bold mt-1" style="font-size:1.35rem;">
+          {{ "{:,.0f}".format(net_profit).replace(',', ' ') }} Ft
+        </div>
+        <div class="text-muted" style="font-size:.75rem;">{{ profit_pct }}% profit ráta</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CASHFLOW + PROFIT RÉSZLETEZÉS
+═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+  <!-- Cashflow grafikon -->
+  <div class="col-12 col-lg-8">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-chart-line me-2 text-primary"></i>Cashflow — 30 nap</h6>
+        <div class="d-flex gap-2" style="font-size:.78rem;">
+          <span class="d-flex align-items-center gap-1"><span style="width:10px;height:3px;background:#2fb344;display:inline-block;border-radius:2px;"></span>Bevétel</span>
+          <span class="d-flex align-items-center gap-1"><span style="width:10px;height:3px;background:#d63939;display:inline-block;border-radius:2px;"></span>Kiadás</span>
+          <span class="d-flex align-items-center gap-1"><span style="width:10px;height:3px;background:#1d6ef5;display:inline-block;border-radius:2px;"></span>Profit</span>
+        </div>
+      </div>
+      <div class="card-body px-3 pb-3 pt-1">
+        <canvas id="cashflowChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profit részletezés -->
+  <div class="col-12 col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-calculator me-2 text-primary"></i>Profit részletezés</h6>
+      </div>
+      <div class="card-body px-3 pb-3 pt-2">
+        <div class="profit-row">
+          <span class="label">Teljes bevétel</span>
+          <span class="value text-success">{{ "{:,.0f}".format(monthly_revenue).replace(',', ' ') }} Ft</span>
+        </div>
+        <div class="profit-row">
+          <span class="label">Anyagköltség</span>
+          <span class="value text-danger">− {{ "{:,.0f}".format(material_cost).replace(',', ' ') }} Ft</span>
+        </div>
+        <div class="profit-row">
+          <span class="label">Munkabér</span>
+          <span class="value text-danger">− {{ "{:,.0f}".format(labor_cost).replace(',', ' ') }} Ft</span>
+        </div>
+        <div class="profit-row">
+          <span class="label">Egyéb kiadás</span>
+          <span class="value text-danger">− {{ "{:,.0f}".format(total_expenses - material_cost if total_expenses > material_cost else 0).replace(',', ' ') }} Ft</span>
+        </div>
+        <div class="profit-row mt-1 pt-1" style="border-top: 2px solid #e2e8f0 !important;">
+          <span class="label fw-bold" style="color:#1e293b;">Nettó profit</span>
+          <span class="value fw-bold fs-6 {{ 'text-success' if net_profit >= 0 else 'text-danger' }}">
+            {{ "{:,.0f}".format(net_profit).replace(',', ' ') }} Ft
+          </span>
+        </div>
+        <div class="mt-2 text-center">
+          <span class="badge {{ 'bg-success' if profit_pct >= 20 else ('bg-warning text-dark' if profit_pct >= 0 else 'bg-danger') }} px-3 py-2" style="font-size:.85rem;">
+            Profit ráta: {{ profit_pct }}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TOP MUNKÁSOK + FIGYELMEZTETÉSEK
+═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+  <!-- Top munkások -->
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-star me-2 text-warning"></i>Legaktívabb munkások</h6>
+        <small class="text-muted">{{ current_month }}</small>
+      </div>
+      <div class="card-body px-3 pb-3 pt-2">
+        {% if top_workers %}
+          {% for w in top_workers %}
+          <div class="worker-row">
+            <div class="worker-avatar">{{ w.name[:2].upper() if w.name else '??' }}</div>
+            <div class="flex-fill">
+              <div class="fw-semibold" style="font-size:.875rem;">{{ w.name or 'Ismeretlen' }}</div>
+              <div class="text-muted" style="font-size:.78rem;">{{ w.job_count }} munka · {{ "{:,.0f}".format(w.revenue).replace(',', ' ') }} Ft</div>
+            </div>
+            {% if w.job_count < avg_jobs * 0.5 and avg_jobs > 0 %}
+            <span class="badge bg-warning text-dark" style="font-size:.7rem;">Lemaradt</span>
+            {% elif loop.index == 1 %}
+            <span class="badge bg-success" style="font-size:.7rem;">Top</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center py-3" style="font-size:.875rem;">
+            <i class="ti ti-users-off d-block mb-1" style="font-size:1.5rem;"></i>
+            Nincs adat
+          </p>
+        {% endif %}
+        <div class="mt-3 pt-2 border-top">
+          <a href="{{ url_for('business.worker_payments') }}" class="btn btn-sm btn-outline-primary w-100">
+            Munkás kifizetések →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Figyelmeztetések -->
+  <div class="col-12 col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-alert-triangle me-2 text-danger"></i>Figyelmeztetések</h6>
+      </div>
+      <div class="card-body px-3 pb-3 pt-2">
+        {% if warnings %}
+          {% for w in warnings %}
+          <a href="{{ w.url }}" class="warning-item {{ w.type }}">
+            <i class="ti {{ w.icon }}"></i>
+            {{ w.text }}
+            <i class="ti ti-chevron-right ms-auto" style="font-size:.75rem;"></i>
+          </a>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-3">
+            <i class="ti ti-circle-check text-success d-block mb-1" style="font-size:2rem;"></i>
+            <span class="text-muted" style="font-size:.875rem;">Nincs figyelmeztetés — minden rendben!</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULOK + LEGUTÓBBI AKTIVITÁSOK
+═══════════════════════════════════════════════════════════════ -->
+<div class="row g-3 mb-3">
+
+  <!-- Modulok kártyák -->
+  <div class="col-12 col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-apps me-2 text-primary"></i>Modulok</h6>
+      </div>
+      <div class="card-body px-3 pb-3 pt-2">
+        <div class="row g-2">
+          <div class="col-6">
+            <a href="{{ url_for('business.expenses') }}" class="card border h-100 text-decoration-none p-3 d-flex align-items-center gap-2 flex-row hover-shadow">
+              <i class="ti ti-receipt fs-4 text-danger"></i>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">Kiadások</div>
+                <div class="text-muted" style="font-size:.78rem;">Rögzítés és nyomon követés</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('business.worker_payments') }}" class="card border h-100 text-decoration-none p-3 d-flex align-items-center gap-2 flex-row">
+              <i class="ti ti-wallet fs-4 text-warning"></i>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">Munkás kifizetések</div>
+                <div class="text-muted" style="font-size:.78rem;">Bérek és kifizetések</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('business.leads') }}" class="card border h-100 text-decoration-none p-3 d-flex align-items-center gap-2 flex-row">
+              <i class="ti ti-user-plus fs-4 text-success"></i>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">Lead követés</div>
+                <div class="text-muted" style="font-size:.78rem;">{{ open_leads }} nyitott érdeklődő</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-6">
+            <a href="{{ url_for('business.tasks') }}" class="card border h-100 text-decoration-none p-3 d-flex align-items-center gap-2 flex-row">
+              <i class="ti ti-checkbox fs-4 text-primary"></i>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">Feladatok</div>
+                <div class="text-muted" style="font-size:.78rem;">{{ open_tasks }} nyitott feladat</div>
+              </div>
+            </a>
+          </div>
+          <div class="col-12">
+            <a href="{{ url_for('business.confirmations') }}" class="card border h-100 text-decoration-none p-3 d-flex align-items-center gap-2 flex-row">
+              <i class="ti ti-file-check fs-4 text-info"></i>
+              <div>
+                <div class="fw-semibold" style="font-size:.875rem;">Teljesítési igazolások</div>
+                <div class="text-muted" style="font-size:.78rem;">
+                  {% if pending_confirmations > 0 %}
+                    <span class="text-warning fw-semibold">{{ pending_confirmations }} jóváhagyásra vár</span>
+                  {% else %}
+                    Havi igazolások kezelése
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legutóbbi aktivitások -->
+  <div class="col-12 col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-activity me-2 text-primary"></i>Legutóbbi aktivitások</h6>
+      </div>
+      <div class="card-body px-3 pb-3 pt-2">
+        {% if recent_activities %}
+          {% for a in recent_activities %}
+          <div class="timeline-item">
+            <div class="timeline-dot {{ a.color }}">
+              <i class="ti {{ a.icon }}"></i>
+            </div>
+            <div class="flex-fill">
+              <div style="font-size:.845rem; font-weight:500;">{{ a.text }}</div>
+              <div class="text-muted" style="font-size:.76rem;">{{ a.date }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-center py-3" style="font-size:.875rem;">Nincs aktivitás</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: KIADÁS RÖGZÍTÉSE
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalExpense" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('business.add_expense') }}">
+        <input type="hidden" name="next" value="{{ url_for('business.hub') }}">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-receipt me-2 text-danger"></i>Kiadás rögzítése</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-8">
+              <label class="form-label fw-semibold">Összeg (Ft) *</label>
+              <input type="number" name="amount" class="form-control" placeholder="pl. 15000" required min="1">
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">Dátum</label>
+              <input type="date" name="expense_date" class="form-control" value="{{ today.isoformat() }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Kategória</label>
+              <select name="category" class="form-select">
+                <option value="Anyag">Anyag / Alkatrész</option>
+                <option value="Üzemanyag">Üzemanyag</option>
+                <option value="Rezsi">Rezsi</option>
+                <option value="Eszköz">Eszköz / Szerszám</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Egyéb">Egyéb</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Forrás</label>
+              <select name="payment_source" class="form-select">
+                <option value="Készpénz">Készpénz</option>
+                <option value="Bankkártya">Bankkártya</option>
+                <option value="Átutalás">Átutalás</option>
+              </select>
+            </div>
+            {% if workers %}
+            <div class="col-12">
+              <label class="form-label fw-semibold">Munkás (opcionális)</label>
+              <select name="worker_id" class="form-select">
+                <option value="">— nem kapcsolódik munkáshoz —</option>
+                {% for w in workers %}
+                <option value="{{ w.user_id }}">{{ w.first_name or '' }} {{ w.last_name or w.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-12">
+              <label class="form-label fw-semibold">Megjegyzés</label>
+              <input type="text" name="notes" class="form-control" placeholder="Rövid leírás...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn btn-danger"><i class="ti ti-check me-1"></i>Rögzítés</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: ÚJ FELADAT
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalTask" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('business.add_task') }}">
+        <input type="hidden" name="next" value="{{ url_for('business.hub') }}">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-checkbox me-2 text-primary"></i>Új feladat</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Feladat neve *</label>
+              <input type="text" name="title" class="form-control" placeholder="pl. Olajszűrő rendelés" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Határidő</label>
+              <input type="date" name="deadline" class="form-control" value="{{ today.isoformat() }}">
+            </div>
+            {% if workers %}
+            <div class="col-6">
+              <label class="form-label fw-semibold">Felelős</label>
+              <select name="assigned_worker_id" class="form-select">
+                <option value="">— nincs —</option>
+                {% for w in workers %}
+                <option value="{{ w.user_id }}">{{ w.first_name or '' }} {{ w.last_name or w.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-12">
+              <label class="form-label fw-semibold">Leírás</label>
+              <textarea name="description" class="form-control" rows="2" placeholder="Részletek..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Hozzáadás</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: ÚJ LEAD
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalLead" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('business.add_lead') }}">
+        <input type="hidden" name="next" value="{{ url_for('business.hub') }}">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-user-plus me-2 text-success"></i>Új lead</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Név *</label>
+              <input type="text" name="name" class="form-control" placeholder="pl. Kovács János" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Telefon</label>
+              <input type="text" name="phone" class="form-control" placeholder="+36 ...">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Forrás</label>
+              <select name="source" class="form-select">
+                <option value="Ajánlás">Ajánlás</option>
+                <option value="Google">Google</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Személyes">Személyes</option>
+                <option value="Egyéb">Egyéb</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Megjegyzés</label>
+              <input type="text" name="notes" class="form-control" placeholder="Érdeklődés tárgya...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn btn-success"><i class="ti ti-check me-1"></i>Hozzáadás</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: KIFIZETÉS RÖGZÍTÉSE
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalPayment" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('business.add_worker_payment') }}">
+        <input type="hidden" name="next" value="{{ url_for('business.hub') }}">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="ti ti-wallet me-2 text-warning"></i>Kifizetés rögzítése</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-2">
+            {% if workers %}
+            <div class="col-12">
+              <label class="form-label fw-semibold">Munkás *</label>
+              <select name="worker_id" class="form-select" required>
+                <option value="">Válassz munkást...</option>
+                {% for w in workers %}
+                <option value="{{ w.user_id }}">{{ w.first_name or '' }} {{ w.last_name or w.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+            <div class="col-8">
+              <label class="form-label fw-semibold">Összeg (Ft) *</label>
+              <input type="number" name="amount" class="form-control" placeholder="pl. 150000" required min="1">
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">Dátum</label>
+              <input type="date" name="payment_date" class="form-control" value="{{ today.isoformat() }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Megjegyzés</label>
+              <input type="text" name="notes" class="form-control" placeholder="pl. Április bérelőleg">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn btn-warning"><i class="ti ti-check me-1"></i>Rögzítés</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: NAPI ZÁRÁS
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalDailyClose" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-moon me-2"></i>Nap lezárása</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="dailyCloseLoading" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2 text-muted">Ellenőrzés folyamatban...</p>
+        </div>
+        <div id="dailyCloseResult" class="d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bezárás</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+// ── CASHFLOW GRAFIKON ────────────────────────────────────────────
+(function() {
+  const raw = {{ cashflow_days | tojson }};
+  if (!raw || !raw.length) return;
+
+  const labels   = raw.map(d => d.date);
+  const revenues = raw.map(d => d.revenue);
+  const expenses = raw.map(d => d.expense);
+  const profits  = raw.map(d => d.profit);
+
+  const ctx = document.getElementById('cashflowChart');
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Bevétel',
+          data: revenues,
+          borderColor: '#2fb344',
+          backgroundColor: 'rgba(47,179,68,.07)',
+          tension: .35, fill: true, pointRadius: 2, borderWidth: 2,
+        },
+        {
+          label: 'Kiadás',
+          data: expenses,
+          borderColor: '#d63939',
+          backgroundColor: 'rgba(214,57,57,.05)',
+          tension: .35, fill: false, pointRadius: 2, borderWidth: 2,
+        },
+        {
+          label: 'Profit',
+          data: profits,
+          borderColor: '#1d6ef5',
+          backgroundColor: 'rgba(29,110,245,.05)',
+          tension: .35, fill: false, pointRadius: 2, borderWidth: 1.5,
+          borderDash: [4, 3],
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString('hu-HU')} Ft`
+          }
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: v => v >= 1000 ? (v/1000).toFixed(0) + 'e' : v,
+            font: { size: 10 }
+          },
+          grid: { color: 'rgba(0,0,0,.05)' }
+        },
+        x: {
+          ticks: {
+            maxTicksLimit: 10,
+            font: { size: 10 }
+          },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+})();
+
+// ── NAPI ZÁRÁS ───────────────────────────────────────────────────
+document.getElementById('dailyCloseBtn').addEventListener('click', function() {
+  const modal = new bootstrap.Modal(document.getElementById('modalDailyClose'));
+  modal.show();
+
+  document.getElementById('dailyCloseLoading').classList.remove('d-none');
+  document.getElementById('dailyCloseResult').classList.add('d-none');
+
+  fetch('{{ url_for("business.daily_close") }}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token() }}' if csrf_token else {} }
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('dailyCloseLoading').classList.add('d-none');
+    const result = document.getElementById('dailyCloseResult');
+    result.classList.remove('d-none');
+
+    let html = `<p class="fw-semibold mb-2">${data.date}</p>`;
+
+    if (data.ok && data.ok.length) {
+      data.ok.forEach(msg => {
+        html += `<div class="ok-item mb-1">${msg}</div>`;
+      });
+    }
+    if (data.issues && data.issues.length) {
+      data.issues.forEach(msg => {
+        html += `<div class="warn-item mb-1">${msg}</div>`;
+      });
+    }
+
+    if (data.status === 'ok') {
+      html += `<div class="alert alert-success mt-3 mb-0 py-2">
+        <i class="ti ti-check me-2"></i>A nap sikeresen lezárható!
+      </div>`;
+    } else {
+      html += `<div class="alert alert-warning mt-3 mb-0 py-2">
+        <i class="ti ti-alert-triangle me-2"></i>Figyelj a fenti pontokra lezárás előtt!
+      </div>`;
+    }
+    result.innerHTML = html;
+  })
+  .catch(() => {
+    document.getElementById('dailyCloseLoading').classList.add('d-none');
+    document.getElementById('dailyCloseResult').innerHTML =
+      '<div class="alert alert-danger">Hiba történt az ellenőrzés közben.</div>';
+    document.getElementById('dailyCloseResult').classList.remove('d-none');
+  });
+});
+</script>
 {% endblock %}

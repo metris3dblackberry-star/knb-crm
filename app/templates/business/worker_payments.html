@@ -1,0 +1,134 @@
+{% extends "base/layout.html" %}
+{% block title %}Munkás kifizetések{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('business.hub') }}">Üzleti Központ</a></li>
+<li class="breadcrumb-item active">Munkás kifizetések</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+        <span style="font-size:1.5rem">👷</span> Munkás kifizetések
+    </h1>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+        <i class="ti ti-plus me-2"></i>Kifizetés rögzítése
+    </button>
+</div>
+
+<!-- Munkás összesítők -->
+{% if workers %}
+<div class="row mb-4">
+    {% for w in workers %}
+    <div class="col-md-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                        <i class="ti ti-user text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ w.first_name }} {{ w.last_name }}</div>
+                        <small class="text-muted">{{ w.email or '' }}</small>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="text-muted small">Összes kifizetés</div>
+                    <div class="h4 mb-0 text-success">{{ "%.0f"|format(payment_totals.get(w.user_id, 0)) }} Ft</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Kifizetések listája -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Kifizetések előzményei</h3></div>
+    {% if payments %}
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead>
+                <tr><th>Dátum</th><th>Munkás</th><th>Forrás</th><th class="text-end">Összeg</th><th>Megjegyzés</th></tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.payment_date.strftime('%Y. %m. %d.') if p.payment_date else 'N/A' }}</td>
+                    <td>{{ p.worker.first_name ~ ' ' ~ p.worker.last_name if p.worker else '—' }}</td>
+                    <td><span class="badge bg-info-lt">{{ p.payment_source }}</span></td>
+                    <td class="text-end fw-semibold text-success">{{ "%.0f"|format(p.amount|float) }} {{ p.currency }}</td>
+                    <td><small class="text-muted">{{ p.notes or '—' }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty"><div class="empty-icon"><i class="ti ti-users"></i></div>
+        <p class="empty-title">Nincs kifizetés rögzítve</p></div>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="addPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Kifizetés rögzítése</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('business.add_worker_payment') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Munkás *</label>
+                        <select name="worker_id" class="form-select" required>
+                            <option value="">— Válassz munkást —</option>
+                            {% for w in workers %}
+                            <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label class="form-label">Összeg *</label>
+                            <input type="number" name="amount" class="form-control" required min="0" step="1">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Deviza</label>
+                            <select name="currency" class="form-select">
+                                <option value="HUF">HUF</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Forrás *</label>
+                        <select name="payment_source" class="form-select" required>
+                            <option value="Készpénz">Készpénz</option>
+                            <option value="Banki átutalás">Banki átutalás</option>
+                            <option value="Kölcsön">Kölcsön</option>
+                            <option value="Előleg">Előleg</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dátum *</label>
+                        <input type="date" name="payment_date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Megjegyzés</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-accent">Mentés</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>document.querySelector('[name=payment_date]').value = new Date().toISOString().split('T')[0];</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base/layout.html" %}
+{% block title %}Lead követés{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('business.hub') }}">Üzleti Központ</a></li>
+<li class="breadcrumb-item active">Lead követés</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+        <span style="font-size:1.5rem">📊</span> Lead követés
+    </h1>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#addLeadModal">
+        <i class="ti ti-plus me-2"></i>Új lead
+    </button>
+</div>
+
+<!-- Pipeline sávok -->
+{% set stage_colors = {'Új lead': 'primary', 'Kapcsolatfelvétel': 'info', 'Ajánlat elküldve': 'warning', 'Megnyert': 'success', 'Elveszett': 'danger'} %}
+<div class="row g-3 mb-4">
+    {% for stage in stages %}
+    {% set stage_leads = leads | selectattr('stage', 'equalto', stage) | list %}
+    <div class="col-md">
+        <div class="card h-100">
+            <div class="card-header bg-{{ stage_colors[stage] }}-lt">
+                <h6 class="card-title mb-0 text-{{ stage_colors[stage] }}">
+                    {{ stage }} <span class="badge bg-{{ stage_colors[stage] }} ms-1">{{ stage_leads|length }}</span>
+                </h6>
+            </div>
+            <div class="card-body p-2">
+                {% for lead in stage_leads %}
+                <div class="card mb-2 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="fw-semibold mb-1">{{ lead.name }}</div>
+                        {% if lead.phone %}<div class="small text-muted"><i class="ti ti-phone me-1"></i>{{ lead.phone }}</div>{% endif %}
+                        {% if lead.source %}<div class="small text-muted"><i class="ti ti-tag me-1"></i>{{ lead.source }}</div>{% endif %}
+                        {% if lead.notes %}<div class="small text-muted mt-1">{{ lead.notes[:60] }}{% if lead.notes|length > 60 %}…{% endif %}</div>{% endif %}
+                        <div class="mt-2 d-flex gap-1 flex-wrap">
+                            {% for s in stages %}
+                            {% if s != lead.stage %}
+                            <form method="POST" action="{{ url_for('business.update_lead_stage', lead_id=lead.lead_id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="stage" value="{{ s }}">
+                                <button type="submit" class="btn btn-xs btn-outline-{{ stage_colors[s] }}" style="font-size:0.7rem;padding:2px 6px" title="{{ s }}">→ {{ s[:8] }}</button>
+                            </form>
+                            {% endif %}
+                            {% endfor %}
+                            <form method="POST" action="{{ url_for('business.delete_lead', lead_id=lead.lead_id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-xs btn-outline-danger" style="font-size:0.7rem;padding:2px 6px"><i class="ti ti-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-muted small py-3">Nincs lead ebben a státuszban</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="addLeadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Új lead hozzáadása</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('business.add_lead') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Név *</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Telefon</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Forrás</label>
+                        <input type="text" name="source" class="form-control" placeholder="pl. ajánlás, Facebook, weboldal">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Státusz</label>
+                        <select name="stage" class="form-select">
+                            {% for s in stages %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Felelős munkás</label>
+                        <select name="assigned_worker_id" class="form-select">
+                            <option value="">— Nincs hozzárendelve —</option>
+                            {% for w in workers %}
+                            <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Megjegyzés</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-accent">Mentés</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

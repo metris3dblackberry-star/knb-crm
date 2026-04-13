@@ -1,0 +1,159 @@
+{% extends "base/layout.html" %}
+{% block title %}Feladatok{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('business.hub') }}">Üzleti Központ</a></li>
+<li class="breadcrumb-item active">Feladatok</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+        <span style="font-size:1.5rem">✅</span> Feladatok
+    </h1>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+        <i class="ti ti-plus me-2"></i>Új feladat
+    </button>
+</div>
+
+<!-- Nyitott feladatok -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-circle-check me-2 text-warning"></i>Nyitott feladatok</h3>
+    </div>
+    {% set open_tasks = tasks | rejectattr('done') | list %}
+    {% if open_tasks %}
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>Kész</th><th>Feladat</th><th>Munkás</th><th>Határidő</th><th>Munka</th><th></th></tr></thead>
+            <tbody>
+                {% for t in open_tasks %}
+                <tr>
+                    <td>
+                        <form method="POST" action="{{ url_for('business.toggle_task', task_id=t.task_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success"><i class="ti ti-check"></i></button>
+                        </form>
+                    </td>
+                    <td>
+                        <div class="fw-semibold">{{ t.title }}</div>
+                        {% if t.description %}<small class="text-muted">{{ t.description[:80] }}</small>{% endif %}
+                    </td>
+                    <td>{{ t.assigned_worker.first_name ~ ' ' ~ t.assigned_worker.last_name if t.assigned_worker else '—' }}</td>
+                    <td>
+                        {% if t.deadline %}
+                            {% if t.deadline < today %}
+                                <span class="badge bg-danger">{{ t.deadline.strftime('%Y. %m. %d.') }}</span>
+                            {% elif (t.deadline - today).days <= 3 %}
+                                <span class="badge bg-warning">{{ t.deadline.strftime('%Y. %m. %d.') }}</span>
+                            {% else %}
+                                <span class="badge bg-success-lt">{{ t.deadline.strftime('%Y. %m. %d.') }}</span>
+                            {% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{% if t.job %}<a href="{{ url_for('technician.job_detail', job_id=t.job_id) }}">#{{ t.job_id }}</a>{% else %}—{% endif %}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('business.delete_task', task_id=t.task_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty"><div class="empty-icon"><i class="ti ti-circle-check"></i></div>
+        <p class="empty-title">Nincs nyitott feladat 🎉</p></div>
+    {% endif %}
+</div>
+
+<!-- Elvégzett feladatok -->
+{% set done_tasks = tasks | selectattr('done') | list %}
+{% if done_tasks %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-checks me-2 text-success"></i>Elvégzett feladatok ({{ done_tasks|length }})</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <tbody>
+                {% for t in done_tasks %}
+                <tr class="text-muted">
+                    <td><span class="badge bg-success"><i class="ti ti-check"></i></span></td>
+                    <td><s>{{ t.title }}</s></td>
+                    <td>{{ t.assigned_worker.first_name ~ ' ' ~ t.assigned_worker.last_name if t.assigned_worker else '—' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('business.toggle_task', task_id=t.task_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary btn-sm">Visszanyit</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('business.delete_task', task_id=t.task_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Új feladat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('business.add_task') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Cím *</label>
+                        <input type="text" name="title" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Leírás</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Munkás</label>
+                            <select name="assigned_worker_id" class="form-select">
+                                <option value="">— Nincs hozzárendelve —</option>
+                                {% for w in workers %}
+                                <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Határidő</label>
+                            <input type="date" name="deadline" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kapcsolódó munka (opcionális)</label>
+                        <select name="job_id" class="form-select">
+                            <option value="">— Nincs kapcsolódó munka —</option>
+                            {% for job in jobs %}
+                            <option value="{{ job.job_id }}">#{{ job.job_id }} — {{ job.customer_rel.first_name ~ ' ' ~ job.customer_rel.family_name if job.customer_rel else 'N/A' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-accent">Mentés</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>const today = new Date(); document.querySelector('[name=deadline]') && (document.querySelector('[name=deadline]').min = today.toISOString().split('T')[0]);</script>
+{% endblock %}

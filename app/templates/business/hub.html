@@ -1,0 +1,119 @@
+{% extends "base/layout.html" %}
+{% block title %}Üzleti Központ{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">Üzleti Központ</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-2 d-flex align-items-center gap-2">
+            <i class="ti ti-building-store text-primary"></i>
+            Üzleti Központ
+        </h1>
+        <p class="text-muted mb-0">{{ current_month }} — havi összesítő</p>
+    </div>
+</div>
+
+<!-- Havi összesítő kártyák -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-success-lt me-2"><i class="ti ti-trending-up"></i></span>
+                    <div class="subheader">Havi bevétel</div>
+                </div>
+                <div class="h1 mb-0 text-success">{{ "%.0f"|format(monthly_revenue) }} Ft</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-danger-lt me-2"><i class="ti ti-cash"></i></span>
+                    <div class="subheader">Havi kiadások</div>
+                </div>
+                <div class="h1 mb-0 text-danger">{{ "%.0f"|format(total_expenses) }} Ft</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge bg-warning-lt me-2"><i class="ti ti-users"></i></span>
+                    <div class="subheader">Munkás kifizetések</div>
+                </div>
+                <div class="h1 mb-0 text-warning">{{ "%.0f"|format(total_payouts) }} Ft</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="badge {% if profit_estimate >= 0 %}bg-success-lt{% else %}bg-danger-lt{% endif %} me-2">
+                        <i class="ti ti-chart-line"></i>
+                    </span>
+                    <div class="subheader">Becsült profit</div>
+                </div>
+                <div class="h1 mb-0 {% if profit_estimate >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ "%.0f"|format(profit_estimate) }} Ft
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modulok -->
+<div class="row g-3">
+    <div class="col-md-4">
+        <a href="{{ url_for('business.expenses') }}" class="card card-link text-decoration-none">
+            <div class="card-body text-center py-4">
+                <div class="mb-3" style="font-size: 2.5rem;">💸</div>
+                <h3 class="fw-bold mb-1">Kiadások</h3>
+                <p class="text-muted mb-0">Kiadások rögzítése és nyomonkövetése</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('business.worker_payments') }}" class="card card-link text-decoration-none">
+            <div class="card-body text-center py-4">
+                <div class="mb-3" style="font-size: 2.5rem;">👷</div>
+                <h3 class="fw-bold mb-1">Munkás kifizetések</h3>
+                <p class="text-muted mb-0">Munkások bérének és kifizetéseinek kezelése</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('business.leads') }}" class="card card-link text-decoration-none">
+            <div class="card-body text-center py-4">
+                <div class="mb-3" style="font-size: 2.5rem;">📊</div>
+                <h3 class="fw-bold mb-1">Lead követés</h3>
+                <p class="text-muted mb-0">{{ open_leads }} nyitott érdeklődő</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('business.tasks') }}" class="card card-link text-decoration-none">
+            <div class="card-body text-center py-4">
+                <div class="mb-3" style="font-size: 2.5rem;">✅</div>
+                <h3 class="fw-bold mb-1">Feladatok</h3>
+                <p class="text-muted mb-0">{{ open_tasks }} nyitott feladat</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('business.confirmations') }}" class="card card-link text-decoration-none">
+            <div class="card-body text-center py-4">
+                <div class="mb-3" style="font-size: 2.5rem;">📄</div>
+                <h3 class="fw-bold mb-1">Teljesítési igazolások</h3>
+                <p class="text-muted mb-0">Havi igazolások kezelése</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

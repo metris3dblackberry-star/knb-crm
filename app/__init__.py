@@ -109,6 +109,14 @@ def init_extensions(app):
             Customer, Job, JobService, JobPart, Service, Part, User,
             Tenant, TenantMembership, Inventory, InventoryTransaction, Subscription
         )
+        # Business Hub modellek
+        try:
+            from app.models.expense import Expense
+            from app.models.lead import Lead
+            from app.models.task import Task
+            from app.models.worker_payment import WorkerPayment, PerformanceConfirmation
+        except Exception:
+            pass
 
         db.create_all()  # checkfirst=True by default, never drops existing tables
 
@@ -155,6 +163,13 @@ def register_blueprints(app):
     try:
         from app.views.onboarding import onboarding_bp
         app.register_blueprint(onboarding_bp, url_prefix='/onboarding')
+    except ImportError:
+        pass
+
+    # Register business hub blueprint
+    try:
+        from app.views.business_hub import business_bp
+        app.register_blueprint(business_bp)
     except ImportError:
         pass
 

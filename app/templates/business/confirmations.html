@@ -1,0 +1,126 @@
+{% extends "base/layout.html" %}
+{% block title %}Teljesítési igazolások{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('business.hub') }}">Üzleti Központ</a></li>
+<li class="breadcrumb-item active">Teljesítési igazolások</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+        <span style="font-size:1.5rem">📄</span> Teljesítési igazolások
+    </h1>
+    <button class="btn btn-accent" data-bs-toggle="modal" data-bs-target="#addConfirmModal">
+        <i class="ti ti-upload me-2"></i>Igazolás beadása
+    </button>
+</div>
+
+{% if confirmations %}
+{% set months = confirmations | map(attribute='month') | unique | list | sort(reverse=True) %}
+{% for month in months %}
+<div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-calendar me-2"></i>{{ month }}</h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+            <thead><tr><th>Munkás</th><th>Státusz</th><th>Fájl</th><th>Megjegyzés</th><th>Munka</th><th></th></tr></thead>
+            <tbody>
+                {% for c in confirmations if c.month == month %}
+                <tr>
+                    <td>{{ c.worker.first_name ~ ' ' ~ c.worker.last_name if c.worker else '—' }}</td>
+                    <td>
+                        {% if c.status == 'Jóváhagyva' %}
+                            <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>{{ c.status }}</span>
+                        {% else %}
+                            <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>{{ c.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if c.file_path %}
+                        <a href="{{ c.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="ti ti-file me-1"></i>Megnyit
+                        </a>
+                        {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td><small class="text-muted">{{ c.notes or '—' }}</small></td>
+                    <td>{% if c.job_id %}<a href="{{ url_for('technician.job_detail', job_id=c.job_id) }}">#{{ c.job_id }}</a>{% else %}—{% endif %}</td>
+                    <td>
+                        {% if c.status != 'Jóváhagyva' %}
+                        <form method="POST" action="{{ url_for('business.approve_confirmation', conf_id=c.confirmation_id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-success">Jóváhagyás</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card">
+    <div class="empty"><div class="empty-icon"><i class="ti ti-file"></i></div>
+        <p class="empty-title">Nincs beadott igazolás</p></div>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="addConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Teljesítési igazolás beadása</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <form method="POST" action="{{ url_for('business.add_confirmation') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Munkás *</label>
+                        <select name="worker_id" class="form-select" required>
+                            <option value="">— Válassz munkást —</option>
+                            {% for w in workers %}
+                            <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Hónap *</label>
+                        <input type="month" name="month" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fájl (PDF / kép)</label>
+                        <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kapcsolódó munka</label>
+                        <select name="job_id" class="form-select">
+                            <option value="">— Nincs kapcsolódó munka —</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Megjegyzés</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-accent">Beadás</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const monthInput = document.querySelector('[name=month]');
+if (monthInput) {
+    const now = new Date();
+    monthInput.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+}
+</script>
+{% endblock %}

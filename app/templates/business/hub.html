@@ -674,6 +674,14 @@
               <input type="date" name="payment_date" class="form-control" value="{{ today.isoformat() }}">
             </div>
             <div class="col-12">
+              <label class="form-label fw-semibold">Forrás</label>
+              <select name="payment_source" class="form-select">
+                <option value="Készpénz">Készpénz</option>
+                <option value="Banki átutalás">Banki átutalás</option>
+                <option value="Előleg">Előleg</option>
+              </select>
+            </div>
+            <div class="col-12">
               <label class="form-label fw-semibold">Megjegyzés</label>
               <input type="text" name="notes" class="form-control" placeholder="pl. Április bérelőleg">
             </div>

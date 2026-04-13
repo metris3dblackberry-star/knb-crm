@@ -540,6 +540,8 @@ def add_worker_payment():
             tenant_id=get_tenant_id(),
             worker_id=worker_id,
             amount=float(request.form.get('amount', 0)),
+            currency=request.form.get('currency', 'HUF'),
+            payment_source=sanitize_input(request.form.get('payment_source', 'Készpénz')),
             payment_date=date.fromisoformat(request.form.get('payment_date', str(date.today()))),
             notes=sanitize_input(request.form.get('notes', '')),
         )

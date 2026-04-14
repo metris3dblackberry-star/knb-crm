@@ -1,6 +1,32 @@
 {% extends "base/layout.html" %}
 
 {% block content %}
+
+<!-- ── MOBIL GYORSLINK SÁV (csak kis képernyőn) ─────────────── -->
+<div class="d-lg-none border-bottom bg-white" style="overflow-x:auto; white-space:nowrap;">
+  <div style="display:inline-flex; gap:0; padding:0 4px;">
+    {% if session.logged_in %}
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-link text-dark px-2 py-2" style="font-size:.8rem;">
+      <i class="ti ti-layout-dashboard me-1"></i>Műszerfal
+    </a>
+    {% if session.current_role in ('owner', 'admin') %}
+    <a href="{{ url_for('administrator.dashboard') }}" class="btn btn-sm btn-link text-dark px-2 py-2" style="font-size:.8rem;">
+      <i class="ti ti-shield me-1"></i>Admin
+    </a>
+    <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-sm btn-link text-dark px-2 py-2" style="font-size:.8rem;">
+      <i class="ti ti-clipboard-list me-1"></i>Munkák
+    </a>
+    <a href="{{ url_for('business.hub') }}" class="btn btn-sm btn-link text-dark px-2 py-2" style="font-size:.8rem;">
+      <i class="ti ti-briefcase me-1"></i>Üzleti
+    </a>
+    {% endif %}
+    <a href="{{ url_for('main.customers') }}" class="btn btn-sm btn-link text-dark px-2 py-2" style="font-size:.8rem;">
+      <i class="ti ti-address-book me-1"></i>Ügyfelek
+    </a>
+    {% endif %}
+  </div>
+</div>
+
 <div class="admin-layout">
     {% include 'components/admin_sidebar.html' %}
     <div class="admin-main-content">

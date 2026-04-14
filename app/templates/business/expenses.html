@@ -28,7 +28,7 @@
                 {% for e in expenses %}
                 <tr>
                     <td>{{ e.expense_date.strftime('%Y. %m. %d.') if e.expense_date else 'N/A' }}</td>
-                    <td>{{ e.worker.first_name ~ ' ' ~ e.worker.last_name if e.worker else '—' }}</td>
+                    <td>{{ e.worker.username if e.worker else '—' }}</td>
                     <td><span class="badge bg-primary-lt">{{ e.category }}</span></td>
                     <td><span class="badge bg-secondary-lt">{{ e.payment_source }}</span></td>
                     <td class="text-end fw-semibold text-danger">{{ "%.0f"|format(e.amount|float) }} {{ e.currency }}</td>
@@ -64,7 +64,7 @@
                         <select name="worker_id" class="form-select">
                             <option value="">— Válassz munkást —</option>
                             {% for w in workers %}
-                            <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                            <option value="{{ w.user_id }}">{{ w.username }}</option>
                             {% endfor %}
                         </select>
                     </div>

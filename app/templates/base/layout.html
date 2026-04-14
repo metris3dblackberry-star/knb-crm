@@ -73,7 +73,7 @@
 
             <!-- Navigation Menu -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto flex-wrap">
                     {% if session.logged_in %}
                         <!-- Dashboard -->
                         <li class="nav-item">
@@ -149,8 +149,8 @@
                 <!-- Right Side Menu -->
                 <ul class="navbar-nav">
                     {% if session.logged_in %}
-                        <!-- Search -->
-                        <li class="nav-item me-3">
+                        <!-- Search - csak desktopn -->
+                        <li class="nav-item me-3 d-none d-lg-block">
                             <div style="position: relative;">
                                 <input type="text" class="form-control form-control-sm" placeholder="Ügyfél keresése..." id="globalSearch" autocomplete="off" style="min-width: 180px;">
                                 <div class="search-results-dropdown" id="searchResultsDropdown"></div>

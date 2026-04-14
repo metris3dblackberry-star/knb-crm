@@ -39,7 +39,7 @@
                         <div class="fw-semibold">{{ t.title }}</div>
                         {% if t.description %}<small class="text-muted">{{ t.description[:80] }}</small>{% endif %}
                     </td>
-                    <td>{{ t.assigned_worker.first_name ~ ' ' ~ t.assigned_worker.last_name if t.assigned_worker else '—' }}</td>
+                    <td>{{ t.assigned_worker.username if t.assigned_worker else '—' }}</td>
                     <td>
                         {% if t.deadline %}
                             {% if t.deadline < today %}
@@ -83,7 +83,7 @@
                 <tr class="text-muted">
                     <td><span class="badge bg-success"><i class="ti ti-check"></i></span></td>
                     <td><s>{{ t.title }}</s></td>
-                    <td>{{ t.assigned_worker.first_name ~ ' ' ~ t.assigned_worker.last_name if t.assigned_worker else '—' }}</td>
+                    <td>{{ t.assigned_worker.username if t.assigned_worker else '—' }}</td>
                     <td>
                         <form method="POST" action="{{ url_for('business.toggle_task', task_id=t.task_id) }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -125,7 +125,7 @@
                             <select name="assigned_worker_id" class="form-select">
                                 <option value="">— Nincs hozzárendelve —</option>
                                 {% for w in workers %}
-                                <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                                <option value="{{ w.user_id }}">{{ w.username }}</option>
                                 {% endfor %}
                             </select>
                         </div>

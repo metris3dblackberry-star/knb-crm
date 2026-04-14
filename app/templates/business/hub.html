@@ -567,7 +567,7 @@
               <select name="assigned_worker_id" class="form-select">
                 <option value="">— nincs —</option>
                 {% for w in workers %}
-                <option value="{{ w.user_id }}">{{ w.first_name or '' }} {{ w.last_name or w.username }}</option>
+                <option value="{{ w.user_id }}">{{ w.username }}</option>
                 {% endfor %}
               </select>
             </div>

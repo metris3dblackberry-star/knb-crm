@@ -167,25 +167,37 @@ def hub():
         except Exception:
             pending_confirmations = 0
 
-        # ── CASHFLOW ADATOK (30 nap) ───────────────────────────────
+        # ── CASHFLOW ADATOK (30 nap) — egyetlen lekérdezéssel ────────
         cashflow_days = []
+        date_from = today - timedelta(days=29)
+
+        # Bevétel naponta
+        rev_rows = db.session.execute(
+            db.select(Job.job_date, func.coalesce(func.sum(Job.total_cost), 0).label('rev'))
+            .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                        Job.job_date >= date_from, Job.job_date <= today))
+            .group_by(Job.job_date)
+        ).all()
+        rev_map = {r.job_date: float(r.rev) for r in rev_rows}
+
+        # Kiadás naponta
+        exp_rows = db.session.execute(
+            db.select(Expense.expense_date, func.coalesce(func.sum(Expense.amount), 0).label('exp'))
+            .where(and_(Expense.tenant_id == tenant_id,
+                        Expense.expense_date >= date_from, Expense.expense_date <= today))
+            .group_by(Expense.expense_date)
+        ).all()
+        exp_map = {r.expense_date: float(r.exp) for r in exp_rows}
+
         for i in range(29, -1, -1):
             d = today - timedelta(days=i)
-            rev = db.session.execute(
-                db.select(func.coalesce(func.sum(Job.total_cost), 0))
-                .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
-                            Job.job_date == d))
-            ).scalar() or 0
-            exp = db.session.execute(
-                db.select(func.coalesce(func.sum(Expense.amount), 0))
-                .where(and_(Expense.tenant_id == tenant_id,
-                            Expense.expense_date == d))
-            ).scalar() or 0
+            rev = rev_map.get(d, 0.0)
+            exp = exp_map.get(d, 0.0)
             cashflow_days.append({
                 'date': d.strftime('%m.%d'),
-                'revenue': float(rev),
-                'expense': float(exp),
-                'profit': float(rev) - float(exp)
+                'revenue': rev,
+                'expense': exp,
+                'profit': rev - exp
             })
 
         # ── TOP MUNKÁSOK ───────────────────────────────────────────

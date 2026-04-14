@@ -82,13 +82,47 @@ def dashboard():
         billing_stats = billing_service.get_billing_statistics()
         recent_jobs, _, _ = job_service.get_current_jobs(page=1, per_page=5)
 
+        # ── TENANT-AWARE lekérdezések ──────────────────────────────
+        from sqlalchemy import func
+
+        # Összes bevétel (lezárt munkák, tenant_id alapján)
+        total_revenue = db.session.execute(
+            db.select(func.coalesce(func.sum(Job.total_cost), 0))
+            .where(and_(Job.tenant_id == tenant_id, Job.completed == True))
+        ).scalar() or 0
+
+        paid_revenue = db.session.execute(
+            db.select(func.coalesce(func.sum(Job.total_cost), 0))
+            .where(and_(Job.tenant_id == tenant_id, Job.completed == True, Job.paid == True))
+        ).scalar() or 0
+
+        unpaid_revenue = float(total_revenue) - float(paid_revenue)
+
+        # Felülírjuk a service által visszaadott értékeket
+        billing_stats['total_amount'] = float(total_revenue)
+        billing_stats['paid_amount'] = float(paid_revenue)
+        billing_stats['unpaid_amount'] = unpaid_revenue
+
+        # Aktív ügyfelek (tenant_id alapján)
+        try:
+            from app.models.customer import Customer
+            total_customers = db.session.execute(
+                db.select(func.count()).select_from(Customer)
+                .where(Customer.tenant_id == tenant_id)
+            ).scalar() or 0
+            customers_with_unpaid = db.session.execute(
+                db.select(func.count(func.distinct(Job.customer_id)))
+                .where(and_(Job.tenant_id == tenant_id, Job.completed == True, Job.paid == False))
+            ).scalar() or 0
+        except Exception:
+            total_customers = len(customer_service.get_all_customers())
+            customers_with_unpaid = 0
+
         # ORM overdue_bills (befejezett, kifizetetlen)
         overdue_q = db.select(Job).where(
             and_(Job.completed == True, Job.paid == False, Job.tenant_id == tenant_id)
         ).order_by(Job.job_id.desc()).limit(5)
         overdue_bills = list(db.session.execute(overdue_q).scalars())
-
-        total_customers = len(customer_service.get_all_customers())
 
         # Monthly revenue for chart
         monthly_revenue = [0.0] * 12
@@ -136,7 +170,7 @@ def dashboard():
                              recent_jobs=recent_jobs,
                              overdue_bills=overdue_bills,
                              total_customers=total_customers,
-                             customers_with_unpaid=0,
+                             customers_with_unpaid=customers_with_unpaid,
                              customers_with_overdue=0,
                              active_jobs=active_jobs,
                              todays_jobs=todays_jobs,

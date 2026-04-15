@@ -166,6 +166,7 @@ def token_exchange() -> dict:
                           headers={'Content-Type': 'application/xml;charset=UTF-8', 'Accept': 'application/xml'},
                           timeout=15)
         logger.info(f"NAV TokenExchange HTTP {r.status_code}")
+        logger.warning(f"NAV TokenExchange FULL RESPONSE: {r.text[:2000]}")
         if r.status_code != 200:
             return {'success': False, 'error': f'HTTP {r.status_code}: {r.text[:300]}'}
 

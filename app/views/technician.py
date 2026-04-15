@@ -1198,7 +1198,7 @@ def send_job_email(job_id):
                         'line_items[0][price_data][currency]': 'huf',
                         'line_items[0][price_data][product_data][name]': f'K&B Autójavító – {invoice_num}',
                         'line_items[0][price_data][product_data][description]': f'Munkalap: {ws_num} | Ügyfél: {buyer_name}',
-                        'line_items[0][price_data][unit_amount]': str(int(total_ft)),
+                        'line_items[0][price_data][unit_amount]': str(int(total_ft * 100)),
                         'line_items[0][quantity]': '1',
                         'mode': 'payment',
                         'customer_email': customer.email,

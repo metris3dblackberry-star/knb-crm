@@ -161,6 +161,7 @@ def token_exchange() -> dict:
 </TokenExchangeRequest>"""
 
     try:
+        logger.error(f"NAV REQUEST XML: login={cfg['login']} taxNumber={cfg['tax_number']} sig={sig[:20]}...")
         r = requests.post(f"{cfg['base_url']}/tokenExchange",
                           data=xml.encode('utf-8'),
                           headers={'Content-Type': 'application/xml;charset=UTF-8', 'Accept': 'application/xml'},

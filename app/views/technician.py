@@ -1167,7 +1167,7 @@ def send_job_email(job_id):
 
         mg_api_key = os.environ.get('MAILGUN_API_KEY', '')
         mg_domain = os.environ.get('MAILGUN_DOMAIN', 'starlabs.hu')
-        from_email = os.environ.get('GMAIL_USER', f'noreply@{mg_domain}')
+        from_email = f'noreply@{mg_domain}'  # Mailgunhoz a domain saját emailje kell
 
         if not mg_api_key:
             flash('MAILGUN_API_KEY hiányzik a Railway Variables-ből!', 'error')
@@ -1215,8 +1215,9 @@ K&B Autójavító csapata"""
             flash(f'Email elküldve: {customer.email}', 'success')
             logger.info(f"Email sent via Mailgun to {customer.email} for job {job_id}")
         else:
-            logger.error(f"Mailgun error: {response.status_code} {response.text}")
-            flash(f'Mailgun hiba: {response.text}', 'error')
+            error_detail = response.json() if response.headers.get('content-type','').startswith('application/json') else response.text
+            logger.error(f"Mailgun error {response.status_code}: {error_detail}")
+            flash(f'Mailgun hiba ({response.status_code}): {error_detail}', 'error')
 
     except Exception as e:
         logger.error(f"Email send failed: {e}")

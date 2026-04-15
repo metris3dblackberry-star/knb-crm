@@ -301,7 +301,7 @@ def generate_worksheet(job_id):
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
     footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'),
                                    alignment=TA_CENTER, fontName=unicode_font)
-    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else 'STAR LABS Kft.'}', footer_style))
 
     doc.build(story)
     buffer.seek(0)
@@ -748,7 +748,7 @@ def generate_invoice(job_id):
     parts = job.get_parts()
 
     # Invoice number
-    invoice_num = f"KNB-{datetime.date.today().year}-{job_id:04d}"
+    invoice_num = f"SL-{datetime.date.today().year}-{job_id:04d}"
 
     # PDF buffer
     buffer = BytesIO()
@@ -790,7 +790,7 @@ def generate_invoice(job_id):
     # Seller / Buyer info
     seller_lines = [
         '<b>Eladó</b>',
-        tenant.name if tenant else 'K&B Autojavito',
+        tenant.name if tenant else 'STAR LABS Kft.',
         settings.get('company_reg', ''),
         tenant.address if tenant else '',
         f'Adószám: {settings.get("tax_id", "")}' if settings.get('tax_id') else '',
@@ -949,9 +949,9 @@ def _generate_invoice_pdf(job_id):
     accent_color = colors.HexColor('#e87e04')
     primary_color = colors.HexColor('#1e3a5f')
 
-    invoice_num = f"KNB-{datetime.date.today().year}-{job_id:04d}"
+    invoice_num = f"SL-{datetime.date.today().year}-{job_id:04d}"
     header_data = [[
-        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "STAR LABS Kft."}</b></font>', styles['Normal']),
         Paragraph(f'<font color="white" size="10"><b>Számla</b><br/>{invoice_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
     header_table = Table(header_data, colWidths=[10*cm, 8*cm])
@@ -965,8 +965,18 @@ def _generate_invoice_pdf(job_id):
     story.append(Spacer(1, 0.5*cm))
 
     info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
-    seller = settings.get('seller_name', tenant.name if tenant else 'K&B Autójavító')
-    left = f'<b>Eladó</b><br/>{seller}<br/>{settings.get("reg_num","")}<br/>{settings.get("address","")}<br/>Adószám: {settings.get("tax_number","")}<br/>Bankszámlaszám: {settings.get("bank_account","")}'
+    seller = tenant.name if tenant else 'STAR LABS Kft.'
+    seller_address = tenant.address if tenant else ''
+    tax_id = settings.get('tax_id', '')
+    bank_account = settings.get('bank_account', '')
+    company_reg = settings.get('company_reg', '')
+    left = f'<b>Eladó</b><br/>{seller}<br/>{seller_address}'
+    if tax_id:
+        left += f'<br/>Adószám: {tax_id}'
+    if bank_account:
+        left += f'<br/>Bankszámlaszám: {bank_account}'
+    if company_reg:
+        left += f'<br/>Cégjegyzékszám: {company_reg}'
     buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
     right = f'<b>Vevő</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}'
     info_data = [[Paragraph(left, info_style), Paragraph(right, info_style)]]
@@ -1008,7 +1018,7 @@ def _generate_invoice_pdf(job_id):
     story.append(Spacer(1, 0.5*cm))
     footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
-    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else 'STAR LABS Kft.'}', footer_style))
     doc.build(story)
     buffer.seek(0)
     return buffer.read(), invoice_num
@@ -1135,7 +1145,7 @@ def _generate_worksheet_pdf(job_id):
     story.append(Spacer(1, 0.5*cm))
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
     footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
-    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "K&B Autójavító"}', footer_style))
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else 'STAR LABS Kft.'}', footer_style))
     doc.build(story)
     buffer.seek(0)
     return buffer.read(), ws_num
@@ -1178,10 +1188,10 @@ def send_job_email(job_id):
             from app.models.tenant import Tenant
             tenant_id = session.get('current_tenant_id') or 1
             tenant = Tenant.find_by_id(tenant_id)
-            company_name = tenant.name if tenant else 'K&B Autójavító'
+            company_name = tenant.name if tenant else 'STAR LABS Kft.'
             company_address = tenant.address if tenant else 'Budapest, Tordai út 17/B'
         except Exception:
-            company_name = 'K&B Autójavító'
+            company_name = 'STAR LABS Kft.'
             company_address = 'Budapest, Tordai út 17/B'
 
         # PDF-ek generálása

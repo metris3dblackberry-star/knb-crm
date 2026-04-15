@@ -1173,6 +1173,17 @@ def send_job_email(job_id):
             flash('MAILGUN_API_KEY hiányzik a Railway Variables-ből!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
+        # Tenant neve a beállításokból
+        try:
+            from app.models.tenant import Tenant
+            tenant_id = session.get('current_tenant_id') or 1
+            tenant = Tenant.find_by_id(tenant_id)
+            company_name = tenant.name if tenant else 'K&B Autójavító'
+            company_address = tenant.address if tenant else 'Budapest, Tordai út 17/B'
+        except Exception:
+            company_name = 'K&B Autójavító'
+            company_address = 'Budapest, Tordai út 17/B'
+
         # PDF-ek generálása
         invoice_bytes, invoice_num = _generate_invoice_pdf(job_id)
         worksheet_bytes, ws_num = _generate_worksheet_pdf(job_id)
@@ -1196,7 +1207,7 @@ def send_job_email(job_id):
                     data={
                         'payment_method_types[]': 'card',
                         'line_items[0][price_data][currency]': 'huf',
-                        'line_items[0][price_data][product_data][name]': f'K&B Autójavító – {invoice_num}',
+                        'line_items[0][price_data][product_data][name]': f'{company_name} – {invoice_num}',
                         'line_items[0][price_data][product_data][description]': f'Munkalap: {ws_num} | Ügyfél: {buyer_name}',
                         'line_items[0][price_data][unit_amount]': str(int(total_ft * 100)),
                         'line_items[0][quantity]': '1',
@@ -1255,7 +1266,7 @@ Munkalap:   {ws_num}
 Köszönjük bizalmát!
 
 Üdvözlettel,
-K&B Autójavító csapata
+{company_name} csapata
 Tel: +36 70 408 4988"""
 
         body_html = f"""<!DOCTYPE html>
@@ -1263,8 +1274,8 @@ Tel: +36 70 408 4988"""
 <body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;">
 
   <div style="background:#1e3a5f;padding:20px 24px;border-radius:8px 8px 0 0;">
-    <div style="color:#fff;font-size:1.3rem;font-weight:700;">K&amp;B Autójavító</div>
-    <div style="color:#93c5fd;font-size:.85rem;">Budapest, Tordai út 17/B</div>
+    <div style="color:#fff;font-size:1.3rem;font-weight:700;">{company_name}</div>
+    <div style="color:#93c5fd;font-size:.85rem;">{company_address}</div>
   </div>
 
   <div style="padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
@@ -1289,7 +1300,7 @@ Tel: +36 70 408 4988"""
     {payment_block_html}
 
     <p style="margin-top:24px;">Köszönjük bizalmát!</p>
-    <p><strong>K&amp;B Autójavító csapata</strong><br>
+    <p><strong>{company_name} csapata</strong><br>
     Tel: +36 70 408 4988</p>
   </div>
 
@@ -1304,7 +1315,7 @@ Tel: +36 70 408 4988"""
                 ('attachment', (f'munkalap-{ws_num}.pdf', worksheet_bytes, 'application/pdf')),
             ],
             data={
-                'from': f'K&B Autójavító <{from_email}>',
+                'from': f'{company_name} <{from_email}>',
                 'to': customer.email,
                 'subject': f'Számla és munkalap – {invoice_num}',
                 'text': body_text,

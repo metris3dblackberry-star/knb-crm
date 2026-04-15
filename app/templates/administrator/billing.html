@@ -19,6 +19,18 @@
                     </h1>
                     <p class="text-muted mb-0">Számlák és fizetések megtekintése és kezelése</p>
                 </div>
+                <!-- Számlatípus gombok -->
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalProforma">
+                        <i class="ti ti-file-description me-1"></i>Proforma számla
+                    </button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalVegszamla">
+                        <i class="ti ti-file-invoice me-1"></i>Végszámla
+                    </button>
+                    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalHelyesbito">
+                        <i class="ti ti-file-pencil me-1"></i>Helyesbítő számla
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -211,4 +223,192 @@
         </div>
     </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL: PROFORMA SZÁMLA
+══════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalProforma" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold"><i class="ti ti-file-description me-2 text-primary"></i>Proforma számla</h5>
+          <small class="text-muted">Előzetes fizetési felszólítás — NAV-ba NEM kerül be</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="GET" action="{{ url_for('technician.generate_invoice', job_id=0) }}" target="_blank" id="formProforma"
+            onsubmit="this.action=this.action.replace('/0/', '/'+this.job_id.value+'/')">
+        <input type="hidden" name="invoice_type" value="proforma">
+        <div class="modal-body">
+          <div class="alert alert-info py-2 mb-3" style="font-size:.84rem;">
+            <i class="ti ti-info-circle me-1"></i>
+            A proforma számla <b>nem hivatalos számla</b> — előlegbekérőként vagy árajánlatként használható.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Munka kiválasztása *</label>
+            <select name="job_id" class="form-select" required id="proformaJobId">
+              <option value="">— Válassz munkát —</option>
+              {% for bill in bills|default([]) %}
+              <option value="{{ bill.job_id }}">#{{ bill.job_id }} – {{ bill.first_name }} {{ bill.family_name }} ({{ "%.0f"|format(bill.total_cost|default(0)|float) }} Ft)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fizetési határidő</label>
+            <input type="date" name="due_date" class="form-control" id="proformaDue">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Megjegyzés</label>
+            <textarea name="notes" class="form-control" rows="2" placeholder="pl. Előleg az alkatrészekre..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="button" class="btn btn-primary" onclick="openInvoice('proforma')">
+            <i class="ti ti-download me-1"></i>Proforma generálása
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL: VÉGSZÁMLA
+══════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalVegszamla" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold"><i class="ti ti-file-invoice me-2 text-success"></i>Végszámla kiállítása</h5>
+          <small class="text-muted">Hivatalos számla — NAV-ba beküldésre kerül</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success py-2 mb-3" style="font-size:.84rem;">
+          <i class="ti ti-check me-1"></i>
+          A végszámla <b>hivatalos NAV-számla</b> — automatikusan bejelentésre kerül az Online Számla rendszerbe.
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Munka kiválasztása *</label>
+          <select class="form-select" id="vegszamlaJobId">
+            <option value="">— Válassz munkát —</option>
+            {% for bill in bills|default([]) %}
+            {% if bill.paid != 1 %}
+            <option value="{{ bill.job_id }}">#{{ bill.job_id }} – {{ bill.first_name }} {{ bill.family_name }} ({{ "%.0f"|format(bill.total_cost|default(0)|float) }} Ft)</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Fizetési mód</label>
+          <select id="vegszamlaPayment" class="form-select">
+            <option value="TRANSFER">Átutalás</option>
+            <option value="CASH">Készpénz</option>
+            <option value="CARD">Bankkártya</option>
+            <option value="STRIPE">Online (Stripe)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Fizetési határidő</label>
+          <input type="date" class="form-control" id="vegszamlaDue">
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+        <button type="button" class="btn btn-success" onclick="openInvoice('final')">
+          <i class="ti ti-file-invoice me-1"></i>Végszámla + NAV beküldés
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     MODAL: HELYESBÍTŐ SZÁMLA
+══════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalHelyesbito" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div>
+          <h5 class="modal-title fw-bold"><i class="ti ti-file-pencil me-2 text-warning"></i>Helyesbítő számla</h5>
+          <small class="text-muted">Korábban kiállított számla módosítása</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning py-2 mb-3" style="font-size:.84rem;">
+          <i class="ti ti-alert-triangle me-1"></i>
+          A helyesbítő számla az <b>eredeti számla módosítása</b> — NAV-ba MODIFICATION típusként kerül be.
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Eredeti számlaszám *</label>
+          <input type="text" id="originalInvoice" class="form-control" placeholder="pl. SL-2026-0042">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Munka kiválasztása *</label>
+          <select class="form-select" id="helyesbitoJobId">
+            <option value="">— Válassz munkát —</option>
+            {% for bill in bills|default([]) %}
+            <option value="{{ bill.job_id }}">#{{ bill.job_id }} – {{ bill.first_name }} {{ bill.family_name }} ({{ "%.0f"|format(bill.total_cost|default(0)|float) }} Ft)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Helyesbítés oka *</label>
+          <textarea id="correctionReason" class="form-control" rows="2"
+                    placeholder="pl. Téves összeg, hiányzó tétel..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+        <button type="button" class="btn btn-warning" onclick="openInvoice('correction')">
+          <i class="ti ti-file-pencil me-1"></i>Helyesbítő + NAV beküldés
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block admin_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const plus8  = new Date(today); plus8.setDate(today.getDate() + 8);
+    const plus30 = new Date(today); plus30.setDate(today.getDate() + 30);
+    const fmt = d => d.toISOString().split('T')[0];
+    const d1 = document.getElementById('proformaDue');
+    const d2 = document.getElementById('vegszamlaDue');
+    if (d1) d1.value = fmt(plus30);
+    if (d2) d2.value = fmt(plus8);
+});
+
+function openInvoice(type) {
+    let jobId, url;
+    const base = '/technician/jobs/';
+
+    if (type === 'proforma') {
+        jobId = document.getElementById('proformaJobId').value;
+        if (!jobId) { alert('Válassz munkát!'); return; }
+        url = base + jobId + '/invoice?invoice_type=proforma&due_date=' + document.getElementById('proformaDue').value;
+    } else if (type === 'final') {
+        jobId = document.getElementById('vegszamlaJobId').value;
+        if (!jobId) { alert('Válassz munkát!'); return; }
+        url = base + jobId + '/invoice?invoice_type=final&payment_method=' + document.getElementById('vegszamlaPayment').value + '&due_date=' + document.getElementById('vegszamlaDue').value;
+    } else if (type === 'correction') {
+        jobId = document.getElementById('helyesbitoJobId').value;
+        const orig = document.getElementById('originalInvoice').value;
+        const reason = document.getElementById('correctionReason').value;
+        if (!jobId || !orig) { alert('Töltsd ki a kötelező mezőket!'); return; }
+        url = base + jobId + '/invoice?invoice_type=correction&original_invoice=' + encodeURIComponent(orig) + '&correction_reason=' + encodeURIComponent(reason);
+    }
+    window.open(url, '_blank');
+}
+</script>
 {% endblock %}

@@ -1144,7 +1144,7 @@ def _generate_worksheet_pdf(job_id):
 @technician_bp.route('/jobs/<int:job_id>/send-email', methods=['POST'])
 @handle_database_errors
 def send_job_email(job_id):
-    """Send invoice and worksheet PDF to customer via Mailgun API"""
+    """Send invoice and worksheet PDF to customer via Mailgun API, with Stripe payment link"""
     redirect_response = require_technician_login()
     if redirect_response:
         return redirect_response
@@ -1167,7 +1167,7 @@ def send_job_email(job_id):
 
         mg_api_key = os.environ.get('MAILGUN_API_KEY', '')
         mg_domain = os.environ.get('MAILGUN_DOMAIN', 'starlabs.hu')
-        from_email = f'noreply@{mg_domain}'  # Mailgunhoz a domain saját emailje kell
+        from_email = f'noreply@{mg_domain}'
 
         if not mg_api_key:
             flash('MAILGUN_API_KEY hiányzik a Railway Variables-ből!', 'error')
@@ -1182,20 +1182,120 @@ def send_job_email(job_id):
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
         buyer_name = f"{customer.first_name} {customer.family_name}"
-        total = f"{float(job.total_cost):,.0f}".replace(',', ' ') if job.total_cost else '0'
-        body = f"""Tisztelt {buyer_name}!
+        total_ft = float(job.total_cost) if job.total_cost else 0
+        total_str = f"{total_ft:,.0f}".replace(',', ' ')
+
+        # ── STRIPE CHECKOUT SESSION ────────────────────────────────
+        stripe_payment_url = None
+        stripe_secret = os.environ.get('STRIPE_SECRET_KEY', '')
+        if stripe_secret and total_ft > 0:
+            try:
+                stripe_resp = requests.post(
+                    'https://api.stripe.com/v1/checkout/sessions',
+                    auth=(stripe_secret, ''),
+                    data={
+                        'payment_method_types[]': 'card',
+                        'line_items[0][price_data][currency]': 'huf',
+                        'line_items[0][price_data][product_data][name]': f'K&B Autójavító – {invoice_num}',
+                        'line_items[0][price_data][product_data][description]': f'Munkalap: {ws_num} | Ügyfél: {buyer_name}',
+                        'line_items[0][price_data][unit_amount]': str(int(total_ft)),
+                        'line_items[0][quantity]': '1',
+                        'mode': 'payment',
+                        'customer_email': customer.email,
+                        'success_url': os.environ.get('BASE_URL', 'https://web-production-5755d.up.railway.app') + '/payment/success',
+                        'cancel_url': os.environ.get('BASE_URL', 'https://web-production-5755d.up.railway.app') + '/payment/cancel',
+                        'metadata[job_id]': str(job_id),
+                        'metadata[invoice_num]': invoice_num,
+                    }
+                )
+                if stripe_resp.status_code == 200:
+                    stripe_payment_url = stripe_resp.json().get('url')
+                    logger.info(f"Stripe checkout session created for job {job_id}")
+                else:
+                    logger.warning(f"Stripe session error: {stripe_resp.status_code} {stripe_resp.text}")
+            except Exception as se:
+                logger.warning(f"Stripe session creation failed: {se}")
+
+        # ── EMAIL SZÖVEG ───────────────────────────────────────────
+        payment_block_text = ""
+        payment_block_html = ""
+
+        if stripe_payment_url:
+            payment_block_text = f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💳 ONLINE FIZETÉS
+Fizessen kártyával biztonságosan:
+{stripe_payment_url}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+            payment_block_html = f"""
+<div style="margin:24px 0;padding:20px;background:#f0fdf4;border:2px solid #22c55e;border-radius:10px;text-align:center;">
+  <div style="font-size:1.1rem;font-weight:700;color:#15803d;margin-bottom:8px;">💳 Online fizetés</div>
+  <div style="color:#374151;margin-bottom:16px;">Fizessen kártyával egyszerűen és biztonságosan</div>
+  <div style="font-size:1.4rem;font-weight:800;color:#111827;margin-bottom:16px;">{total_str} Ft</div>
+  <a href="{stripe_payment_url}"
+     style="display:inline-block;background:#22c55e;color:#fff;padding:12px 32px;
+            border-radius:8px;text-decoration:none;font-weight:700;font-size:1rem;
+            letter-spacing:.3px;">
+    🔒 Fizetés most
+  </a>
+  <div style="margin-top:10px;font-size:.78rem;color:#6b7280;">
+    Biztonságos fizetés a Stripe rendszerén keresztül
+  </div>
+</div>"""
+
+        body_text = f"""Tisztelt {buyer_name}!
 
 Mellékletben megküldjük az elvégzett munkáról szóló számlát és munkalapot.
 
 Számlaszám: {invoice_num}
-Munkalap: {ws_num}
-Összeg: {total} Ft
-
+Munkalap:   {ws_num}
+Összeg:     {total_str} Ft
+{payment_block_text}
 Köszönjük bizalmát!
 
 Üdvözlettel,
-K&B Autójavító csapata"""
+K&B Autójavító csapata
+Tel: +36 70 408 4988"""
 
+        body_html = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111827;">
+
+  <div style="background:#1e3a5f;padding:20px 24px;border-radius:8px 8px 0 0;">
+    <div style="color:#fff;font-size:1.3rem;font-weight:700;">K&amp;B Autójavító</div>
+    <div style="color:#93c5fd;font-size:.85rem;">Budapest, Tordai út 17/B</div>
+  </div>
+
+  <div style="padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+    <p>Tisztelt <strong>{buyer_name}</strong>!</p>
+    <p>Mellékletben megküldjük az elvégzett munkáról szóló számlát és munkalapot.</p>
+
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr style="background:#f9fafb;">
+        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">Számlaszám</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;">{invoice_num}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">Munkalap</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;">{ws_num}</td>
+      </tr>
+      <tr style="background:#f0fdf4;">
+        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:700;">Fizetendő összeg</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:700;color:#15803d;font-size:1.1rem;">{total_str} Ft</td>
+      </tr>
+    </table>
+
+    {payment_block_html}
+
+    <p style="margin-top:24px;">Köszönjük bizalmát!</p>
+    <p><strong>K&amp;B Autójavító csapata</strong><br>
+    Tel: +36 70 408 4988</p>
+  </div>
+
+</body></html>"""
+
+        # ── KÜLDÉS ────────────────────────────────────────────────
         response = requests.post(
             f'https://api.eu.mailgun.net/v3/{mg_domain}/messages',
             auth=('api', mg_api_key),
@@ -1207,12 +1307,16 @@ K&B Autójavító csapata"""
                 'from': f'K&B Autójavító <{from_email}>',
                 'to': customer.email,
                 'subject': f'Számla és munkalap – {invoice_num}',
-                'text': body,
+                'text': body_text,
+                'html': body_html,
             }
         )
 
         if response.status_code == 200:
-            flash(f'Email elküldve: {customer.email}', 'success')
+            msg = f'Email elküldve: {customer.email}'
+            if stripe_payment_url:
+                msg += ' (Stripe fizetési link mellékelve)'
+            flash(msg, 'success')
             logger.info(f"Email sent via Mailgun to {customer.email} for job {job_id}")
         else:
             error_detail = response.json() if response.headers.get('content-type','').startswith('application/json') else response.text

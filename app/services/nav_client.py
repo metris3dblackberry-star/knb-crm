@@ -154,7 +154,6 @@ def token_exchange() -> dict:
     sig_ts = _sig_ts()  # Egyszer generáljuk, ugyanazt használjuk
     sig    = _token_sig(req_id, sig_ts, cfg['sign_key'])
 
-    logger.error(f"NAV TOKEN SIG DEBUG: req_id={req_id} sig_ts={sig_ts} sign_key={cfg['sign_key'][:10]}...")
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <TokenExchangeRequest xmlns="http://schemas.nav.gov.hu/OSA/3.0/api"
@@ -164,13 +163,11 @@ def token_exchange() -> dict:
 </TokenExchangeRequest>"""
 
     try:
-        logger.error(f"NAV REQUEST XML: login={cfg['login']} taxNumber={cfg['tax_number']} sig={sig[:20]}... pwdhash_prefix={cfg['pwd_hash'][:15]}...")
         r = requests.post(f"{cfg['base_url']}/tokenExchange",
                           data=xml.encode('utf-8'),
                           headers={'Content-Type': 'application/xml;charset=UTF-8', 'Accept': 'application/xml'},
                           timeout=15)
         logger.info(f"NAV TokenExchange HTTP {r.status_code}")
-        logger.error(f"NAV FULL RESPONSE: {r.text[:3000]}")
         if r.status_code != 200:
             return {'success': False, 'error': f'HTTP {r.status_code}: {r.text[:300]}'}
 

@@ -16,6 +16,75 @@
     </button>
 </div>
 
+<!-- ── GRAFIKONOK ─────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+  <!-- Kategória donut -->
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-chart-donut me-2 text-primary"></i>Kategóriánként</h6>
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center py-3">
+        <canvas id="expenseCategoryChart" style="max-height:200px;max-width:200px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Munkásonkénti bar -->
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-chart-bar me-2 text-danger"></i>Munkásonként</h6>
+      </div>
+      <div class="card-body py-3">
+        <canvas id="expenseWorkerChart" style="max-height:200px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Napi trend vonal -->
+  <div class="col-12 col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
+        <h6 class="mb-0"><i class="ti ti-chart-line me-2 text-warning"></i>Napi trend</h6>
+      </div>
+      <div class="card-body py-3">
+        <canvas id="expenseDailyChart" style="max-height:200px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Összesítő KPI sor -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="text-muted" style="font-size:.75rem;">ÖSSZES KIADÁS</div>
+      <div class="fw-bold text-danger" style="font-size:1.3rem;" id="kpiTotal">—</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="text-muted" style="font-size:.75rem;">LEGNAGYOBB TÉTEL</div>
+      <div class="fw-bold text-warning" style="font-size:1.3rem;" id="kpiMax">—</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="text-muted" style="font-size:.75rem;">ÁTLAG / TÉTEL</div>
+      <div class="fw-bold text-primary" style="font-size:1.3rem;" id="kpiAvg">—</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="text-muted" style="font-size:.75rem;">TÉTELEK SZÁMA</div>
+      <div class="fw-bold" style="font-size:1.3rem;" id="kpiCount">—</div>
+    </div>
+  </div>
+</div>
+
 <div class="card">
     <div class="card-header"><h3 class="card-title">Kiadások listája</h3></div>
     {% if expenses %}
@@ -122,5 +191,112 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>document.querySelector('[name=expense_date]').value = new Date().toISOString().split('T')[0];</script>
+<script>
+document.querySelector('[name=expense_date]').value = new Date().toISOString().split('T')[0];
+
+// ── KIADÁS ADATOK A TEMPLATE-BŐL ─────────────────────────────
+(function() {
+  // Adatok kinyerése a táblázatból
+  const rows = document.querySelectorAll('tbody tr');
+  const data = [];
+  rows.forEach(r => {
+    const cells = r.querySelectorAll('td');
+    if (cells.length < 5) return;
+    const dateStr = cells[0].textContent.trim();
+    const worker  = cells[1].textContent.trim();
+    const cat     = cells[2].textContent.trim();
+    const amtStr  = cells[4].textContent.trim().replace(/[^0-9]/g, '');
+    const amt     = parseInt(amtStr) || 0;
+    data.push({ date: dateStr, worker, cat, amt });
+  });
+
+  if (!data.length) return;
+
+  const fmt = v => v.toLocaleString('hu-HU') + ' Ft';
+
+  // KPI
+  const total = data.reduce((s, d) => s + d.amt, 0);
+  const max   = Math.max(...data.map(d => d.amt));
+  const avg   = Math.round(total / data.length);
+  document.getElementById('kpiTotal').textContent = fmt(total);
+  document.getElementById('kpiMax').textContent   = fmt(max);
+  document.getElementById('kpiAvg').textContent   = fmt(avg);
+  document.getElementById('kpiCount').textContent = data.length + ' db';
+
+  // ── KATEGÓRIA DONUT ────────────────────────────────────────
+  const catMap = {};
+  data.forEach(d => { catMap[d.cat] = (catMap[d.cat] || 0) + d.amt; });
+  const catLabels = Object.keys(catMap);
+  const catVals   = catLabels.map(k => catMap[k]);
+  const colors = ['#ef4444','#f59f00','#2fb344','#1d6ef5','#8b5cf6','#ec4899','#14b8a6'];
+
+  const ctx1 = document.getElementById('expenseCategoryChart');
+  if (ctx1) new Chart(ctx1, {
+    type: 'doughnut',
+    data: { labels: catLabels, datasets: [{ data: catVals, backgroundColor: colors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
+    options: {
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: { callbacks: { label: c => ` ${c.label}: ${fmt(c.raw)}` } }
+      }
+    }
+  });
+
+  // ── MUNKÁSONKÉNTI BAR ──────────────────────────────────────
+  const workerMap = {};
+  data.forEach(d => { if (d.worker && d.worker !== '—') workerMap[d.worker] = (workerMap[d.worker] || 0) + d.amt; });
+  const wLabels = Object.keys(workerMap).map(n => n.split(' ')[0]);
+  const wVals   = Object.values(workerMap);
+
+  const ctx2 = document.getElementById('expenseWorkerChart');
+  if (ctx2) new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: wLabels,
+      datasets: [{ label: 'Kiadás', data: wVals, backgroundColor: 'rgba(239,68,68,.7)', borderRadius: 5 }]
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.raw)}` } } },
+      scales: {
+        y: { ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'e' : v, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ── NAPI TREND VONAL ───────────────────────────────────────
+  const dayMap = {};
+  data.forEach(d => { dayMap[d.date] = (dayMap[d.date] || 0) + d.amt; });
+  // Rendezés dátum szerint
+  const sortedDays = Object.keys(dayMap).sort((a, b) => {
+    const pa = a.replace(/[^0-9]/g, '');
+    const pb = b.replace(/[^0-9]/g, '');
+    return pa.localeCompare(pb);
+  });
+
+  const ctx3 = document.getElementById('expenseDailyChart');
+  if (ctx3) new Chart(ctx3, {
+    type: 'line',
+    data: {
+      labels: sortedDays,
+      datasets: [{
+        label: 'Napi kiadás',
+        data: sortedDays.map(d => dayMap[d]),
+        borderColor: '#f59f00',
+        backgroundColor: 'rgba(245,159,0,.1)',
+        tension: .35, fill: true, pointRadius: 4, borderWidth: 2,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${fmt(c.raw)}` } } },
+      scales: {
+        y: { ticks: { callback: v => v >= 1000 ? (v/1000).toFixed(0)+'e' : v, font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.05)' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 7 } }
+      }
+    }
+  });
+
+})();
+</script>
 {% endblock %}

@@ -944,8 +944,6 @@ def confirmation_pdf(conf_id):
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_RIGHT, TA_CENTER
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
     import datetime, os
 
     from app.models.worker_payment import PerformanceConfirmation
@@ -960,19 +958,32 @@ def confirmation_pdf(conf_id):
     tenant = Tenant.find_by_id(tenant_id)
     settings = tenant.settings or {} if tenant else {}
 
-    # Font betöltés
+    # Font betöltés — ugyanolyan mint technician.py-ban
     unicode_font = 'Helvetica'
     unicode_font_bold = 'Helvetica-Bold'
     try:
-        font_paths = [
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        font_search = [
             '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
         ]
-        if os.path.exists(font_paths[0]):
-            pdfmetrics.registerFont(TTFont('DejaVu', font_paths[0]))
-            pdfmetrics.registerFont(TTFont('DejaVu-Bold', font_paths[1]))
-            unicode_font = 'DejaVu'
-            unicode_font_bold = 'DejaVu-Bold'
+        bold_search = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+        ]
+        for fp, fb in zip(font_search, bold_search):
+            if os.path.exists(fp) and os.path.exists(fb):
+                try:
+                    pdfmetrics.registerFont(TTFont('UniFont', fp))
+                    pdfmetrics.registerFont(TTFont('UniFont-Bold', fb))
+                    unicode_font = 'UniFont'
+                    unicode_font_bold = 'UniFont-Bold'
+                    break
+                except Exception:
+                    continue
     except Exception:
         pass
 

@@ -25,7 +25,7 @@
     </div>
     <div class="table-responsive">
         <table class="table table-vcenter card-table">
-            <thead><tr><th>Munkás</th><th>Státusz</th><th>Fájl</th><th>Megjegyzés</th><th>Munka</th><th></th></tr></thead>
+            <thead><tr><th>Munkás</th><th>Státusz</th><th>PDF</th><th>Fájl</th><th>Megjegyzés</th><th>Munka</th><th></th></tr></thead>
             <tbody>
                 {% for c in confirmations if c.month == month %}
                 <tr>
@@ -38,8 +38,13 @@
                         {% endif %}
                     </td>
                     <td>
+                        <a href="{{ url_for('business.confirmation_pdf', conf_id=c.confirmation_id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="ti ti-file-download me-1"></i>PDF
+                        </a>
+                    </td>
+                    <td>
                         {% if c.file_path %}
-                        <a href="{{ c.file_path }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ c.file_path }}" target="_blank" class="btn btn-sm btn-outline-secondary">
                             <i class="ti ti-file me-1"></i>Megnyit
                         </a>
                         {% else %}<span class="text-muted">—</span>{% endif %}

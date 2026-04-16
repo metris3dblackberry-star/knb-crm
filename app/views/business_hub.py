@@ -924,3 +924,195 @@ def add_worker():
         flash(f'Hiba: {ex}', 'error')
     next_url = request.form.get('next', url_for('business.hub'))
     return redirect(next_url)
+
+# ─────────────────────────────────────────────────────────────────
+# TELJESÍTÉSI IGAZOLÁS PDF GENERÁLÁS
+# ─────────────────────────────────────────────────────────────────
+
+@business_bp.route('/business-hub/confirmations/<int:conf_id>/pdf')
+@handle_database_errors
+def confirmation_pdf(conf_id):
+    """Teljesítési igazolás PDF letöltése - munkalap stílusban"""
+    r = require_login()
+    if r: return r
+
+    from flask import make_response
+    from io import BytesIO
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import datetime, os
+
+    from app.models.worker_payment import PerformanceConfirmation
+    from app.models.tenant import Tenant
+
+    c = db.session.get(PerformanceConfirmation, conf_id)
+    if not c:
+        flash('Igazolás nem található', 'error')
+        return redirect(url_for('business.confirmations'))
+
+    tenant_id = get_tenant_id()
+    tenant = Tenant.find_by_id(tenant_id)
+    settings = tenant.settings or {} if tenant else {}
+
+    # Font betöltés
+    unicode_font = 'Helvetica'
+    unicode_font_bold = 'Helvetica-Bold'
+    try:
+        font_paths = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        ]
+        if os.path.exists(font_paths[0]):
+            pdfmetrics.registerFont(TTFont('DejaVu', font_paths[0]))
+            pdfmetrics.registerFont(TTFont('DejaVu-Bold', font_paths[1]))
+            unicode_font = 'DejaVu'
+            unicode_font_bold = 'DejaVu-Bold'
+    except Exception:
+        pass
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                           rightMargin=1.5*cm, leftMargin=1.5*cm,
+                           topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    for style in styles.byName.values():
+        style.fontName = unicode_font
+
+    story = []
+    white = colors.white
+    primary = colors.HexColor('#1e3a5f')
+    accent  = colors.HexColor('#e87e04')
+
+    # ── FEJLÉC ────────────────────────────────────────────────────
+    doc_num = f"TI-{datetime.date.today().year}-{conf_id:04d}"
+    company_name = tenant.name if tenant else 'STAR LABS Kft.'
+
+    header_data = [[
+        Paragraph(f'<font color="white" size="20"><b>{company_name}</b></font>', styles['Normal']),
+        Paragraph(f'<font color="white" size="11"><b>TELJESÍTÉSI IGAZOLÁS</b><br/>{doc_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+    ]]
+    header_table = Table(header_data, colWidths=[10*cm, 8*cm])
+    header_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), accent),
+        ('TOPPADDING', (0,0), (-1,-1), 16), ('BOTTOMPADDING', (0,0), (-1,-1), 16),
+        ('LEFTPADDING', (0,0), (-1,-1), 16), ('RIGHTPADDING', (0,0), (-1,-1), 16),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('ALIGN', (1,0), (1,0), 'RIGHT'),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── IGAZOLÁS ADATOK ───────────────────────────────────────────
+    info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
+
+    worker_name = c.worker.username if c.worker else '—'
+    job_info = f'#{c.job_id}' if c.job_id else '—'
+
+    seller_addr = tenant.address if tenant else ''
+    tax_id = settings.get('tax_id', '')
+
+    left_text = f'<b>Kibocsátó</b><br/>{company_name}<br/>{seller_addr}'
+    if tax_id:
+        left_text += f'<br/>Adószám: {tax_id}'
+
+    right_text = f'<b>Munkás</b><br/>{worker_name}<br/><b>Hónap:</b> {c.month}<br/><b>Kapcsolódó munka:</b> {job_info}'
+
+    info_data = [[Paragraph(left_text, info_style), Paragraph(right_text, info_style)]]
+    info_table = Table(info_data, colWidths=[9*cm, 9*cm])
+    info_table.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('LINEAFTER', (0,0), (0,-1), 0.5, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 12), ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── IGAZOLÁS TARTALOM ─────────────────────────────────────────
+    th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
+    cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
+
+    rows = [[
+        Paragraph('Megnevezés', th_style),
+        Paragraph('Érték', th_style),
+    ]]
+
+    status_label = '✓ Jóváhagyva' if c.status == 'Jóváhagyva' else '⏳ Beadva / Feldolgozás alatt'
+    rows.append([Paragraph('Státusz', cell_style), Paragraph(status_label, cell_style)])
+    rows.append([Paragraph('Hónap', cell_style), Paragraph(c.month, cell_style)])
+    rows.append([Paragraph('Munkás', cell_style), Paragraph(worker_name, cell_style)])
+    rows.append([Paragraph('Dokumentum száma', cell_style), Paragraph(doc_num, cell_style)])
+
+    if c.job_id:
+        # Ha van kapcsolódó munka, adjuk hozzá a részleteket
+        try:
+            from app.models.job import Job
+            job = db.session.get(Job, c.job_id)
+            if job:
+                customer = job.customer_rel
+                buyer_name = f"{customer.first_name} {customer.family_name}" if customer else '—'
+                rows.append([Paragraph('Ügyfél', cell_style), Paragraph(buyer_name, cell_style)])
+                rows.append([Paragraph('Munka dátuma', cell_style), Paragraph(job.job_date.strftime('%Y. %m. %d.') if job.job_date else '—', cell_style)])
+                total = f"{int(job.total_cost):,} Ft".replace(',', ' ') if job.total_cost else '—'
+                rows.append([Paragraph('Munka értéke', cell_style), Paragraph(total, cell_style)])
+
+                # Tételek
+                services = job.get_services()
+                parts = job.get_parts()
+                if services or parts:
+                    rows.append([Paragraph('<b>Elvégzett munkák:</b>', cell_style), Paragraph('', cell_style)])
+                    for s in services:
+                        rows.append([Paragraph(f'  • {s["service_name"]}', cell_style),
+                                     Paragraph(f'{s["qty"]} db × {int(s["cost"]):,} Ft'.replace(',', ' '), cell_style)])
+                    for p in parts:
+                        rows.append([Paragraph(f'  • {p["part_name"]}', cell_style),
+                                     Paragraph(f'{p["qty"]} db × {int(p["cost"]):,} Ft'.replace(',', ' '), cell_style)])
+        except Exception:
+            pass
+
+    if c.notes:
+        rows.append([Paragraph('Megjegyzés', cell_style), Paragraph(c.notes, cell_style)])
+
+    t = Table(rows, colWidths=[6*cm, 12*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), primary),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#e2e8f0')),
+        ('PADDING', (0,0), (-1,-1), 8),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 1*cm))
+
+    # ── ALÁÍRÁS BLOKK ─────────────────────────────────────────────
+    sig_style = ParagraphStyle('sig', fontSize=9, fontName=unicode_font, alignment=TA_CENTER)
+    sig_data = [[
+        Paragraph('____________________________<br/><br/>Kibocsátó aláírása', sig_style),
+        Paragraph('____________________________<br/><br/>Munkás aláírása', sig_style),
+        Paragraph('____________________________<br/><br/>Jóváhagyó aláírása', sig_style),
+    ]]
+    sig_table = Table(sig_data, colWidths=[6*cm, 6*cm, 6*cm])
+    sig_table.setStyle(TableStyle([
+        ('PADDING', (0,0), (-1,-1), 12),
+        ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),
+    ]))
+    story.append(sig_table)
+    story.append(Spacer(1, 0.5*cm))
+
+    # ── LÁBLÉC ────────────────────────────────────────────────────
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
+    footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'),
+                                   alignment=TA_CENTER, fontName=unicode_font)
+    story.append(Paragraph(f'Powered by RepairOS · {company_name}', footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    response = make_response(buffer.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=teljesites-igazolas-{doc_num}.pdf'
+    return response

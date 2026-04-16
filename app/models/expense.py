@@ -25,14 +25,21 @@ class Expense(db.Model, BaseModelMixin):
 
     worker: Mapped[Optional["User"]] = relationship("User", foreign_keys=[worker_id])
 
+    @property
+    def worker_name(self):
+        if self.worker:
+            return getattr(self.worker, 'username', None) or \
+                   f"{getattr(self.worker,'first_name','')} {getattr(self.worker,'last_name','')}".strip() or 'Ismeretlen'
+        return '—'
+
     def to_dict(self):
         return {
             'expense_id': self.expense_id,
-            'worker_name': f"{self.worker.first_name} {self.worker.last_name}" if self.worker else 'N/A',
+            'worker_name': self.worker_name,
             'amount': float(self.amount),
             'currency': self.currency,
-            'payment_source': self.payment_source,
-            'category': self.category,
+            'payment_source': self.payment_source or '',
+            'category': self.category or '',
             'notes': self.notes or '',
             'expense_date': self.expense_date.strftime('%Y. %m. %d.') if self.expense_date else 'N/A',
         }

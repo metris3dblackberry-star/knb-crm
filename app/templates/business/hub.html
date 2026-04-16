@@ -1111,40 +1111,43 @@ document.addEventListener('DOMContentLoaded', function() {
     vd.value = d.toISOString().split('T')[0];
   }
 
-  // Tétel hozzáadása — új sort épít, nem klónoz
-  const addBtn = document.getElementById('addQuoteItem');
-  if (addBtn) {
-    addBtn.addEventListener('click', function() {
-      const first = document.querySelector('.quote-item');
+  // AI AJÁNLATKÉSZÍTŐ - tétel kezelés
+  document.addEventListener('click', function(e) {
+    // Tétel hozzáadása
+    if (e.target.closest('#addQuoteItem')) {
+      const container = document.getElementById('quoteItems');
+      if (!container) return;
+      const first = container.querySelector('.quote-item');
+      if (!first) return;
       const newRow = document.createElement('div');
       newRow.className = 'row g-2 mb-2 quote-item';
       newRow.innerHTML = first.innerHTML;
-      // Reset values
       newRow.querySelectorAll('input').forEach(i => {
-        i.value = i.name && i.name.includes('qty') ? '1' : '';
+        i.value = (i.name && i.name.includes('qty')) ? '1' : '';
       });
       newRow.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-      document.getElementById('quoteItems').appendChild(newRow);
-    });
-  }
-
-  // Tétel törlése
-  document.getElementById('quoteItems').addEventListener('click', function(e) {
+      container.appendChild(newRow);
+    }
+    // Tétel törlése
     if (e.target.closest('.remove-item')) {
-      const items = document.querySelectorAll('.quote-item');
+      const container = document.getElementById('quoteItems');
+      if (!container) return;
+      const items = container.querySelectorAll('.quote-item');
       if (items.length > 1) e.target.closest('.quote-item').remove();
     }
   });
 
-  // Ár automatikus kitöltés
-  document.getElementById('quoteItems').addEventListener('change', function(e) {
-    if (e.target.tagName === 'SELECT') {
+  // Ár auto-kitöltés
+  document.addEventListener('change', function(e) {
+    if (e.target.closest('#quoteItems') && e.target.tagName === 'SELECT') {
       const opt = e.target.options[e.target.selectedIndex];
-      const price = opt.dataset.price;
+      const price = opt && opt.dataset.price;
       if (price) {
         const row = e.target.closest('.quote-item');
-        const priceInput = row.querySelector('[name="item_price[]"]');
-        if (priceInput && !priceInput.value) priceInput.value = price;
+        if (row) {
+          const priceInput = row.querySelector('[name="item_price[]"]');
+          if (priceInput && !priceInput.value) priceInput.value = price;
+        }
       }
     }
   });

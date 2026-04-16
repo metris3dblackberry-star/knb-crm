@@ -928,6 +928,9 @@
   </div>
 </div>
 
+<script type="application/json" id="cashflowData">{{ cashflow_days | tojson }}</script>
+<script type="application/json" id="workersData">{{ top_workers | tojson }}</script>
+
 {% endblock %}
 
 
@@ -937,7 +940,7 @@
 (function() {
   var raw;
   try {
-    raw = {{ cashflow_days | tojson | safe }};
+    raw = JSON.parse(document.getElementById('cashflowData').textContent);
   } catch(e) { raw = []; }
   if (!raw || !raw.length) return;
 
@@ -1012,7 +1015,7 @@
 
 // ── MUNKÁS TREND CHART ───────────────────────────────────────
 (function() {
-  var workers = {{ top_workers | tojson | safe }};
+  var workers = JSON.parse(document.getElementById('workersData').textContent);
   var ctx = document.getElementById('workerTrendChart');
   if (!ctx || !workers || !workers.length) return;
 

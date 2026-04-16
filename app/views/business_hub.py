@@ -375,6 +375,31 @@ def hub():
         recent_activities.sort(key=lambda x: x['sort_date'], reverse=True)
         recent_activities = recent_activities[:8]
 
+        # ── AJÁNLATKÉSZÍTŐHÖZ: szolgáltatások, alkatrészek, ügyfelek ──
+        try:
+            from app.models.service import Service
+            services_list = db.session.execute(
+                db.select(Service).where(Service.tenant_id == tenant_id)
+                .order_by(Service.service_name)
+            ).scalars().all()
+        except Exception:
+            services_list = []
+        try:
+            from app.models.part import Part
+            parts_list = db.session.execute(
+                db.select(Part).where(Part.tenant_id == tenant_id)
+                .order_by(Part.part_name)
+            ).scalars().all()
+        except Exception:
+            parts_list = []
+        try:
+            quote_jobs = db.session.execute(
+                db.select(Job).where(Job.tenant_id == tenant_id)
+                .order_by(Job.job_id.desc()).limit(30)
+            ).scalars().all()
+        except Exception:
+            quote_jobs = []
+
         return render_template('business/hub.html',
             # Havi összesítők
             total_expenses=float(total_expenses),
@@ -409,6 +434,10 @@ def hub():
             # Workers (modal-hoz)
             workers=workers,
             today=today,
+            # AI ajánlatkészítő
+            services_list=services_list,
+            parts_list=parts_list,
+            recent_jobs=quote_jobs,
         )
 
     except Exception as e:
@@ -1127,3 +1156,302 @@ def confirmation_pdf(conf_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=teljesites-igazolas-{doc_num}.pdf'
     return response
+
+
+# ─────────────────────────────────────────────────────────────────
+# AI AJÁNLATKÉSZÍTÉS
+# ─────────────────────────────────────────────────────────────────
+
+@business_bp.route('/business-hub/generate-quote', methods=['POST'])
+@handle_database_errors
+def generate_quote():
+    """AI-alapú ajánlat PPTX generálás"""
+    r = require_login()
+    if r: return r
+
+    import os, base64, json, requests as req_lib
+    from flask import make_response
+    from io import BytesIO
+
+    tenant_id = get_tenant_id()
+
+    # ── FORM ADATOK ───────────────────────────────────────────────
+    quote_title  = sanitize_input(request.form.get('quote_title', 'Ajánlat'))
+    customer_id  = request.form.get('customer_id', type=int)
+    valid_until  = request.form.get('valid_until', '')
+    ai_notes     = sanitize_input(request.form.get('ai_notes', ''))
+    item_names   = request.form.getlist('item_name[]')
+    item_qtys    = request.form.getlist('item_qty[]')
+    item_prices  = request.form.getlist('item_price[]')
+
+    items = []
+    total = 0
+    for name, qty, price in zip(item_names, item_qtys, item_prices):
+        if name:
+            q = int(qty or 1)
+            p = float(price or 0)
+            subtotal = q * p
+            total += subtotal
+            items.append({'name': name, 'qty': q, 'price': p, 'subtotal': subtotal})
+
+    # ── ÜGYFÉL ADATOK ─────────────────────────────────────────────
+    customer_name = 'Tisztelt Ügyfél'
+    try:
+        from app.models.customer import Customer
+        from app.extensions import db
+        if customer_id:
+            c = db.session.get(Customer, customer_id)
+            if c:
+                customer_name = f"{c.first_name} {c.family_name}"
+    except Exception:
+        pass
+
+    # ── VÁLLALAT ADATOK ───────────────────────────────────────────
+    try:
+        from app.models.tenant import Tenant
+        tenant = Tenant.find_by_id(tenant_id)
+        company_name = tenant.name if tenant else 'STAR LABS Kft.'
+        company_addr = tenant.address if tenant else 'Budapest'
+        settings = tenant.settings or {} if tenant else {}
+        company_tax = settings.get('tax_id', '')
+        company_bank = settings.get('bank_account', '')
+        company_email = tenant.email if tenant else ''
+        company_phone = tenant.phone if tenant else ''
+    except Exception:
+        company_name = 'STAR LABS Kft.'
+        company_addr = 'Budapest'
+        company_tax = company_bank = company_email = company_phone = ''
+
+    # ── KÉPEK BEOLVASÁSA ──────────────────────────────────────────
+    logo_b64 = None
+    logo_file = request.files.get('logo')
+    if logo_file and logo_file.filename:
+        logo_b64 = base64.b64encode(logo_file.read()).decode('utf-8')
+        logo_mime = 'image/png' if logo_file.filename.lower().endswith('.png') else 'image/jpeg'
+
+    image_files = request.files.getlist('images')
+    images_b64 = []
+    for img in image_files[:3]:
+        if img and img.filename:
+            images_b64.append({
+                'data': base64.b64encode(img.read()).decode('utf-8'),
+                'mime': 'image/png' if img.filename.lower().endswith('.png') else 'image/jpeg',
+                'name': img.filename
+            })
+
+    # ── ANTHROPIC API HÍVÁS ───────────────────────────────────────
+    anthropic_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    ai_texts = {'intro': '', 'items': [], 'closing': ''}
+
+    if anthropic_key and items:
+        items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items])
+        prompt = f"""Te egy profi üzleti ajánlatszöveg-írói asszisztens vagy. Írj rövid, meggyőző magyar nyelvű szövegeket egy PPTX ajánlathoz.
+
+Cég: {company_name}
+Ajánlat címe: {quote_title}
+Ügyfél: {customer_name}
+Tételek:
+{items_text}
+Összesen: {int(total):,} Ft
+Érvényes: {valid_until}
+{'Különleges megjegyzés: ' + ai_notes if ai_notes else ''}
+
+Válaszolj CSAK JSON formátumban, semmi más:
+{{
+  "intro": "2-3 mondatos bevezető szöveg az ajánlathoz (megszólítással)",
+  "items": [{{"name": "tétel neve", "description": "1 mondatos leírás a tétel előnyéről"}}],
+  "closing": "2-3 mondatos záró szöveg, cselekvésre ösztönzés"
+}}"""
+
+        try:
+            api_resp = req_lib.post(
+                'https://api.anthropic.com/v1/messages',
+                headers={
+                    'x-api-key': anthropic_key,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json',
+                },
+                json={
+                    'model': 'claude-sonnet-4-20250514',
+                    'max_tokens': 1000,
+                    'messages': [{'role': 'user', 'content': prompt}]
+                },
+                timeout=30
+            )
+            if api_resp.status_code == 200:
+                raw = api_resp.json()['content'][0]['text']
+                raw = raw.strip()
+                if raw.startswith('```'):
+                    raw = raw.split('```')[1]
+                    if raw.startswith('json'):
+                        raw = raw[4:]
+                ai_texts = json.loads(raw.strip())
+        except Exception as e:
+            logger.warning(f"AI szöveggenerálás hiba: {e}")
+
+    # ── PPTX GENERÁLÁS python-pptx-szel ──────────────────────────
+    try:
+        from pptx import Presentation
+        from pptx.util import Inches, Pt, Emu
+        from pptx.dml.color import RGBColor
+        from pptx.enum.text import PP_ALIGN
+        import datetime as dt
+
+        DARK   = RGBColor(0x1e, 0x3a, 0x5f)
+        ACCENT = RGBColor(0xe8, 0x7e, 0x04)
+        WHITE  = RGBColor(0xFF, 0xFF, 0xFF)
+        GRAY   = RGBColor(0x64, 0x74, 0x8b)
+        LIGHT  = RGBColor(0xf8, 0xfa, 0xfc)
+
+        prs = Presentation()
+        prs.slide_width  = Inches(13.33)
+        prs.slide_height = Inches(7.5)
+        blank = prs.slide_layouts[6]  # blank
+
+        def add_rect(slide, x, y, w, h, color):
+            shape = slide.shapes.add_shape(1, Inches(x), Inches(y), Inches(w), Inches(h))
+            shape.fill.solid()
+            shape.fill.fore_color.rgb = color
+            shape.line.fill.background()
+            return shape
+
+        def add_text(slide, text, x, y, w, h, size=18, bold=False, color=WHITE, align=PP_ALIGN.LEFT, italic=False):
+            txBox = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+            tf = txBox.text_frame
+            tf.word_wrap = True
+            p = tf.paragraphs[0]
+            p.alignment = align
+            run = p.add_run()
+            run.text = text
+            run.font.size = Pt(size)
+            run.font.bold = bold
+            run.font.italic = italic
+            run.font.color.rgb = color
+            return txBox
+
+        def add_image_b64(slide, b64data, mime, x, y, w, h):
+            try:
+                img_bytes = base64.b64decode(b64data)
+                img_stream = BytesIO(img_bytes)
+                slide.shapes.add_picture(img_stream, Inches(x), Inches(y), Inches(w), Inches(h))
+            except Exception as ie:
+                logger.warning(f"Kép beillesztés hiba: {ie}")
+
+        # ════ SLIDE 1: BORÍTÓ ════════════════════════════════════
+        sl1 = prs.slides.add_slide(blank)
+        add_rect(sl1, 0, 0, 13.33, 7.5, DARK)
+        add_rect(sl1, 0, 5.8, 13.33, 1.7, ACCENT)
+
+        # Logo ha van
+        if logo_b64:
+            add_image_b64(sl1, logo_b64, logo_mime, 0.5, 0.3, 2.5, 1.0)
+
+        add_text(sl1, company_name, 0.5, 1.5, 12, 0.8, size=16, color=RGBColor(0x93,0xc5,0xfd))
+        add_text(sl1, quote_title, 0.5, 2.3, 12, 1.5, size=40, bold=True, color=WHITE)
+        add_text(sl1, f'Ajánlat: {customer_name}', 0.5, 4.0, 8, 0.6, size=20, color=RGBColor(0xfb,0xd3,0x8d))
+
+        if valid_until:
+            add_text(sl1, f'Érvényes: {valid_until}', 0.5, 4.7, 6, 0.5, size=14, color=GRAY)
+
+        add_text(sl1, dt.date.today().strftime('%Y. %m. %d.'), 10, 4.7, 2.5, 0.5, size=13, color=GRAY, align=PP_ALIGN.RIGHT)
+
+        # Képek a borítón ha van
+        if images_b64:
+            add_image_b64(sl1, images_b64[0]['data'], images_b64[0]['mime'], 9.5, 0.5, 3.3, 5.0)
+
+        # ════ SLIDE 2: BEVEZETŐ ══════════════════════════════════
+        sl2 = prs.slides.add_slide(blank)
+        add_rect(sl2, 0, 0, 13.33, 1.2, DARK)
+        add_text(sl2, 'Bemutatkozás & Ajánlatunk', 0.4, 0.2, 12, 0.8, size=28, bold=True)
+
+        intro_text = ai_texts.get('intro') or f'Tisztelt {customer_name}! Örömmel küldjük Önnek az alábbi árajánlatot. Bízunk benne, hogy megoldásaink megfelelnek elvárásainak.'
+        add_text(sl2, intro_text, 0.5, 1.5, 8, 3.0, size=16, color=RGBColor(0x1e,0x29,0x3b))
+
+        # Stat kártyák
+        add_rect(sl2, 0.5, 5.0, 3.5, 1.8, LIGHT)
+        add_text(sl2, str(len(items)), 0.7, 5.1, 3.0, 0.7, size=36, bold=True, color=ACCENT, align=PP_ALIGN.CENTER)
+        add_text(sl2, 'Ajánlott tétel', 0.7, 5.8, 3.0, 0.5, size=13, color=GRAY, align=PP_ALIGN.CENTER)
+
+        add_rect(sl2, 4.5, 5.0, 4.0, 1.8, LIGHT)
+        add_text(sl2, f'{int(total):,} Ft'.replace(',', ' '), 4.7, 5.1, 3.5, 0.7, size=28, bold=True, color=DARK, align=PP_ALIGN.CENTER)
+        add_text(sl2, 'Nettó összérték', 4.7, 5.8, 3.5, 0.5, size=13, color=GRAY, align=PP_ALIGN.CENTER)
+
+        if images_b64 and len(images_b64) > 0:
+            add_image_b64(sl2, images_b64[0]['data'], images_b64[0]['mime'], 9.0, 1.5, 3.8, 3.0)
+
+        # ════ SLIDE 3: TÉTELEK ═══════════════════════════════════
+        sl3 = prs.slides.add_slide(blank)
+        add_rect(sl3, 0, 0, 13.33, 1.2, ACCENT)
+        add_text(sl3, 'Ajánlat tételei', 0.4, 0.2, 12, 0.8, size=28, bold=True)
+
+        # Táblázat fejléc
+        add_rect(sl3, 0.3, 1.3, 7.5, 0.45, DARK)
+        add_text(sl3, 'Megnevezés', 0.35, 1.32, 4.5, 0.4, size=12, bold=True)
+        add_text(sl3, 'Menny.', 4.85, 1.32, 1.0, 0.4, size=12, bold=True, align=PP_ALIGN.CENTER)
+        add_text(sl3, 'Egységár', 5.85, 1.32, 1.2, 0.4, size=12, bold=True, align=PP_ALIGN.CENTER)
+        add_text(sl3, 'Részösszeg', 7.05, 1.32, 1.5, 0.4, size=12, bold=True, align=PP_ALIGN.RIGHT)
+
+        ai_item_map = {i['name']: i.get('description','') for i in (ai_texts.get('items') or [])}
+        row_h = 0.55
+        for idx, item in enumerate(items[:8]):
+            y = 1.85 + idx * row_h
+            bg = LIGHT if idx % 2 == 0 else WHITE
+            add_rect(sl3, 0.3, y, 7.5, row_h - 0.05, bg)
+            desc = ai_item_map.get(item['name'], '')
+            name_text = item['name'] + (f'\n  {desc}' if desc else '')
+            add_text(sl3, name_text, 0.35, y+0.03, 4.4, row_h-0.08, size=11, color=RGBColor(0x1e,0x29,0x3b))
+            add_text(sl3, f"{item['qty']} db", 4.85, y+0.05, 1.0, 0.4, size=11, color=DARK, align=PP_ALIGN.CENTER)
+            add_text(sl3, f"{int(item['price']):,} Ft".replace(',', ' '), 5.85, y+0.05, 1.2, 0.4, size=11, color=DARK, align=PP_ALIGN.CENTER)
+            add_text(sl3, f"{int(item['subtotal']):,} Ft".replace(',', ' '), 7.05, y+0.05, 1.5, 0.4, size=11, color=DARK, align=PP_ALIGN.RIGHT)
+
+        # Összesen sor
+        total_y = 1.85 + min(len(items), 8) * row_h + 0.1
+        add_rect(sl3, 0.3, total_y, 7.5, 0.55, DARK)
+        add_text(sl3, 'ÖSSZESEN (nettó)', 0.35, total_y+0.08, 5.5, 0.4, size=13, bold=True)
+        add_text(sl3, f"{int(total):,} Ft".replace(',', ' '), 6.0, total_y+0.08, 1.5, 0.4, size=13, bold=True, align=PP_ALIGN.RIGHT)
+
+        if images_b64 and len(images_b64) > 1:
+            add_image_b64(sl3, images_b64[1]['data'], images_b64[1]['mime'], 8.5, 1.5, 4.3, 5.5)
+
+        # ════ SLIDE 4: ZÁRÁS / KONTAKT ═══════════════════════════
+        sl4 = prs.slides.add_slide(blank)
+        add_rect(sl4, 0, 0, 13.33, 7.5, DARK)
+        add_rect(sl4, 0, 5.5, 13.33, 2.0, ACCENT)
+
+        closing = ai_texts.get('closing') or 'Kérjük, forduljon hozzánk bizalommal! Csapatunk készen áll az ajánlat részletes megbeszélésére.'
+        add_text(sl4, 'Következő lépések', 0.5, 0.5, 12, 0.8, size=30, bold=True)
+        add_text(sl4, closing, 0.5, 1.5, 9, 2.0, size=16, color=RGBColor(0xcb,0xd5,0xe1))
+
+        # Kontakt adatok
+        contact = company_name
+        if company_addr:   contact += f'\n{company_addr}'
+        if company_email:  contact += f'\n{company_email}'
+        if company_phone:  contact += f'\n{company_phone}'
+        if company_tax:    contact += f'\nAdószám: {company_tax}'
+        add_text(sl4, contact, 0.5, 5.55, 8, 1.8, size=13, color=WHITE)
+        add_text(sl4, f'Érvényes: {valid_until}' if valid_until else '', 9.5, 5.7, 3.3, 0.5, size=13, color=WHITE, align=PP_ALIGN.RIGHT)
+
+        if logo_b64:
+            add_image_b64(sl4, logo_b64, logo_mime, 10.5, 0.5, 2.3, 0.9)
+
+        if images_b64 and len(images_b64) > 2:
+            add_image_b64(sl4, images_b64[2]['data'], images_b64[2]['mime'], 9.0, 1.5, 3.8, 3.5)
+
+        # ── MENTÉS ────────────────────────────────────────────────
+        pptx_buffer = BytesIO()
+        prs.save(pptx_buffer)
+        pptx_buffer.seek(0)
+
+        safe_title = quote_title.replace(' ', '_')[:30]
+        response = make_response(pptx_buffer.read())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        response.headers['Content-Disposition'] = f'attachment; filename=ajanlat_{safe_title}.pptx'
+        return response
+
+    except ImportError:
+        flash('python-pptx csomag hiányzik! pip install python-pptx', 'error')
+        return redirect(url_for('business.hub'))
+    except Exception as e:
+        logger.error(f"PPTX generálás hiba: {e}", exc_info=True)
+        flash(f'PPTX generálás hiba: {e}', 'error')
+        return redirect(url_for('business.hub'))

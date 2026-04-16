@@ -122,6 +122,10 @@
   <button class="btn-quick btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalWorker">
     <i class="ti ti-plus"></i> Új munkás
   </button>
+  <button class="btn-quick text-white fw-bold" data-bs-toggle="modal" data-bs-target="#modalAIQuote"
+          style="background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:8px;font-size:.85rem;padding:.45rem .9rem;">
+    <i class="ti ti-sparkles me-1"></i> A.I. Ajánlatkészítés
+  </button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -800,6 +804,130 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL: A.I. AJÁNLATKÉSZÍTÉS
+═══════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalAIQuote" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header border-0" style="background:linear-gradient(135deg,#7c3aed,#db2777);">
+        <h5 class="modal-title text-white fw-bold">
+          <i class="ti ti-sparkles me-2"></i>A.I. Ajánlatkészítés
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form method="POST" action="{{ url_for('business.generate_quote') }}" enctype="multipart/form-data" id="quoteForm">
+        <div class="modal-body px-4 py-3">
+
+          <div class="alert py-2 mb-3" style="background:#f5f3ff;border:1px solid #c4b5fd;font-size:.84rem;">
+            <i class="ti ti-info-circle me-1 text-purple-600"></i>
+            Az AI a kiválasztott tételek alapján profi ajánlatszöveget ír, és letölthető <b>PPTX prezentációt</b> generál.
+          </div>
+
+          <div class="row g-3">
+
+            <!-- Ajánlat címe -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Ajánlat címe *</label>
+              <input type="text" name="quote_title" class="form-control" required
+                     placeholder="pl. Éves karbantartási csomag ajánlat">
+            </div>
+
+            <!-- Ügyfél -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Címzett ügyfél *</label>
+              <select name="customer_id" class="form-select" required>
+                <option value="">— Válassz ügyfelet —</option>
+                {% for job in recent_jobs|default([]) %}
+                {% if job.customer_rel %}
+                <option value="{{ job.customer_rel.customer_id }}">
+                  {{ job.customer_rel.first_name }} {{ job.customer_rel.family_name }}
+                </option>
+                {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Érvényesség -->
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Érvényesség</label>
+              <input type="date" name="valid_until" class="form-control" id="quoteValidDate">
+            </div>
+
+            <!-- Tételek -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Ajánlat tételei</label>
+              <div id="quoteItems">
+                <div class="row g-2 mb-2 quote-item">
+                  <div class="col-5">
+                    <select name="item_name[]" class="form-select form-select-sm">
+                      <option value="">— Szolgáltatás vagy alkatrész —</option>
+                      <optgroup label="Szolgáltatások">
+                        {% for s in services_list|default([]) %}
+                        <option value="{{ s.service_name }}" data-price="{{ s.price }}">{{ s.service_name }}</option>
+                        {% endfor %}
+                      </optgroup>
+                      <optgroup label="Alkatrészek">
+                        {% for p in parts_list|default([]) %}
+                        <option value="{{ p.part_name }}" data-price="{{ p.unit_price }}">{{ p.part_name }}</option>
+                        {% endfor %}
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="col-2">
+                    <input type="number" name="item_qty[]" class="form-control form-control-sm" placeholder="Menny." min="1" value="1">
+                  </div>
+                  <div class="col-3">
+                    <input type="number" name="item_price[]" class="form-control form-control-sm" placeholder="Egységár (Ft)">
+                  </div>
+                  <div class="col-2">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-item">
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-secondary mt-1" id="addQuoteItem">
+                <i class="ti ti-plus me-1"></i>Tétel hozzáadása
+              </button>
+            </div>
+
+            <!-- Megjegyzés az AI-nak -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Megjegyzés az AI-nak <small class="text-muted">(opcionális)</small></label>
+              <textarea name="ai_notes" class="form-control" rows="2"
+                        placeholder="pl. Hangsúlyozd a minőséget és a gyors átfutási időt, hosszú távú partnerség ajánlat..."></textarea>
+            </div>
+
+            <!-- Fájl feltöltés -->
+            <div class="col-12">
+              <label class="form-label fw-semibold">Logo feltöltése</label>
+              <input type="file" name="logo" class="form-control form-control-sm" accept=".png,.jpg,.jpeg"
+                     placeholder="Nevezd el: logo.png vagy logo.jpg">
+              <small class="text-muted">Nevezd el a fájlt: <b>logo.png</b> vagy <b>logo.jpg</b> — az AI automatikusan felismeri</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Képek (max 3 db)</label>
+              <input type="file" name="images" class="form-control form-control-sm" accept=".png,.jpg,.jpeg" multiple>
+              <small class="text-muted">Max 3 kép — stílusosan elhelyezve a prezentációban</small>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+          <button type="submit" class="btn text-white fw-bold px-4" id="quoteSubmitBtn"
+                  style="background:linear-gradient(135deg,#7c3aed,#db2777);">
+            <i class="ti ti-sparkles me-1"></i>Ajánlat generálása
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 
@@ -972,6 +1100,59 @@ document.getElementById('dailyCloseBtn').addEventListener('click', function() {
       '<div class="alert alert-danger">Hiba történt az ellenőrzés közben.</div>';
     document.getElementById('dailyCloseResult').classList.remove('d-none');
   });
+});
+
+// ── AI AJÁNLATKÉSZÍTÉS ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  // Érvényesség dátum alapértelmezés (+30 nap)
+  const vd = document.getElementById('quoteValidDate');
+  if (vd) {
+    const d = new Date(); d.setDate(d.getDate()+30);
+    vd.value = d.toISOString().split('T')[0];
+  }
+
+  // Tétel hozzáadása
+  const addBtn = document.getElementById('addQuoteItem');
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      const first = document.querySelector('.quote-item');
+      const clone = first.cloneNode(true);
+      clone.querySelectorAll('input').forEach(i => i.value = i.name.includes('qty') ? '1' : '');
+      clone.querySelector('select').selectedIndex = 0;
+      document.getElementById('quoteItems').appendChild(clone);
+    });
+  }
+
+  // Tétel törlése
+  document.getElementById('quoteItems').addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item')) {
+      const items = document.querySelectorAll('.quote-item');
+      if (items.length > 1) e.target.closest('.quote-item').remove();
+    }
+  });
+
+  // Ár automatikus kitöltés
+  document.getElementById('quoteItems').addEventListener('change', function(e) {
+    if (e.target.tagName === 'SELECT') {
+      const opt = e.target.options[e.target.selectedIndex];
+      const price = opt.dataset.price;
+      if (price) {
+        const row = e.target.closest('.quote-item');
+        const priceInput = row.querySelector('[name="item_price[]"]');
+        if (priceInput && !priceInput.value) priceInput.value = price;
+      }
+    }
+  });
+
+  // Submit gomb loading state
+  const qForm = document.getElementById('quoteForm');
+  if (qForm) {
+    qForm.addEventListener('submit', function() {
+      const btn = document.getElementById('quoteSubmitBtn');
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI generál...';
+      btn.disabled = true;
+    });
+  }
 });
 </script>
 {% endblock %}

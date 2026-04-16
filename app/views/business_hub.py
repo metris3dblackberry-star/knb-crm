@@ -1241,26 +1241,56 @@ def generate_quote():
 
     # ── ANTHROPIC API HÍVÁS ───────────────────────────────────────
     anthropic_key = os.environ.get('ANTHROPIC_API_KEY', '')
-    ai_texts = {'intro': '', 'items': [], 'closing': ''}
+    ai_texts = {'intro': '', 'items': [], 'closing': '', 'payment_schedule': [], '_detailed': False}
 
-    if anthropic_key and items:
-        items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items])
-        notes_line = f'\nKülönleges elvárás a szöveggel kapcsolatban: {ai_notes}' if ai_notes else ''
-        prompt = f"""Te egy profi üzleti ajánlatszöveg-írói asszisztens vagy. Írj rövid, meggyőző magyar nyelvű szövegeket egy PPTX ajánlathoz.
+    if anthropic_key:
+        items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items]) if items else 'Nincs megadva'
+        total_str = f"{int(total):,} Ft" if total else 'Lásd részletek'
+        detailed_mode = len(ai_notes) > 100
+
+        if detailed_mode:
+            prompt = f"""Te egy profi magyar üzleti ajánlatszöveg-író vagy. Készíts PPTX prezentáció tartalmat az alábbi RÉSZLETES INSTRUKCIÓK alapján - ezeket KÖTELEZŐ követni!
 
 Cég: {company_name}
 Ajánlat címe: {quote_title}
 Ügyfél: {customer_name}
-Tételek:
-{items_text}
-Összesen: {int(total):,} Ft
-Érvényes: {valid_until}{notes_line}
+Tételek: {items_text}
+Teljes összeg: {total_str}
+Érvényesség: {valid_until}
+
+RÉSZLETES INSTRUKCIÓK (KÖTELEZŐ KÖVETNI):
+{ai_notes}
+
+Válaszolj CSAK JSON formátumban, semmi más:
+{{
+  "intro": "2-3 mondatos bevezető (megszólítással, üzleti hangvételű)",
+  "project_description": "2-3 mondatos projekt leírás",
+  "technical_content": "3-4 mondatos műszaki tartalom",
+  "payment_schedule": [
+    {{"milestone": "mérföldkő neve", "percent": 15, "amount": "15 000 000 Ft", "description": "rövid leírás"}}
+  ],
+  "timeline": "teljesítési határidő leírása",
+  "warranty": "garanciális feltételek",
+  "payment_terms": "fizetési feltételek",
+  "legal_terms": "általános jogi feltételek",
+  "closing": "2-3 mondatos záró szöveg"
+}}"""
+        else:
+            prompt = f"""Te egy profi üzleti ajánlatszöveg-írói asszisztens vagy. Írj rövid, meggyőző magyar nyelvű szövegeket egy PPTX ajánlathoz.
+
+Cég: {company_name}
+Ajánlat címe: {quote_title}
+Ügyfél: {customer_name}
+Tételek: {items_text}
+Összesen: {total_str}
+Érvényes: {valid_until}
+{('Megjegyzés: ' + ai_notes) if ai_notes else ''}
 
 Válaszolj CSAK JSON formátumban, semmi más:
 {{
   "intro": "2-3 mondatos bevezető szöveg az ajánlathoz (megszólítással)",
-  "items": [{{"name": "tétel neve", "description": "1 mondatos leírás a tétel előnyéről"}}],
-  "closing": "2-3 mondatos záró szöveg, cselekvésre ösztönzés"
+  "items": [{{"name": "tétel neve", "description": "1 mondatos leírás"}}],
+  "closing": "2-3 mondatos záró szöveg"
 }}"""
 
         try:
@@ -1273,19 +1303,19 @@ Válaszolj CSAK JSON formátumban, semmi más:
                 },
                 json={
                     'model': 'claude-sonnet-4-20250514',
-                    'max_tokens': 1000,
+                    'max_tokens': 2000,
                     'messages': [{'role': 'user', 'content': prompt}]
                 },
-                timeout=30
+                timeout=45
             )
             if api_resp.status_code == 200:
-                raw = api_resp.json()['content'][0]['text']
-                raw = raw.strip()
+                raw = api_resp.json()['content'][0]['text'].strip()
                 if raw.startswith('```'):
                     raw = raw.split('```')[1]
-                    if raw.startswith('json'):
-                        raw = raw[4:]
-                ai_texts = json.loads(raw.strip())
+                    if raw.startswith('json'): raw = raw[4:]
+                parsed = json.loads(raw.strip())
+                ai_texts.update(parsed)
+                ai_texts['_detailed'] = detailed_mode
         except Exception as e:
             logger.warning(f"AI szöveggenerálás hiba: {e}")
 
@@ -1329,17 +1359,11 @@ Válaszolj CSAK JSON formátumban, semmi más:
             run.font.color.rgb = color
             return txBox
 
-        def add_image_b64(slide, b64data, mime, x, y, w, h=None):
+        def add_image_b64(slide, b64data, mime, x, y, w, h):
             try:
                 img_bytes = base64.b64decode(b64data)
                 img_stream = BytesIO(img_bytes)
-                # Csak szélességet adunk meg - arány megőrzéséhez
-                pic = slide.shapes.add_picture(img_stream, Inches(x), Inches(y), width=Inches(w))
-                # Ha túl magas lenne, korlátozzuk
-                if h and pic.height > Inches(h):
-                    ratio = Inches(h) / pic.height
-                    pic.height = Inches(h)
-                    pic.width = int(pic.width * ratio)
+                slide.shapes.add_picture(img_stream, Inches(x), Inches(y), Inches(w), Inches(h))
             except Exception as ie:
                 logger.warning(f"Kép beillesztés hiba: {ie}")
 
@@ -1442,6 +1466,79 @@ Válaszolj CSAK JSON formátumban, semmi más:
 
         if images_b64 and len(images_b64) > 2:
             add_image_b64(sl4, images_b64[2]['data'], images_b64[2]['mime'], 9.0, 1.5, 3.8, 3.5)
+
+        # ════ RÉSZLETES MÓD: extra slide-ok ══════════════════════
+        if ai_texts.get('_detailed'):
+
+            # ── SLIDE 5: PROJEKT LEÍRÁS + MŰSZAKI TARTALOM ──────
+            sl5 = prs.slides.add_slide(blank)
+            add_rect(sl5, 0, 0, 13.33, 1.2, DARK)
+            add_text(sl5, 'Projekt leírás & Műszaki tartalom', 0.4, 0.2, 12, 0.8, size=26, bold=True)
+
+            proj_desc = ai_texts.get('project_description', '')
+            tech = ai_texts.get('technical_content', '')
+
+            add_rect(sl5, 0.3, 1.4, 6.0, 0.4, ACCENT)
+            add_text(sl5, 'Projekt leírás', 0.4, 1.42, 5.5, 0.35, size=13, bold=True)
+            add_text(sl5, proj_desc, 0.4, 1.9, 6.0, 2.5, size=13, color=RGBColor(0x1e,0x29,0x3b))
+
+            add_rect(sl5, 0.3, 4.5, 6.0, 0.4, DARK)
+            add_text(sl5, 'Műszaki tartalom', 0.4, 4.52, 5.5, 0.35, size=13, bold=True)
+            add_text(sl5, tech, 0.4, 5.0, 6.0, 2.0, size=13, color=RGBColor(0x1e,0x29,0x3b))
+
+            if images_b64 and len(images_b64) > 0:
+                add_image_b64(sl5, images_b64[0]['data'], images_b64[0]['mime'], 7.0, 1.4, 5.8, 5.5)
+
+            # ── SLIDE 6: FIZETÉSI ÜTEMEZÉS ───────────────────────
+            payment_sched = ai_texts.get('payment_schedule', [])
+            if payment_sched:
+                sl6 = prs.slides.add_slide(blank)
+                add_rect(sl6, 0, 0, 13.33, 1.2, ACCENT)
+                add_text(sl6, 'Fizetési ütemezés', 0.4, 0.2, 12, 0.8, size=28, bold=True)
+
+                # Fejléc
+                add_rect(sl6, 0.3, 1.3, 12.5, 0.45, DARK)
+                add_text(sl6, 'Mérföldkő', 0.4, 1.32, 5.5, 0.4, size=12, bold=True)
+                add_text(sl6, '%', 5.95, 1.32, 1.0, 0.4, size=12, bold=True, align=PP_ALIGN.CENTER)
+                add_text(sl6, 'Összeg', 7.0, 1.32, 2.5, 0.4, size=12, bold=True, align=PP_ALIGN.CENTER)
+                add_text(sl6, 'Leírás', 9.6, 1.32, 3.0, 0.4, size=12, bold=True)
+
+                for idx, ps in enumerate(payment_sched[:8]):
+                    y = 1.85 + idx * 0.6
+                    bg = LIGHT if idx % 2 == 0 else WHITE
+                    add_rect(sl6, 0.3, y, 12.5, 0.55, bg)
+                    add_text(sl6, ps.get('milestone',''), 0.4, y+0.08, 5.5, 0.4, size=11, color=DARK, bold=True)
+                    add_text(sl6, f"{ps.get('percent',0)}%", 5.95, y+0.08, 1.0, 0.4, size=11, color=ACCENT, bold=True, align=PP_ALIGN.CENTER)
+                    add_text(sl6, ps.get('amount',''), 7.0, y+0.08, 2.5, 0.4, size=11, color=DARK, align=PP_ALIGN.CENTER)
+                    add_text(sl6, ps.get('description',''), 9.6, y+0.08, 3.0, 0.4, size=10, color=GRAY)
+
+                # Összesen
+                tot_y = 1.85 + min(len(payment_sched), 8) * 0.6 + 0.1
+                add_rect(sl6, 0.3, tot_y, 12.5, 0.55, DARK)
+                add_text(sl6, 'ÖSSZESEN', 0.4, tot_y+0.08, 5.5, 0.4, size=13, bold=True)
+                add_text(sl6, '100%', 5.95, tot_y+0.08, 1.0, 0.4, size=13, bold=True, align=PP_ALIGN.CENTER)
+                total_disp = f"{int(total):,} Ft".replace(',', ' ') if total else ai_texts.get('payment_schedule', [{}])[-1].get('amount','')
+                add_text(sl6, total_disp, 7.0, tot_y+0.08, 2.5, 0.4, size=13, bold=True, align=PP_ALIGN.CENTER)
+
+            # ── SLIDE 7: FELTÉTELEK ──────────────────────────────
+            sl7 = prs.slides.add_slide(blank)
+            add_rect(sl7, 0, 0, 13.33, 1.2, DARK)
+            add_text(sl7, 'Szerződési feltételek', 0.4, 0.2, 12, 0.8, size=26, bold=True)
+
+            conditions = [
+                ('Teljesítési határidő', ai_texts.get('timeline', '')),
+                ('Garanciális feltételek', ai_texts.get('warranty', '')),
+                ('Fizetési feltételek', ai_texts.get('payment_terms', '')),
+                ('Általános feltételek', ai_texts.get('legal_terms', '')),
+            ]
+            y = 1.4
+            for label, text in conditions:
+                if text:
+                    add_rect(sl7, 0.3, y, 12.5, 0.35, ACCENT)
+                    add_text(sl7, label, 0.4, y+0.03, 12.0, 0.3, size=12, bold=True)
+                    y += 0.4
+                    add_text(sl7, text, 0.4, y, 12.0, 0.7, size=12, color=RGBColor(0x1e,0x29,0x3b))
+                    y += 0.85
 
         # ── MENTÉS ────────────────────────────────────────────────
         pptx_buffer = BytesIO()

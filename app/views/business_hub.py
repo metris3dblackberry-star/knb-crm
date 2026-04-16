@@ -1247,7 +1247,7 @@ def generate_quote():
         items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items]) if items else 'Nincs megadva'
         total_str = f"{int(total):,} Ft" if total else 'Lásd részletek'
         detailed_mode = len(ai_notes) > 100
-        logger.info(f"AI quote: notes_len={len(ai_notes)}, detailed={detailed_mode}, items={len(items)}")
+        logger.error(f"AI quote DEBUG: notes_len={len(ai_notes)}, detailed={detailed_mode}, items={len(items)}, has_key={bool(anthropic_key)}")
 
         if detailed_mode:
             prompt = f"""Te egy profi magyar üzleti ajánlatszöveg-író vagy. Készíts PPTX prezentáció tartalmat az alábbi RÉSZLETES INSTRUKCIÓK alapján - ezeket KÖTELEZŐ követni!
@@ -1311,14 +1311,18 @@ Válaszolj CSAK JSON formátumban, semmi más:
             )
             if api_resp.status_code == 200:
                 raw = api_resp.json()['content'][0]['text'].strip()
+                logger.error(f"AI API OK: raw[:100]={raw[:100]}")
                 if raw.startswith('```'):
                     raw = raw.split('```')[1]
                     if raw.startswith('json'): raw = raw[4:]
                 parsed = json.loads(raw.strip())
                 ai_texts.update(parsed)
                 ai_texts['_detailed'] = detailed_mode
+                logger.error(f"AI texts keys: {list(ai_texts.keys())}, _detailed={ai_texts.get('_detailed')}")
+            else:
+                logger.error(f"AI API hiba: {api_resp.status_code} {api_resp.text[:200]}")
         except Exception as e:
-            logger.warning(f"AI szöveggenerálás hiba: {e}")
+            logger.error(f"AI szöveggenerálás hiba: {e}")
 
     # ── PPTX GENERÁLÁS python-pptx-szel ──────────────────────────
     try:

@@ -216,7 +216,7 @@ def hub():
         else:
             period = 'monthly'
             period_start = today.replace(day=1)
-            period_label = current_month
+            period_label = today.strftime('%Y. %B')
 
         try:
             worker_stats = []

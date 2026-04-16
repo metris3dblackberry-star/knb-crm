@@ -1247,6 +1247,7 @@ def generate_quote():
         items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items]) if items else 'Nincs megadva'
         total_str = f"{int(total):,} Ft" if total else 'Lásd részletek'
         detailed_mode = len(ai_notes) > 100
+        logger.info(f"AI quote: notes_len={len(ai_notes)}, detailed={detailed_mode}, items={len(items)}")
 
         if detailed_mode:
             prompt = f"""Te egy profi magyar üzleti ajánlatszöveg-író vagy. Készíts PPTX prezentáció tartalmat az alábbi RÉSZLETES INSTRUKCIÓK alapján - ezeket KÖTELEZŐ követni!

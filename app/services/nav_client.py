@@ -151,7 +151,10 @@ def token_exchange() -> dict:
 
     req_id = _request_id()
     xml_ts = _xml_ts()
-    sig    = _token_sig(req_id, _sig_ts(), cfg['sign_key'])
+    sig_ts = _sig_ts()  # Egyszer generáljuk, ugyanazt használjuk
+    sig    = _token_sig(req_id, sig_ts, cfg['sign_key'])
+
+    logger.error(f"NAV TOKEN SIG DEBUG: req_id={req_id} sig_ts={sig_ts} sign_key={cfg['sign_key'][:10]}...")
 
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <TokenExchangeRequest xmlns="http://schemas.nav.gov.hu/OSA/3.0/api"
@@ -161,7 +164,7 @@ def token_exchange() -> dict:
 </TokenExchangeRequest>"""
 
     try:
-        logger.error(f"NAV REQUEST XML: login={cfg['login']} taxNumber={cfg['tax_number']} sig={sig[:20]}...")
+        logger.error(f"NAV REQUEST XML: login={cfg['login']} taxNumber={cfg['tax_number']} sig={sig[:20]}... pwdhash_prefix={cfg['pwd_hash'][:15]}...")
         r = requests.post(f"{cfg['base_url']}/tokenExchange",
                           data=xml.encode('utf-8'),
                           headers={'Content-Type': 'application/xml;charset=UTF-8', 'Accept': 'application/xml'},

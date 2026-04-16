@@ -1111,15 +1111,20 @@ document.addEventListener('DOMContentLoaded', function() {
     vd.value = d.toISOString().split('T')[0];
   }
 
-  // Tétel hozzáadása
+  // Tétel hozzáadása — új sort épít, nem klónoz
   const addBtn = document.getElementById('addQuoteItem');
   if (addBtn) {
     addBtn.addEventListener('click', function() {
       const first = document.querySelector('.quote-item');
-      const clone = first.cloneNode(true);
-      clone.querySelectorAll('input').forEach(i => i.value = i.name.includes('qty') ? '1' : '');
-      clone.querySelector('select').selectedIndex = 0;
-      document.getElementById('quoteItems').appendChild(clone);
+      const newRow = document.createElement('div');
+      newRow.className = 'row g-2 mb-2 quote-item';
+      newRow.innerHTML = first.innerHTML;
+      // Reset values
+      newRow.querySelectorAll('input').forEach(i => {
+        i.value = i.name && i.name.includes('qty') ? '1' : '';
+      });
+      newRow.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+      document.getElementById('quoteItems').appendChild(newRow);
     });
   }
 

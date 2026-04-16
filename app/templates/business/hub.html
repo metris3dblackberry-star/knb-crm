@@ -314,24 +314,47 @@
   <!-- Top munkások -->
   <div class="col-12 col-md-6">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-white border-0 pt-3 pb-1 px-3">
-        <h6 class="mb-0"><i class="ti ti-star me-2 text-warning"></i>Legaktívabb munkások</h6>
-        <small class="text-muted">{{ current_month }}</small>
+      <div class="card-header bg-white border-0 pt-3 pb-1 px-3 d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0"><i class="ti ti-star me-2 text-warning"></i>Legaktívabb munkások</h6>
+          <small class="text-muted">{{ period_label }}</small>
+        </div>
+        <!-- Periódus váltó -->
+        <div class="btn-group btn-group-sm" role="group">
+          <a href="?period=daily"   class="btn {{ 'btn-primary' if period == 'daily'   else 'btn-outline-secondary' }}" style="font-size:.72rem;">Nap</a>
+          <a href="?period=weekly"  class="btn {{ 'btn-primary' if period == 'weekly'  else 'btn-outline-secondary' }}" style="font-size:.72rem;">Hét</a>
+          <a href="?period=monthly" class="btn {{ 'btn-primary' if period == 'monthly' else 'btn-outline-secondary' }}" style="font-size:.72rem;">Hónap</a>
+        </div>
       </div>
-      <div class="card-body px-3 pb-3 pt-2">
+      <div class="card-body px-3 pb-2 pt-2">
         {% if top_workers %}
           {% for w in top_workers %}
           <div class="worker-row">
             <div class="worker-avatar">{{ w.name[:2].upper() if w.name else '??' }}</div>
             <div class="flex-fill">
               <div class="fw-semibold" style="font-size:.875rem;">{{ w.name or 'Ismeretlen' }}</div>
-              <div class="text-muted" style="font-size:.78rem;">{{ w.job_count }} munka · {{ "{:,.0f}".format(w.revenue).replace(',', ' ') }} Ft</div>
+              <div class="text-muted" style="font-size:.78rem;">
+                {{ w.job_count }} munka · {{ "{:,.0f}".format(w.revenue).replace(',', ' ') }} Ft
+              </div>
             </div>
-            {% if w.job_count < avg_jobs * 0.5 and avg_jobs > 0 %}
-            <span class="badge bg-warning text-dark" style="font-size:.7rem;">Lemaradt</span>
-            {% elif loop.index == 1 %}
-            <span class="badge bg-success" style="font-size:.7rem;">Top</span>
-            {% endif %}
+            <div class="d-flex align-items-center gap-1">
+              {% if w.job_count < avg_jobs * 0.5 and avg_jobs > 0 %}
+                <span class="badge bg-warning text-dark" style="font-size:.7rem;">Lemaradt</span>
+              {% elif loop.index == 1 %}
+                <span class="badge bg-success" style="font-size:.7rem;">Top</span>
+              {% endif %}
+              {% if w.trend == 'up' %}
+                <span class="text-success" style="font-size:.75rem;" title="{{w.trend_pct}}% az előző periódushoz képest">
+                  <i class="ti ti-trending-up"></i> +{{w.trend_pct}}%
+                </span>
+              {% elif w.trend == 'down' %}
+                <span class="text-danger" style="font-size:.75rem;" title="{{w.trend_pct}}% az előző periódushoz képest">
+                  <i class="ti ti-trending-down"></i> {{w.trend_pct}}%
+                </span>
+              {% else %}
+                <span class="text-muted" style="font-size:.75rem;"><i class="ti ti-minus"></i></span>
+              {% endif %}
+            </div>
           </div>
           {% endfor %}
         {% else %}
@@ -340,11 +363,15 @@
             Nincs adat
           </p>
         {% endif %}
-        <div class="mt-3 pt-2 border-top">
-          <a href="{{ url_for('business.worker_payments') }}" class="btn btn-sm btn-outline-primary w-100">
-            Munkás kifizetések →
-          </a>
-        </div>
+      </div>
+      <!-- Trend mini chart -->
+      <div class="px-3 pb-3">
+        <canvas id="workerTrendChart" style="max-height:80px;"></canvas>
+      </div>
+      <div class="px-3 pb-3 border-top pt-2">
+        <a href="{{ url_for('business.worker_payments') }}" class="btn btn-sm btn-outline-primary w-100">
+          Munkás kifizetések →
+        </a>
       </div>
     </div>
   </div>
@@ -855,7 +882,49 @@
   });
 })();
 
-// ── NAPI ZÁRÁS ───────────────────────────────────────────────────
+// ── MUNKÁS TREND CHART ───────────────────────────────────────
+(function() {
+  var workers = {{ top_workers | tojson | safe }};
+  var ctx = document.getElementById('workerTrendChart');
+  if (!ctx || !workers || !workers.length) return;
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: workers.map(w => w.name.split(' ')[0]),
+      datasets: [
+        {
+          label: 'Aktuális',
+          data: workers.map(w => w.job_count),
+          backgroundColor: 'rgba(47,179,68,.75)',
+          borderRadius: 4,
+        },
+        {
+          label: 'Előző',
+          data: workers.map(w => w.prev_count),
+          backgroundColor: 'rgba(148,163,184,.5)',
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} munka`
+          }
+        }
+      },
+      scales: {
+        y: { display: false, beginAtZero: true },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+})();
 document.getElementById('dailyCloseBtn').addEventListener('click', function() {
   const modal = new bootstrap.Modal(document.getElementById('modalDailyClose'));
   modal.show();

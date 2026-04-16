@@ -430,7 +430,23 @@ def complete_job(job_id):
             return redirect(url_for('technician.current_jobs'))
         job.completed = True
         db.session.commit()
-        flash('Munka befejezettnek jelölve!', 'success')
+
+        # ── NAV BEKÜLDÉS ──────────────────────────────────────────
+        try:
+            from app.services.nav_client import submit_invoice
+            from app.models.tenant import Tenant
+            tenant_id = session.get('current_tenant_id') or 1
+            tenant = Tenant.find_by_id(tenant_id)
+            settings = tenant.settings or {} if tenant else {}
+            nav_result = submit_invoice(job, tenant, settings)
+            if nav_result['success']:
+                flash(f'✅ Munka lezárva! NAV bejelentés OK – {nav_result["transaction_id"]}', 'success')
+            else:
+                flash(f'Munka lezárva! ⚠️ NAV bejelentés sikertelen: {nav_result["error"]}', 'warning')
+        except Exception as nav_err:
+            logger.error(f"NAV error on complete_job {job_id}: {nav_err}")
+            flash(f'Munka befejezettnek jelölve! ⚠️ NAV hiba: {nav_err}', 'warning')
+
         return redirect(url_for('technician.job_detail', job_id=job_id))
 
     except Exception as e:
@@ -895,20 +911,6 @@ def generate_invoice(job_id):
 
     doc.build(story)
     buffer.seek(0)
-
-    # ── NAV BEKÜLDÉS ──────────────────────────────────────────────
-    try:
-        from app.services.nav_client import submit_invoice
-        nav_result = submit_invoice(job, tenant, settings)
-        if nav_result['success']:
-            flash(f"✅ NAV bejelentés OK – Tranzakció: {nav_result['transaction_id']}", 'success')
-            logger.info(f"NAV invoice submitted: {nav_result['transaction_id']}")
-        else:
-            flash(f"⚠️ NAV bejelentés sikertelen: {nav_result['error']}", 'warning')
-            logger.warning(f"NAV submit failed for job {job_id}: {nav_result['error']}")
-    except Exception as nav_err:
-        logger.error(f"NAV integration error: {nav_err}")
-        flash(f"⚠️ NAV modul hiba: {nav_err}", 'warning')
 
     response = make_response(buffer.read())
     response.headers['Content-Type'] = 'application/pdf'

@@ -35,6 +35,5 @@ stripe==11.4.1
 
 # Security
 bcrypt==4.2.1
-reportlabpython-pptx
-python-pptx
+reportlab
 python-pptx

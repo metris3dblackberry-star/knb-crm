@@ -1112,45 +1112,47 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // AI AJÁNLATKÉSZÍTŐ - tétel kezelés
-  document.addEventListener('click', function(e) {
-    // Tétel hozzáadása
-    if (e.target.closest('#addQuoteItem')) {
-      const container = document.getElementById('quoteItems');
+  // Modal megnyitásakor kötjük be az eseményeket
+  var aiQuoteModal = document.getElementById('modalAIQuote');
+  if (aiQuoteModal) {
+    aiQuoteModal.addEventListener('shown.bs.modal', function() {
+      var container = document.getElementById('quoteItems');
       if (!container) return;
-      const first = container.querySelector('.quote-item');
-      if (!first) return;
-      const newRow = document.createElement('div');
-      newRow.className = 'row g-2 mb-2 quote-item';
-      newRow.innerHTML = first.innerHTML;
-      newRow.querySelectorAll('input').forEach(i => {
-        i.value = (i.name && i.name.includes('qty')) ? '1' : '';
-      });
-      newRow.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-      container.appendChild(newRow);
-    }
-    // Tétel törlése
-    if (e.target.closest('.remove-item')) {
-      const container = document.getElementById('quoteItems');
-      if (!container) return;
-      const items = container.querySelectorAll('.quote-item');
-      if (items.length > 1) e.target.closest('.quote-item').remove();
-    }
-  });
 
-  // Ár auto-kitöltés
-  document.addEventListener('change', function(e) {
-    if (e.target.closest('#quoteItems') && e.target.tagName === 'SELECT') {
-      const opt = e.target.options[e.target.selectedIndex];
-      const price = opt && opt.dataset.price;
-      if (price) {
-        const row = e.target.closest('.quote-item');
-        if (row) {
-          const priceInput = row.querySelector('[name="item_price[]"]');
-          if (priceInput && !priceInput.value) priceInput.value = price;
+      // Tétel hozzáadása
+      document.getElementById('addQuoteItem').onclick = function() {
+        var first = container.querySelector('.quote-item');
+        if (!first) return;
+        var newRow = document.createElement('div');
+        newRow.className = 'row g-2 mb-2 quote-item';
+        newRow.innerHTML = first.innerHTML;
+        newRow.querySelectorAll('input').forEach(function(i) {
+          i.value = (i.name && i.name.indexOf('qty') > -1) ? '1' : '';
+        });
+        newRow.querySelectorAll('select').forEach(function(s) { s.selectedIndex = 0; });
+        container.appendChild(newRow);
+      };
+
+      // Törlés és ár-autokitöltés delegálva
+      container.onclick = function(e) {
+        var btn = e.target.closest('.remove-item');
+        if (btn) {
+          var items = container.querySelectorAll('.quote-item');
+          if (items.length > 1) btn.closest('.quote-item').remove();
         }
-      }
-    }
-  });
+      };
+      container.onchange = function(e) {
+        if (e.target.tagName === 'SELECT') {
+          var opt = e.target.options[e.target.selectedIndex];
+          if (opt && opt.dataset.price) {
+            var row = e.target.closest('.quote-item');
+            var pi = row && row.querySelector('[name="item_price[]"]');
+            if (pi && !pi.value) pi.value = opt.dataset.price;
+          }
+        }
+      };
+    });
+  }
 
   // Submit gomb loading state
   const qForm = document.getElementById('quoteForm');

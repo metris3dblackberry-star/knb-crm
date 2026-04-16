@@ -1245,6 +1245,7 @@ def generate_quote():
 
     if anthropic_key and items:
         items_text = '\n'.join([f"- {i['name']}: {i['qty']} db × {int(i['price']):,} Ft = {int(i['subtotal']):,} Ft" for i in items])
+        notes_line = f'\nKülönleges elvárás a szöveggel kapcsolatban: {ai_notes}' if ai_notes else ''
         prompt = f"""Te egy profi üzleti ajánlatszöveg-írói asszisztens vagy. Írj rövid, meggyőző magyar nyelvű szövegeket egy PPTX ajánlathoz.
 
 Cég: {company_name}
@@ -1253,8 +1254,7 @@ Ajánlat címe: {quote_title}
 Tételek:
 {items_text}
 Összesen: {int(total):,} Ft
-Érvényes: {valid_until}
-{'Különleges megjegyzés: ' + ai_notes if ai_notes else ''}
+Érvényes: {valid_until}{notes_line}
 
 Válaszolj CSAK JSON formátumban, semmi más:
 {{
@@ -1329,11 +1329,17 @@ Válaszolj CSAK JSON formátumban, semmi más:
             run.font.color.rgb = color
             return txBox
 
-        def add_image_b64(slide, b64data, mime, x, y, w, h):
+        def add_image_b64(slide, b64data, mime, x, y, w, h=None):
             try:
                 img_bytes = base64.b64decode(b64data)
                 img_stream = BytesIO(img_bytes)
-                slide.shapes.add_picture(img_stream, Inches(x), Inches(y), Inches(w), Inches(h))
+                # Csak szélességet adunk meg - arány megőrzéséhez
+                pic = slide.shapes.add_picture(img_stream, Inches(x), Inches(y), width=Inches(w))
+                # Ha túl magas lenne, korlátozzuk
+                if h and pic.height > Inches(h):
+                    ratio = Inches(h) / pic.height
+                    pic.height = Inches(h)
+                    pic.width = int(pic.width * ratio)
             except Exception as ie:
                 logger.warning(f"Kép beillesztés hiba: {ie}")
 

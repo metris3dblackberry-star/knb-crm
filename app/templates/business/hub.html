@@ -937,7 +937,7 @@
 (function() {
   var raw;
   try {
-    raw = {{ cashflow_days | tojson | safe }};
+    raw = {{ cashflow_days | tojson(ensure_ascii=True) | safe }};
   } catch(e) { raw = []; }
   if (!raw || !raw.length) return;
 
@@ -1012,7 +1012,7 @@
 
 // ── MUNKÁS TREND CHART ───────────────────────────────────────
 (function() {
-  var workers = {{ top_workers | tojson | safe }};
+  var workers = {{ top_workers | tojson(ensure_ascii=True) | safe }};
   var ctx = document.getElementById('workerTrendChart');
   if (!ctx || !workers || !workers.length) return;
 

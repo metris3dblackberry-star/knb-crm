@@ -200,34 +200,83 @@ def hub():
                 'profit': rev - exp
             })
 
-        # ── TOP MUNKÁSOK ───────────────────────────────────────────
+        # ── TOP MUNKÁSOK — napi/heti/havi bontással ───────────────
         workers = get_workers()
         top_workers = []
         avg_jobs = 0
+
+        # Periódus: napi / heti / havi (default: havi)
+        period = request.args.get('period', 'monthly')
+        if period == 'daily':
+            period_start = today
+            period_label = 'Ma'
+        elif period == 'weekly':
+            period_start = today - timedelta(days=today.weekday())
+            period_label = 'Ezen a héten'
+        else:
+            period = 'monthly'
+            period_start = today.replace(day=1)
+            period_label = current_month
+
         try:
             worker_stats = []
             for w in workers:
-                job_count = db.session.execute(
+                # Munkák száma az adott periódusban
+                if period == 'daily':
+                    wc = db.session.execute(
+                        db.select(func.count()).select_from(Job)
+                        .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                                    Job.job_date == today))
+                    ).scalar() or 0
+                    rev = db.session.execute(
+                        db.select(func.coalesce(func.sum(Job.total_cost), 0))
+                        .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                                    Job.job_date == today))
+                    ).scalar() or 0
+                else:
+                    wc = db.session.execute(
+                        db.select(func.count()).select_from(Job)
+                        .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                                    Job.job_date >= period_start))
+                    ).scalar() or 0
+                    rev = db.session.execute(
+                        db.select(func.coalesce(func.sum(Job.total_cost), 0))
+                        .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                                    Job.job_date >= period_start))
+                    ).scalar() or 0
+
+                # Trend: előző periódus
+                if period == 'daily':
+                    prev_start = today - timedelta(days=1)
+                    prev_end   = today - timedelta(days=1)
+                elif period == 'weekly':
+                    prev_start = period_start - timedelta(weeks=1)
+                    prev_end   = period_start - timedelta(days=1)
+                else:
+                    prev_month = (today.replace(day=1) - timedelta(days=1))
+                    prev_start = prev_month.replace(day=1)
+                    prev_end   = prev_month
+
+                prev_wc = db.session.execute(
                     db.select(func.count()).select_from(Job)
-                    .where(and_(Job.tenant_id == tenant_id,
-                                Job.completed == True,
-                                func.extract('month', Job.job_date) == today.month,
-                                func.extract('year', Job.job_date) == today.year))
+                    .where(and_(Job.tenant_id == tenant_id, Job.completed == True,
+                                Job.job_date >= prev_start, Job.job_date <= prev_end))
                 ).scalar() or 0
-                revenue = db.session.execute(
-                    db.select(func.coalesce(func.sum(Job.total_cost), 0))
-                    .where(and_(Job.tenant_id == tenant_id,
-                                Job.completed == True,
-                                func.extract('month', Job.job_date) == today.month,
-                                func.extract('year', Job.job_date) == today.year))
-                ).scalar() or 0
+
+                trend = 'up' if wc > prev_wc else ('down' if wc < prev_wc else 'flat')
+                trend_pct = round((wc - prev_wc) / prev_wc * 100) if prev_wc > 0 else (100 if wc > 0 else 0)
+
                 worker_stats.append({
                     'name': getattr(w, 'username', 'Ismeretlen'),
-                    'job_count': job_count,
-                    'revenue': float(revenue),
+                    'job_count': wc,
+                    'revenue': float(rev),
+                    'trend': trend,
+                    'trend_pct': trend_pct,
+                    'prev_count': prev_wc,
                 })
+
             worker_stats.sort(key=lambda x: x['job_count'], reverse=True)
-            top_workers = worker_stats[:3]
+            top_workers = worker_stats[:5]
             if worker_stats:
                 avg_jobs = sum(s['job_count'] for s in worker_stats) / len(worker_stats)
         except Exception as e:
@@ -351,6 +400,8 @@ def hub():
             # Top munkások
             top_workers=top_workers,
             avg_jobs=avg_jobs,
+            period=period,
+            period_label=period_label,
             # Figyelmeztetések
             warnings=warnings,
             # Aktivitások
@@ -752,7 +803,16 @@ def confirmations():
         .order_by(PerformanceConfirmation.month.desc())
     ).scalars().all()
     workers = get_workers()
-    return render_template('business/confirmations.html', confirmations=items, workers=workers, today=date.today())
+    try:
+        from app.models.job import Job
+        from sqlalchemy import and_
+        jobs = db.session.execute(
+            db.select(Job).where(Job.tenant_id == tenant_id)
+            .order_by(Job.job_id.desc()).limit(50)
+        ).scalars().all()
+    except Exception:
+        jobs = []
+    return render_template('business/confirmations.html', confirmations=items, workers=workers, jobs=jobs, today=date.today())
 
 
 @business_bp.route('/business-hub/confirmations/add', methods=['POST'])

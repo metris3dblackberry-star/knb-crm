@@ -29,7 +29,7 @@
             <tbody>
                 {% for c in confirmations if c.month == month %}
                 <tr>
-                    <td>{{ c.worker.first_name ~ ' ' ~ c.worker.last_name if c.worker else '—' }}</td>
+                    <td>{{ c.worker.username if c.worker else '—' }}</td>
                     <td>
                         {% if c.status == 'Jóváhagyva' %}
                             <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>{{ c.status }}</span>
@@ -82,7 +82,7 @@
                         <select name="worker_id" class="form-select" required>
                             <option value="">— Válassz munkást —</option>
                             {% for w in workers %}
-                            <option value="{{ w.user_id }}">{{ w.first_name }} {{ w.last_name }}</option>
+                            <option value="{{ w.user_id }}">{{ w.username }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -98,6 +98,9 @@
                         <label class="form-label">Kapcsolódó munka</label>
                         <select name="job_id" class="form-select">
                             <option value="">— Nincs kapcsolódó munka —</option>
+                            {% for job in jobs|default([]) %}
+                            <option value="{{ job.job_id }}">#{{ job.job_id }} — {{ job.customer_rel.first_name ~ ' ' ~ job.customer_rel.family_name if job.customer_rel else 'N/A' }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">

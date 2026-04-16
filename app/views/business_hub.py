@@ -1442,7 +1442,13 @@ Válaszolj CSAK JSON formátumban, semmi más:
         prs.save(pptx_buffer)
         pptx_buffer.seek(0)
 
-        safe_title = quote_title.replace(' ', '_')[:30]
+        # Ékezetek eltávolítása a fájlnévből
+        import unicodedata
+        safe_title = unicodedata.normalize('NFKD', quote_title)
+        safe_title = ''.join(c for c in safe_title if not unicodedata.combining(c))
+        safe_title = ''.join(c if c.isalnum() or c in '-_ ' else '_' for c in safe_title)
+        safe_title = safe_title.replace(' ', '_')[:30].strip('_')
+
         response = make_response(pptx_buffer.read())
         response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         response.headers['Content-Disposition'] = f'attachment; filename=ajanlat_{safe_title}.pptx'

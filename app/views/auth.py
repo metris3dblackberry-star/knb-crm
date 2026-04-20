@@ -586,15 +586,20 @@ def simple_register():
         )
         user.set_password(password)
         db.session.add(user)
-        db.session.flush()  # user_id-t generál commit nélkül
+        db.session.flush()
 
         # Automatikusan létrehozunk egy tenantot az új felhasználónak
         from app.models.tenant import Tenant
         from app.models.tenant_membership import TenantMembership
+        import datetime as dt
+        slug = Tenant.generate_slug(name)
         tenant = Tenant(
             name=name,
+            slug=slug,
             email=email,
-            owner_user_id=user.user_id,
+            business_type='auto_repair',
+            status='active',
+            trial_ends_at=dt.datetime.utcnow() + dt.timedelta(days=30),
         )
         db.session.add(tenant)
         db.session.flush()
@@ -603,6 +608,9 @@ def simple_register():
             user_id=user.user_id,
             tenant_id=tenant.tenant_id,
             role='owner',
+            status='active',
+            is_default=True,
+            accepted_at=dt.datetime.utcnow(),
         )
         db.session.add(membership)
         db.session.commit()

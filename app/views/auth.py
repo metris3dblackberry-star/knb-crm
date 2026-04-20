@@ -617,7 +617,11 @@ def simple_register():
 
         auth_service = AuthService()
         auth_service.establish_session(user)
+        session['logged_in'] = True
+        session['user_id'] = user.user_id
         session['current_tenant_id'] = tenant.tenant_id
+        session['current_tenant_slug'] = tenant.slug
+        session['current_tenant_name'] = tenant.name
         session['current_role'] = 'owner'
         session['auth_method'] = 'local'
 

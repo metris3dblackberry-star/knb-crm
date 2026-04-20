@@ -75,7 +75,10 @@ def dashboard():
         db = main_db
 
         user_type = session.get('current_role', 'technician')
-        tenant_id = session.get('current_tenant_id') or 1
+        tenant_id = session.get('current_tenant_id')
+        if not tenant_id:
+            # Nincs tenant session - átirányítás a szervezet regisztrációhoz
+            return redirect(url_for('auth.register_organization'))
         today = dt.date.today()
 
         job_stats = job_service.get_job_statistics()

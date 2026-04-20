@@ -586,10 +586,31 @@ def simple_register():
         )
         user.set_password(password)
         db.session.add(user)
+        db.session.flush()  # user_id-t generál commit nélkül
+
+        # Automatikusan létrehozunk egy tenantot az új felhasználónak
+        from app.models.tenant import Tenant
+        from app.models.tenant_membership import TenantMembership
+        tenant = Tenant(
+            name=name,
+            email=email,
+            owner_user_id=user.user_id,
+        )
+        db.session.add(tenant)
+        db.session.flush()
+
+        membership = TenantMembership(
+            user_id=user.user_id,
+            tenant_id=tenant.tenant_id,
+            role='owner',
+        )
+        db.session.add(membership)
         db.session.commit()
 
         auth_service = AuthService()
         auth_service.establish_session(user)
+        session['current_tenant_id'] = tenant.tenant_id
+        session['current_role'] = 'owner'
         session['auth_method'] = 'local'
 
         redirect_url = auth_service.resolve_post_auth_redirect(user.user_id)

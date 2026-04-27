@@ -1,4 +1,4 @@
-{% extends "base/layout_with_sidebar.html" %}
+﻿{% extends "base/layout_with_sidebar.html" %}
 {% block title %}Szervezeti beállítások{% endblock %}
 
 {% block breadcrumb_items %}
@@ -16,7 +16,7 @@
                         <i class="ti ti-building text-primary"></i>
                         Szervezeti beállítások
                     </h1>
-                    <p class="text-muted mb-0">A műhely profiljának és beállításainak konfigurálása</p>
+                    <p class="text-muted mb-0">A cég profiljának és beállításainak konfigurálása</p>
                 </div>
             </div>
         </div>
@@ -33,7 +33,7 @@
                                     <i class="ti ti-building me-1"></i>
                                     Szervezet neve
                                 </label>
-                                <input type="text" class="form-control" name="org_name" value="{{ org.name|default('') }}" placeholder="Műhely neve" required>
+                                <input type="text" class="form-control" name="org_name" value="{{ org.name|default('') }}" placeholder="cég neve" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">
@@ -172,3 +172,4 @@ function previewLogo(input) {
 }
 </script>
 {% endblock %}
+

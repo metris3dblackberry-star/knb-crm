@@ -1,5 +1,5 @@
-{% extends "base/layout_with_sidebar.html" %}
-{% block title %}Admin Irányítópult - RepairOS{% endblock %}
+﻿{% extends "base/layout_with_sidebar.html" %}
+{% block title %}Admin Irányítópult - Vállalatirányítás CRM{% endblock %}
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item active">Irányítópult</li>
@@ -16,7 +16,7 @@
                         <i class="ti ti-layout-dashboard text-primary"></i>
                         Admin Irányítópult
                     </h1>
-                    <p class="text-muted mb-0">A műhely teljesítményének és főbb mutatóinak áttekintése</p>
+                    <p class="text-muted mb-0">A cég teljesítményének és főbb mutatóinak áttekintése</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ url_for('administrator.reports') }}" class="btn btn-outline-primary">
@@ -255,3 +255,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+

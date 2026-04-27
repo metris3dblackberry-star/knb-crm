@@ -1,21 +1,21 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="RepairOS - Professional automotive repair shop management platform">
-    <meta name="author" content="RepairOS">
+    <meta name="description" content="Vállalatirányítás CRM - Professional automotive repair shop management platform">
+    <meta name="author" content="Vállalatirányítás CRM">
 
     <!-- Neon Auth Configuration -->
     {% if config and config.get('NEON_AUTH_URL') %}
     <meta name="neon-auth-url" content="{{ config.get('NEON_AUTH_URL') }}">
     {% endif %}
 
-    <title>{% block title %}SolvioRepair{% endblock %}</title>
+    <title>{% block title %}Vállalatirányítás CRM{% endblock %}</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/solvioRepair.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/Vállalatirányítás CRM.png') }}">
 
     <!-- Tabler CSS -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" rel="stylesheet">
@@ -37,8 +37,8 @@
         <div class="container-xl">
             <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt='SolvioRepair' style="height: 30px; width: auto; margin-right: 8px;">
-                <span>RepairOS{% if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
+                <img src="{{ url_for('static', filename='images/Vállalatirányítás CRM.png') }}" alt='Vállalatirányítás CRM' style="height: 30px; width: auto; margin-right: 8px;">
+                <span>Vállalatirányítás CRM{% if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
             </a>
 
             {% if user_tenants and user_tenants|length > 1 %}
@@ -284,8 +284,8 @@
             <!-- Main footer row -->
             <div class="row align-items-center py-2">
                 <div class="col-lg-auto d-flex align-items-center mb-2 mb-lg-0">
-                    <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt='SolvioRepair' style="height: 20px; width: auto; margin-right: 6px;">
-                    <span>SolvioRepair &copy; <script>document.write(new Date().getFullYear())</script>. All rights reserved.</span>
+                    <img src="{{ url_for('static', filename='images/Vállalatirányítás CRM.png') }}" alt='Vállalatirányítás CRM' style="height: 20px; width: auto; margin-right: 6px;">
+                    <span>Vállalatirányítás CRM &copy; <script>document.write(new Date().getFullYear())</script>. All rights reserved.</span>
                 </div>
                 <div class="col-lg-auto ms-lg-auto d-flex align-items-center gap-3 mb-2 mb-lg-0">
                     <a href="{{ url_for('main.help_page') }}" class="link-secondary">

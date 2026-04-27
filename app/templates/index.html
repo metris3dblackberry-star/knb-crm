@@ -1,6 +1,6 @@
-{% extends "base/layout.html" %}
+﻿{% extends "base/layout.html" %}
 
-{% block title %}{% if session.logged_in %}Dashboard{% else %}Autójavító Műhely Menedzsment Szoftver{% endif %} - K&B Autójavító{% endblock %}
+{% block title %}{% if session.logged_in %}Dashboard{% else %}Autójavító cég Menedzsment Szoftver{% endif %} - K&B Autójavító{% endblock %}
 
 {% block breadcrumb_items %}
     {% if session.logged_in %}
@@ -402,11 +402,11 @@
                 <span class="trust-badge"><i class="ti ti-cloud"></i> Felhő-alapú</span>
             </div>
             <h1 class="display-5 fw-bold mb-3 text-white" style="line-height: 1.15;">
-                Vezesse műhelyét<br>
+                Vezesse cégét<br>
                 <span style="color: var(--repaisos-accent);">magabiztosan.</span>
             </h1>
             <p class="fs-5 mb-4" style="color: rgba(255,255,255,0.75); max-width: 520px;">
-                A munkalapoktól a számlázásig a SolvioRepair eszközöket ad a csapatodnak, hogy gyorsabban szolgáltassatok, időben kifizessenek, és növeljétek a vállalkozásotokat.
+                A munkalapoktól a számlázásig a Vállalatirányítás CRM eszközöket ad a csapatodnak, hogy gyorsabban szolgáltassatok, időben kifizessenek, és növeljétek a vállalkozásotokat.
             </p>
             <div class="d-flex flex-wrap gap-2">
                 <a href="{{ url_for('auth.login') }}" class="btn btn-accent btn-lg px-4">
@@ -418,7 +418,7 @@
             </div>
         </div>
         <div class="col-lg-5 text-center">
-            <img src="{{ url_for('static', filename='images/solvioRepair.png') }}" alt="SolvioRepair" style="width: 280px; max-width: 80%; height: auto; opacity: 0.9; filter: drop-shadow(0 8px 32px rgba(0,0,0,0.3));">
+            <img src="{{ url_for('static', filename='images/Vállalatirányítás CRM.png') }}" alt="Vállalatirányítás CRM" style="width: 280px; max-width: 80%; height: auto; opacity: 0.9; filter: drop-shadow(0 8px 32px rgba(0,0,0,0.3));">
         </div>
     </div>
 </div>
@@ -446,7 +446,7 @@
 <!-- Core Features -->
 <div class="row mb-5">
     <div class="col-12 mb-4">
-        <h2 class="h3 fw-bold text-center">Minden amire egy műhelynek szüksége van</h2>
+        <h2 class="h3 fw-bold text-center">Minden amire egy cégnek szüksége van</h2>
         <p class="text-secondary text-center mb-0">Egyetlen platform az ügyfelek, munkák, alkatrészek, számlázás és a csapatod kezelésére.
 </p>
     </div>
@@ -519,7 +519,7 @@
                 </div>
                 <h4 class="fw-bold mb-2">Több telephely támogatása
 </h4>
-                <p class="text-secondary mb-0">Több műhely kezelése egyetlen fiókból, elkülönített adatokkal, csapatjogosultságokkal és telephelyenkénti beállításokkal.
+                <p class="text-secondary mb-0">Több cég kezelése egyetlen fiókból, elkülönített adatokkal, csapatjogosultságokkal és telephelyenkénti beállításokkal.
 </p>
             </div>
         </div>
@@ -531,7 +531,7 @@
     <div class="col-lg-8 mx-auto">
         <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #1e3a5f 0%, #0f1f33 100%);">
             <div class="card-body p-5 text-center text-white">
-                <h3 class="fw-bold text-white mb-2">Kész modernizálni a műhelyét?</h3>
+                <h3 class="fw-bold text-white mb-2">Kész modernizálni a cégét?</h3>
                 <p class="mb-4" style="color: rgba(255,255,255,0.7);">Kezdjen ingyen - nics szükség bankkártyára. Upgradeljen, amikor kényelmes.</p>
                 <div class="d-flex gap-3 justify-content-center flex-wrap">
                     <a href="{{ url_for('auth.login') }}" class="btn btn-accent btn-lg px-4">
@@ -548,3 +548,4 @@
 
 {% endif %}
 {% endblock %}
+

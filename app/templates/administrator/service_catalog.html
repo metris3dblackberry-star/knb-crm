@@ -1,4 +1,4 @@
-{% extends "base/layout_with_sidebar.html" %}
+﻿{% extends "base/layout_with_sidebar.html" %}
 {% block title %}Szolgáltatás katalógus
 {% for service in services|default([]) %}
 <div class="modal fade" id="editServiceModal{{ service.service_id }}" tabindex="-1">
@@ -121,7 +121,7 @@
                         <i class="ti ti-tool text-primary"></i>
                         Szolgáltatás katalógus
                     </h1>
-                    <p class="text-muted mb-0">A műhely szolgáltatásainak kezelése</p>
+                    <p class="text-muted mb-0">A cég szolgáltatásainak kezelése</p>
                 </div>
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addServiceModal">
                     <i class="ti ti-plus me-1"></i>
@@ -320,3 +320,4 @@
 </div>
 {% endfor %}
 {% endblock %}
+

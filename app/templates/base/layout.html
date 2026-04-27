@@ -38,7 +38,7 @@
             <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
                 <img src="{{ url_for('static', filename='images/SOLVIOR CRM.png') }}" alt='SOLVIOR CRM' style="height: 30px; width: auto; margin-right: 8px;">
-                <span>SOLVIOR CRM{% if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
+                <span>{%  if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
             </a>
 
             {% if user_tenants and user_tenants|length > 1 %}
@@ -388,4 +388,5 @@
             });
 
             function escapeHtml(text) 
+
 

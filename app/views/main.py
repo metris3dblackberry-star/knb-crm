@@ -450,7 +450,7 @@ def fix_tenant_reset():
         if not result:
             db.session.execute(sa.text("""
                 INSERT INTO tenant (tenant_id, name, slug, business_type, status, settings)
-                VALUES (1, 'SOLVIOR CRM/ERP', 'solvior-crm', 'Auto Repair', 'active', '{}')
+                VALUES (1, 'SOLVIOR CRM/ERP', 'solvior-crm', 'Vállalatirányítás', 'active', '{}')
                 ON CONFLICT (tenant_id) DO UPDATE SET name='SOLVIOR CRM/ERP', settings='{}'
             """))
             db.session.commit()
@@ -540,5 +540,6 @@ def delete_customer(customer_id):
         logger.error(f"Delete customer failed: {e}")
         flash(f'Törlési hiba: {str(e)}', 'error')
     return redirect(url_for('main.customers'))
+
 
 

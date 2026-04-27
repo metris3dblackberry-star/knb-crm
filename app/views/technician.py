@@ -1,4 +1,4 @@
-"""
+﻿"""
 Technician Routes Blueprint
 Contains work order management, service and parts addition functionality
 """
@@ -981,7 +981,7 @@ def _generate_invoice_pdf(job_id):
     story.append(Spacer(1, 0.5*cm))
 
     info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
-    seller = settings.get('seller_name', tenant.name if tenant else 'K&B Autójavító')
+    seller = settings.get('seller_name', tenant.name if tenant else 'PLANÉTA CENTRUM Kft.')
     left = f'<b>Eladó</b><br/>{seller}<br/>{settings.get("reg_num","")}<br/>{settings.get("address","")}<br/>Adószám: {settings.get("tax_number","")}<br/>Bankszámlaszám: {settings.get("bank_account","")}'
     buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
     right = f'<b>Vevő</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}'
@@ -1194,10 +1194,10 @@ def send_job_email(job_id):
             from app.models.tenant import Tenant
             tenant_id = session.get('current_tenant_id') or 1
             tenant = Tenant.find_by_id(tenant_id)
-            company_name = tenant.name if tenant else 'K&B Autójavító'
+            company_name = tenant.name if tenant else 'PLANÉTA CENTRUM Kft.'
             company_address = tenant.address if tenant else 'Budapest, Tordai út 17/B'
         except Exception:
-            company_name = 'K&B Autójavító'
+            company_name = 'PLANÉTA CENTRUM Kft.'
             company_address = 'Budapest, Tordai út 17/B'
 
         # PDF-ek generálása
@@ -1451,3 +1451,4 @@ def delete_part(part_id):
         logger.error(f"Delete part failed: {e}")
         flash(f'Törlési hiba: {str(e)}', 'error')
     return redirect(url_for('technician.parts'))
+

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Main Routes Blueprint
 Contains home page, login, public functionality routes
 """
@@ -419,7 +419,7 @@ def fix_tenant_name():
     import sqlalchemy as sa
     from app.extensions import db as _ext_db
     try:
-        db.session.execute(sa.text("UPDATE tenant SET name='K&B Autojavito' WHERE tenant_id=1"))
+        db.session.execute(sa.text("UPDATE tenant SET name='PLANETA CENTRUM Kft.' WHERE tenant_id=1"))
         db.session.commit()
         result = db.session.execute(sa.text("SELECT name FROM tenant WHERE tenant_id=1")).fetchone()
         return f'OK! Tenant name: {result[0]}'
@@ -450,8 +450,8 @@ def fix_tenant_reset():
         if not result:
             db.session.execute(sa.text("""
                 INSERT INTO tenant (tenant_id, name, slug, business_type, status, settings)
-                VALUES (1, 'K&B Autojavito', 'kb-autojavito', 'Auto Repair', 'active', '{}')
-                ON CONFLICT (tenant_id) DO UPDATE SET name='K&B Autojavito', settings='{}'
+                VALUES (1, 'PLANETA CENTRUM Kft.', 'planeta-centrum', 'Auto Repair', 'active', '{}')
+                ON CONFLICT (tenant_id) DO UPDATE SET name='PLANETA CENTRUM Kft.', settings='{}'
             """))
             db.session.commit()
             return 'Tenant létrehozva!'
@@ -540,3 +540,4 @@ def delete_customer(customer_id):
         logger.error(f"Delete customer failed: {e}")
         flash(f'Törlési hiba: {str(e)}', 'error')
     return redirect(url_for('main.customers'))
+

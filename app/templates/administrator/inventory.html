@@ -1,4 +1,4 @@
-{% extends "base/layout_with_sidebar.html" %}
+﻿{% extends "base/layout_with_sidebar.html" %}
 {% block title %}Készletkezelés
 <!-- Készlet hozzáadása Modal -->
 <div class="modal fade" id="addInventoryModal" tabindex="-1">
@@ -13,9 +13,9 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész</label>
+                            <label class="form-label">Termék</label>
                             <select class="form-select" name="part_id" required>
-                                <option value="">Válasszon alkatrészt...</option>
+                                <option value="">Válasszon Termékt...</option>
                                 {% for part in parts|default([]) %}
                                 <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
@@ -60,9 +60,9 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész</label>
+                            <label class="form-label">Termék</label>
                             <select class="form-select" name="part_id" required>
-                                <option value="">Válasszon alkatrészt...</option>
+                                <option value="">Válasszon Termékt...</option>
                                 {% for part in parts|default([]) %}
                                 <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
@@ -125,7 +125,7 @@
                         <table class="table table-vcenter card-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Alkatrész neve</th>
+                                    <th>Termék neve</th>
                                     <th>Készleten</th>
                                     <th>Utánrendelési szint</th>
                                     <th>Hely</th>
@@ -196,7 +196,7 @@
                                 <tr>
                                     <th>Dátum</th>
                                     <th>Típus</th>
-                                    <th>Alkatrész</th>
+                                    <th>Termék</th>
                                     <th>Mennyiség</th>
                                     <th>Ki</th>
                                     <th>Megjegyzés</th>
@@ -270,9 +270,9 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész</label>
+                            <label class="form-label">Termék</label>
                             <select class="form-select" name="part_id" required>
-                                <option value="">Válasszon alkatrészt...</option>
+                                <option value="">Válasszon Termékt...</option>
                                 {% for part in parts|default([]) %}
                                 <option value="{{ part.part_id }}">{{ part.part_name }}</option>
                                 {% endfor %}
@@ -299,3 +299,4 @@
     </div>
 </div>
 {% endblock %}
+

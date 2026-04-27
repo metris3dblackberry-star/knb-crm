@@ -1,4 +1,4 @@
-"""
+﻿"""
 Job Service
 Business logic for work order operations using SQLAlchemy ORM
 """
@@ -148,7 +148,7 @@ class JobService:
 
             part = db.session.get(Part, part_id)
             if not part:
-                return False, ["Alkatrész nem található"]
+                return False, ["Termék nem található"]
 
             job.add_part(part_id, quantity)
             self.logger.info(f"Added part {part.part_name} to job {job_id}")
@@ -319,3 +319,4 @@ class JobService:
             self.logger.error(f"Failed to delete job: {e}")
             db.session.rollback()
             return False, ["System error, please try again"]
+

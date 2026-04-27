@@ -1,12 +1,12 @@
-{% extends "base/layout.html" %}
+﻿{% extends "base/layout.html" %}
 
-{% block title %}Alkatrészek{% endblock %}
+{% block title %}Termékek{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
         <a href="{{ url_for('main.dashboard') }}">Műszerfal</a>
     </li>
-    <li class="breadcrumb-item active">Alkatrészek</li>
+    <li class="breadcrumb-item active">Termékek</li>
 {% endblock %}
 
 {% block content %}
@@ -15,21 +15,21 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-package text-primary"></i>
-            Alkatrészek Inventory
+            Termékek Inventory
         </h1>
-        <p class="text-muted mb-0">Elérhető alkatrészek böngészése</p>
+        <p class="text-muted mb-0">Elérhető Termékek böngészése</p>
     </div>
 </div>
 
-<!-- Alkatrészek Table -->
+<!-- Termékek Table -->
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">
             <i class="ti ti-list me-2"></i>
-            All Alkatrészek
+            All Termékek
         </h3>
         <div class="card-actions">
-            <span class="text-muted">{{ parts|length if parts else 0 }} alkatrész</span>
+            <span class="text-muted">{{ parts|length if parts else 0 }} Termék</span>
         </div>
     </div>
 
@@ -38,7 +38,7 @@
         <table class="table table-vcenter card-table" id="partsTable">
             <thead>
                 <tr>
-                    <th>Alkatrész neve</th>
+                    <th>Termék neve</th>
                     <th>Cikkszám</th>
                     <th>Kategória</th>
                     <th class="text-end">Ár</th>
@@ -136,11 +136,12 @@
     <!-- Empty State -->
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-package"></i></div>
-        <p class="empty-title">No Alkatrészek Available</p>
+        <p class="empty-title">No Termékek Available</p>
         <p class="empty-subtitle text-secondary">
-            Jelenleg nincs alkatrész a készletben. Kérjen meg egy adminisztrátort az alkatrészek hozzáadásához.
+            Jelenleg nincs Termék a készletben. Kérjen meg egy adminisztrátort az Termékek hozzáadásához.
         </p>
     </div>
     {% endif %}
 </div>
 {% endblock %}
+

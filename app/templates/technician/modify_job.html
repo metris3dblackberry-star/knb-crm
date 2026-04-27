@@ -126,7 +126,7 @@ Munka szerkesztése #{{ data.job_id }} - SOLVIOR CRM
         </div>
     </div>
 
-    <!-- Szolgáltatáss and Alkatrészs Section -->
+    <!-- Szolgáltatáss and Terméks Section -->
     <div class="row">
         <!-- Szolgáltatás hozzáadása Card -->
         <div class="col-lg-6 mb-4">
@@ -202,28 +202,28 @@ Munka szerkesztése #{{ data.job_id }} - SOLVIOR CRM
             </div>
         </div>
 
-        <!-- Alkatrész hozzáadásas Card -->
+        <!-- Termék hozzáadásas Card -->
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-success text-white">
                     <h5 class="card-title mb-0">
                         <i class="ti ti-puzzle me-2"></i>
-                        Alkatrészs Management
+                        Terméks Management
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Alkatrész hozzáadása Form -->
+                    <!-- Termék hozzáadása Form -->
                     <div class="mb-4">
                         <h6 class="text-primary mb-3">
                             <i class="ti ti-circle-plus me-2"></i>
-                            Add New Alkatrész
+                            Add New Termék
                         </h6>
                         <form method="POST" action="{{ url_for('add_part_to_job', job_id=data.job_id) }}">
                             <div class="row g-3">
                                 <div class="col-12">
-                                    <label class="form-label">Alkatrész Type</label>
+                                    <label class="form-label">Termék Type</label>
                                     <select class="form-select" name="part_id" required {% if job_completed %}disabled{% endif %}>
-                                        <option value="">Válasszon alkatrészt...</option>
+                                        <option value="">Válasszon Termékt...</option>
                                         {% for part in all_parts %}
                                             <option value="{{ part.part_id }}">
                                                 {{ part.part_name }} - {{ "%.0f"|format(part.cost|float) }} Ft
@@ -238,18 +238,18 @@ Munka szerkesztése #{{ data.job_id }} - SOLVIOR CRM
                                 <div class="col-6 d-flex align-items-end">
                                     <button type="submit" class="btn btn-success w-100" {% if job_completed %}disabled{% endif %}>
                                         <i class="ti ti-plus me-1"></i>
-                                        Alkatrész hozzáadása
+                                        Termék hozzáadása
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Jelenlegi alkatrészek -->
+                    <!-- Jelenlegi Termékek -->
                     <div>
                         <h6 class="text-secondary mb-3">
                             <i class="ti ti-list-check me-2"></i>
-                            Jelenlegi alkatrészek
+                            Jelenlegi Termékek
                         </h6>
                         {% if parts %}
                             <div class="list-group">
@@ -319,5 +319,6 @@ Munka szerkesztése #{{ data.job_id }} - SOLVIOR CRM
     </div>
     {% endif %}
 {% endblock %}
+
 
 

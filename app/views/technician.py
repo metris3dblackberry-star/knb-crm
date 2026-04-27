@@ -256,10 +256,10 @@ def generate_worksheet(job_id):
         story.append(svc_table)
         story.append(Spacer(1, 0.4*cm))
 
-    # Alkatrészek
+    # Termékek
     if parts:
-        story.append(Paragraph('<b>Felhasznált alkatrészek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
-        parts_data = [[Paragraph('Alkatrész', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        story.append(Paragraph('<b>Felhasznált Termékek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        parts_data = [[Paragraph('Termék', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
         for p in parts:
             parts_data.append([
                 Paragraph(p['part_name'], cell_style),
@@ -390,7 +390,7 @@ def add_part_to_job(job_id):
         quantity = request.form.get('quantity', type=int) or 1
 
         if not part_id or part_id <= 0:
-            flash('Válassz érvényes alkatrészt!', 'error')
+            flash('Válassz érvényes Termékt!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
         if not quantity or quantity <= 0:
@@ -400,7 +400,7 @@ def add_part_to_job(job_id):
         success, errors = job_service.add_part_to_job(job_id, part_id, quantity)
 
         if success:
-            flash('Alkatrész hozzáadva!', 'success')
+            flash('Termék hozzáadva!', 'success')
         else:
             for error in errors:
                 flash(error, 'error')
@@ -409,7 +409,7 @@ def add_part_to_job(job_id):
 
     except Exception as e:
         logger.error(f"Failed to add part: {e}")
-        flash('Hiba az alkatrész hozzáadásakor', 'error')
+        flash('Hiba az Termék hozzáadásakor', 'error')
         return redirect(url_for('technician.job_detail', job_id=job_id))
 
 
@@ -1118,8 +1118,8 @@ def _generate_worksheet_pdf(job_id):
         story.append(Spacer(1, 0.4*cm))
 
     if parts:
-        story.append(Paragraph('<b>Felhasznált alkatrészek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
-        parts_data = [[Paragraph('Alkatrész', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
+        story.append(Paragraph('<b>Felhasznált Termékek</b>', ParagraphStyle('h2', fontSize=11, fontName=unicode_font_bold, spaceAfter=6)))
+        parts_data = [[Paragraph('Termék', th_style), Paragraph('Menny.', th_style), Paragraph('Megjegyzés', th_style)]]
         for p in parts:
             parts_data.append([Paragraph(p['part_name'], cell_style), Paragraph(str(p['qty']), cell_style), Paragraph('', cell_style)])
         t = Table(parts_data, colWidths=[9*cm, 2.5*cm, 6.5*cm])
@@ -1441,14 +1441,15 @@ def delete_part(part_id):
         from app.extensions import db
         part = db.session.get(Part, part_id)
         if not part:
-            flash('Alkatrész nem található', 'error')
+            flash('Termék nem található', 'error')
             return redirect(url_for('technician.parts'))
         db.session.delete(part)
         db.session.commit()
-        flash(f'Alkatrész törölve: {part.part_name}', 'success')
+        flash(f'Termék törölve: {part.part_name}', 'success')
     except Exception as e:
         db.session.rollback()
         logger.error(f"Delete part failed: {e}")
         flash(f'Törlési hiba: {str(e)}', 'error')
     return redirect(url_for('technician.parts'))
+
 

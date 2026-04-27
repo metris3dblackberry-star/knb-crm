@@ -1,4 +1,4 @@
-{% extends "base/layout_with_sidebar.html" %}
+﻿{% extends "base/layout_with_sidebar.html" %}
 {% block title %}
 Ügyfélkezelés - Administrator Portal
 {% endblock %}
@@ -27,7 +27,7 @@
                     </button>
                     <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addPartModal">
                         <i class="ti ti-puzzle me-1"></i>
-                        Alkatrész hozzáadása
+                        Termék hozzáadása
                     </button>
                 </div>
             </div>
@@ -391,7 +391,7 @@
     </div>
 </div>
 
-<!-- Alkatrész hozzáadása Modal -->
+<!-- Termék hozzáadása Modal -->
 <div class="modal fade" id="addPartModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content" style="border-top: 4px solid var(--warning);">
@@ -406,7 +406,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész neve *</label>
+                            <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required placeholder="Enter part name">
                         </div>
                         <div class="col-12">
@@ -445,7 +445,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                     <button type="submit" class="btn btn-warning">
                         <i class="ti ti-plus me-1"></i>
-                        Alkatrész hozzáadása
+                        Termék hozzáadása
                     </button>
                 </div>
             </form>
@@ -453,3 +453,4 @@
     </div>
 </div>
 {% endblock %}
+

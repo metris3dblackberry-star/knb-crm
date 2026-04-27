@@ -1,6 +1,6 @@
-{% extends "base/layout.html" %}
+﻿{% extends "base/layout.html" %}
 
-{% block title %}Alkatrészek hozzáadása - 2. lépés / 3{% endblock %}
+{% block title %}Termékek hozzáadása - 2. lépés / 3{% endblock %}
 
 {% block breadcrumb %}{% endblock %}
 
@@ -63,8 +63,8 @@
                             <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-3 mb-3">
                                 <i class="ti ti-package text-primary" style="font-size: 36px;"></i>
                             </div>
-                            <h1 class="h3 fw-bold mb-2">Alkatrészek és készlet</h1>
-                            <p class="text-muted">Tekintse át az alapértelmezett alkatrészeket és adjon hozzá egyénieket. Később is módosíthatja.</p>
+                            <h1 class="h3 fw-bold mb-2">Termékek és készlet</h1>
+                            <p class="text-muted">Tekintse át az alapértelmezett Termékeket és adjon hozzá egyénieket. Később is módosíthatja.</p>
                         </div>
 
                         <!-- Current Parts Table -->
@@ -72,7 +72,7 @@
                             <table class="table table-hover parts-table align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Alkatrész neve</th>
+                                        <th>Termék neve</th>
                                         <th>Cikkszám</th>
                                         <th>Kategória</th>
                                         <th>Ár</th>
@@ -93,7 +93,7 @@
                                     <tr id="no-parts-row">
                                         <td colspan="5" class="text-center text-muted py-4">
                                             <i class="ti ti-inbox mb-2" style="font-size: 32px;"></i>
-                                            <p class="mb-0">Még nincs alkatrész. Az alábbi űrlappal adja hozzá az elsőt.</p>
+                                            <p class="mb-0">Még nincs Termék. Az alábbi űrlappal adja hozzá az elsőt.</p>
                                         </td>
                                     </tr>
                                     {% endif %}
@@ -101,18 +101,18 @@
                             </table>
                         </div>
 
-                        <!-- Alkatrész hozzáadása Form -->
+                        <!-- Termék hozzáadása Form -->
                         <div class="card bg-light border-0 mb-4">
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3 d-flex align-items-center">
                                     <i class="ti ti-circle-plus me-2 text-accent"></i>
-                                    Új alkatrész hozzáadása
+                                    Új Termék hozzáadása
                                 </h6>
                                 <form method="POST" action="{{ url_for('onboarding.save_step', step_number=2) }}" id="add-part-form">
                                     <input type="hidden" name="action" value="add_part">
                                     <div class="row g-3">
                                         <div class="col-md-6">
-                                            <label for="part_name" class="form-label">Alkatrész neve</label>
+                                            <label for="part_name" class="form-label">Termék neve</label>
                                             <input type="text" class="form-control" id="part_name" name="part_name" placeholder="pl. Olajszűrő" required>
                                         </div>
                                         <div class="col-md-6">
@@ -146,7 +146,7 @@
                                         <div class="col-12">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="ti ti-plus me-1"></i>
-                                                Alkatrész hozzáadása
+                                                Termék hozzáadása
                                             </button>
                                         </div>
                                     </div>
@@ -175,3 +175,4 @@
     </div>
 </div>
 {% endblock %}
+

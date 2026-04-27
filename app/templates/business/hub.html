@@ -528,7 +528,7 @@
             <div class="col-12">
               <label class="form-label fw-semibold">Kategória</label>
               <select name="category" class="form-select">
-                <option value="Anyag">Anyag / Alkatrész</option>
+                <option value="Anyag">Anyag / Termék</option>
                 <option value="Üzemanyag">Üzemanyag</option>
                 <option value="Rezsi">Rezsi</option>
                 <option value="Eszköz">Eszköz / Szerszám</option>
@@ -862,13 +862,13 @@
                 <div class="row g-2 mb-2 quote-item">
                   <div class="col-5">
                     <select name="item_name[]" class="form-select form-select-sm">
-                      <option value="">— Szolgáltatás vagy alkatrész —</option>
+                      <option value="">— Szolgáltatás vagy Termék —</option>
                       <optgroup label="Szolgáltatások">
                         {% for s in services_list|default([]) %}
                         <option value="{{ s.service_name }}" data-price="{{ s.price }}">{{ s.service_name }}</option>
                         {% endfor %}
                       </optgroup>
-                      <optgroup label="Alkatrészek">
+                      <optgroup label="Termékek">
                         {% for p in parts_list|default([]) %}
                         <option value="{{ p.part_name }}" data-price="{{ p.unit_price }}">{{ p.part_name }}</option>
                         {% endfor %}
@@ -1172,5 +1172,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
 
 

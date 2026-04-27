@@ -1,4 +1,4 @@
-{% extends "base/layout.html" %}
+﻿{% extends "base/layout.html" %}
 
 {% block title %}Munka #{{ data.job_id }} részletei{% endblock %}
 
@@ -20,7 +20,7 @@
             <i class="ti ti-file-text text-primary"></i>
             Munka #{{ data.job_id }} részletei
         </h1>
-        <p class="text-muted mb-0">Munka adatai, szolgáltatások és alkatrészek</p>
+        <p class="text-muted mb-0">Munka adatai, szolgáltatások és Termékek</p>
     </div>
     <div class="d-flex gap-2">
         {% if not data.completed %}
@@ -154,7 +154,7 @@
         </div>
     </div>
 
-    <!-- Szolgáltatások & Alkatrészek -->
+    <!-- Szolgáltatások & Termékek -->
     <div class="col-lg-8 mb-4">
         <!-- Szolgáltatások Table -->
         <div class="card mb-4">
@@ -233,12 +233,12 @@
             {% endif %}
         </div>
 
-        <!-- Alkatrészek Table -->
+        <!-- Termékek Table -->
         <div class="card mb-4">
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-package me-2"></i>
-                    Alkatrészek
+                    Termékek
                 </h3>
             </div>
 
@@ -247,7 +247,7 @@
                 <table class="table table-vcenter card-table">
                     <thead>
                         <tr>
-                            <th>Alkatrész</th>
+                            <th>Termék</th>
                             <th>Mennyiség</th>
                             <th class="text-end">Egységár</th>
                             <th class="text-end">Részösszeg</th>
@@ -270,7 +270,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end fw-bold">Alkatrészek Total:</td>
+                            <td colspan="3" class="text-end fw-bold">Termékek Total:</td>
                             <td class="text-end fw-bold text-success">{{ "%.0f"|format(parts_total.value) }} Ft</td>
                         </tr>
                     </tfoot>
@@ -279,8 +279,8 @@
             {% else %}
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-package"></i></div>
-                <p class="empty-title">No Alkatrészek</p>
-                <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá alkatrészt.</p>
+                <p class="empty-title">No Termékek</p>
+                <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá Termékt.</p>
             </div>
             {% endif %}
 
@@ -288,9 +288,9 @@
             <div class="card-footer">
                 <form method="POST" action="{{ url_for('technician.add_part_to_job', job_id=data.job_id) }}" class="row g-2 align-items-end">
                     <div class="col">
-                        <label class="form-label mb-1">Alkatrész hozzáadása</label>
+                        <label class="form-label mb-1">Termék hozzáadása</label>
                         <select name="part_id" class="form-select" required>
-                            <option value="">-- Válassz alkatrészt --</option>
+                            <option value="">-- Válassz Termékt --</option>
                             {% for p in all_parts %}
                             <option value="{{ p.part_id }}">{{ p.part_name }} — {{ "%.0f"|format(p.cost|float) }} Ft</option>
                             {% endfor %}
@@ -339,7 +339,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="fw-bold mb-1">Végösszeg</h4>
-                        <p class="text-muted mb-0">Szolgáltatások és alkatrészek összesen</p>
+                        <p class="text-muted mb-0">Szolgáltatások és Termékek összesen</p>
                     </div>
                     <div class="text-end">
                         <span class="fs-2 fw-bold text-success">{{ "%.0f"|format(data.total_cost|float) }} Ft</span>
@@ -363,3 +363,4 @@
     </div>
 </div>
 {% endblock %}
+

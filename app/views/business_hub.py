@@ -1,4 +1,4 @@
-"""
+﻿"""
 Üzleti Központ Blueprint
 ERP kiegészítő modul: kiadások, munkás kifizetések, leadek, feladatok, teljesítési igazolások
 """
@@ -101,7 +101,7 @@ def hub():
         ).scalar() or 0
 
         # ── PROFIT RÉSZLETEZÉS ─────────────────────────────────────
-        # Anyagköltség (alkatrészek)
+        # Anyagköltség (Termékek)
         try:
             from app.models.job import JobPart
             material_cost = db.session.execute(
@@ -375,7 +375,7 @@ def hub():
         recent_activities.sort(key=lambda x: x['sort_date'], reverse=True)
         recent_activities = recent_activities[:8]
 
-        # ── AJÁNLATKÉSZÍTŐHÖZ: szolgáltatások, alkatrészek, ügyfelek ──
+        # ── AJÁNLATKÉSZÍTŐHÖZ: szolgáltatások, Termékek, ügyfelek ──
         try:
             from app.models.service import Service
             services_list = db.session.execute(
@@ -1569,3 +1569,4 @@ Válaszolj CSAK JSON formátumban, semmi más:
         logger.error(f"PPTX generálás hiba: {e}", exc_info=True)
         flash(f'PPTX generálás hiba: {e}', 'error')
         return redirect(url_for('business.hub'))
+

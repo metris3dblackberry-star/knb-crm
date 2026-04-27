@@ -1,12 +1,12 @@
-{% extends "base/layout_with_sidebar.html" %}
-{% block title %}Alkatrész katalógus
+﻿{% extends "base/layout_with_sidebar.html" %}
+{% block title %}Termék katalógus
 <!-- Edit Part Modals -->
 {% for part in parts|default([]) %}
 <div class="modal fade" id="editPartModal{{ part.part_id }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content" style="border-top: 4px solid var(--primary);">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Termék szerkesztése</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
@@ -15,7 +15,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész neve *</label>
+                            <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
                         </div>
                         <div class="col-md-6">
@@ -62,7 +62,7 @@
 
 {% block breadcrumb_items %}
 <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
-<li class="breadcrumb-item active">Alkatrész katalógus</li>
+<li class="breadcrumb-item active">Termék katalógus</li>
 
 <!-- Edit Part Modals -->
 {% for part in parts|default([]) %}
@@ -70,7 +70,7 @@
     <div class="modal-dialog">
         <div class="modal-content" style="border-top: 4px solid var(--primary);">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Termék szerkesztése</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
@@ -79,7 +79,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész neve *</label>
+                            <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
                         </div>
                         <div class="col-md-6">
@@ -133,26 +133,26 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-puzzle text-warning"></i>
-                        Alkatrész katalógus
+                        Termék katalógus
                     </h1>
-                    <p class="text-muted mb-0">Az alkatrész készlet katalógusának kezelése</p>
+                    <p class="text-muted mb-0">Az Termék készlet katalógusának kezelése</p>
                 </div>
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPartModal">
                     <i class="ti ti-plus me-1"></i>
-                    Alkatrész hozzáadása
+                    Termék hozzáadása
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Alkatrészek Table -->
+    <!-- Termékek Table -->
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white;">
                     <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
                         <i class="ti ti-package"></i>
-                        Alkatrészek
+                        Termékek
                     </h5>
                 </div>
                 <div class="card-body">
@@ -220,7 +220,7 @@
                                 <tr>
                                     <td colspan="7" class="text-center text-muted py-4">
                                         <i class="ti ti-puzzle mb-2 d-block mx-auto" style="font-size: 48px;"></i>
-                                        Nincs alkatrész. Adja hozzá az első alkatrészt!
+                                        Nincs Termék. Adja hozzá az első Termékt!
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -233,14 +233,14 @@
     </div>
 </div>
 
-<!-- Alkatrész hozzáadása Modal -->
+<!-- Termék hozzáadása Modal -->
 <div class="modal fade" id="addPartModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content" style="border-top: 4px solid var(--warning);">
             <div class="modal-header">
                 <h5 class="modal-title d-flex align-items-center gap-2">
                     <i class="ti ti-circle-plus"></i>
-                    Új alkatrész hozzáadása
+                    Új Termék hozzáadása
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -248,7 +248,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész neve *</label>
+                            <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required placeholder="pl. Fékbetét">
                         </div>
                         <div class="col-md-6">
@@ -284,7 +284,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
                     <button type="submit" class="btn btn-warning">
                         <i class="ti ti-plus me-1"></i>
-                        Alkatrész hozzáadása
+                        Termék hozzáadása
                     </button>
                 </div>
             </form>
@@ -298,7 +298,7 @@
     <div class="modal-dialog">
         <div class="modal-content" style="border-top: 4px solid var(--primary);">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Alkatrész szerkesztése</h5>
+                <h5 class="modal-title"><i class="ti ti-pencil me-2"></i>Termék szerkesztése</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" action="{{ url_for('administrator.parts_catalog') }}">
@@ -307,7 +307,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Alkatrész neve *</label>
+                            <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required value="{{ part.part_name }}">
                         </div>
                         <div class="col-md-6">
@@ -351,3 +351,4 @@
 </div>
 {% endfor %}
 {% endblock %}
+

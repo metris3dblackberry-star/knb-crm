@@ -1,4 +1,4 @@
-"""
+﻿"""
 Administrator Routes Blueprint
 Contains customer management, billing management, overdue bill handling,
 organization settings, team management, service/parts catalog, and inventory
@@ -241,7 +241,7 @@ def overdue_bills():
 
         tenant_id = session.get('current_tenant_id') or 1
 
-        # Befejezett munkák amiknek van legalább 1 szolgáltatása VAGY alkatrésze
+        # Befejezett munkák amiknek van legalább 1 szolgáltatása VAGY Terméke
         has_service = exists().where(JobService.job_id == Job.job_id)
         has_part = exists().where(JobPart.job_id == Job.job_id)
 
@@ -929,7 +929,7 @@ def parts_catalog():
                         pass
                     part.sku = sanitize_input(request.form.get('sku', ''))
                     db.session.commit()
-                    flash('Alkatrész frissítve!', 'success')
+                    flash('Termék frissítve!', 'success')
 
         elif action == 'toggle':
             part_id = request.form.get('part_id', type=int)
@@ -1065,7 +1065,7 @@ def inventory_adjust():
                 flash('Készlet elem nem található', 'error')
                 return redirect(url_for('administrator.inventory'))
         else:
-            flash('Hiányzó alkatrész adat', 'error')
+            flash('Hiányzó Termék adat', 'error')
             return redirect(url_for('administrator.inventory'))
 
         # Update quantity
@@ -1261,3 +1261,4 @@ def recover_job():
         flash(f'Hiba: {e}', 'error')
 
     return redirect(url_for('administrator.db_tools'))
+

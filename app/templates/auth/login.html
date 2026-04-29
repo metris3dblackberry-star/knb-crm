@@ -307,6 +307,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
+    /* ══════════════════════════════════════════════════
+       PLANÉTA CENTRUM → SOLVIOR CRM  auto-login bridge
+       postMessage fogadó — Planeta oldalról küldött
+       bejelentkezési adatok automatikus feldolgozása
+       ══════════════════════════════════════════════════ */
+    window.addEventListener('message', function(e) {
+        // Engedélyezett eredetek (bővítsd ha más domainre kerül a Planeta oldal)
+        var allowed = [
+            'https://planetacentrum.hu',
+            'https://www.planetacentrum.hu',
+            'http://127.0.0.1:5500',
+            'http://localhost:5500',
+            'null'
+        ];
+        if (allowed.indexOf(e.origin) === -1 && e.origin !== 'null') return;
+        if (!e.data || e.data.type !== 'planeta_crm_fill') return;
+
+        var email    = e.data.email    || '';
+        var password = e.data.password || '';
+        if (!email || !password) return;
+
+        // Kitöltjük a mezőket
+        var emailField = document.getElementById('signin-email');
+        var pwField    = document.getElementById('signin-password');
+        if (emailField) emailField.value = email;
+        if (pwField)    pwField.value    = password;
+
+        // Bejelentkezés ugyanúgy ahogy a form csinálja — fetch JSON
+        var btn = document.getElementById('signinBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn._originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Bejelentkezés...';
+        }
+
+        fetch('/auth/simple-login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, password: password})
+        })
+        .then(function(resp) { return resp.json().then(function(d) { return {ok: resp.ok, data: d}; }); })
+        .then(function(res) {
+            if (res.ok && res.data.success) {
+                window.location.href = res.data.redirect;
+            } else {
+                // Ha hibás az adat, mutassuk a hibaüzenetet és engedélyezzük újra a gombot
+                var msg = document.getElementById('auth-message');
+                if (msg) {
+                    msg.className = 'alert alert-danger mb-4';
+                    msg.textContent = res.data.error || 'Hibás e-mail cím vagy jelszó.';
+                    msg.classList.remove('d-none');
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = btn._originalHtml; }
+            }
+        })
+        .catch(function() {
+            if (btn) { btn.disabled = false; btn.innerHTML = btn._originalHtml; }
+        });
+    });
+
 </script>
 {% endblock %}
 

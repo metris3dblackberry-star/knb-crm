@@ -1,0 +1,357 @@
+﻿{% extends "base/layout.html" %}
+
+{% block title %}Bejelentkezés - SOLVIOR CRM/ERP{% endblock %}
+
+{% block breadcrumb %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.login-bg {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e8eef5 100%);
+    position: relative;
+}
+.login-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%231e3a5f" fill-opacity="0.03"%3E%3Cpath d="M30 30c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2zm-2-6c-3.3 0-6 2.7-6 6s2.7 6 6 6 6-2.7 6-6-2.7-6-6-6zm0 2c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E') repeat;
+    pointer-events: none;
+}
+.auth-tab-btn {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--tblr-secondary);
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+.auth-tab-btn.active {
+    color: var(--tblr-primary);
+    border-bottom-color: var(--tblr-primary);
+}
+.auth-tab-content { display: none; }
+.auth-tab-content.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center min-vh-100 align-items-center login-bg">
+    <div class="col-xl-4 col-lg-5 col-md-6 col-sm-8" style="position: relative; z-index: 1;">
+        <div class="card border-0 shadow-lg" style="border-top: 4px solid var(--repaisos-accent) !important;">
+            <div class="card-body p-5">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <img src="{{ url_for('static', filename='images/solvior.png') }}" height="40" alt="SOLVIOR CRM/ERP" class="mb-3">
+                    <h1 class="h3 fw-bold mb-1">SOLVIOR CRM/ERP</h1>
+                    <p class="text-muted">Belső rendszer — bejelentkezés</p>
+                </div>
+
+                <div id="auth-message" class="alert d-none mb-4"></div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} mb-3">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <!-- Auth Tabs -->
+                <div class="d-flex border-bottom mb-4">
+                    <button type="button" class="auth-tab-btn active" data-tab="signin">Bejelentkezés</button>
+                    <button type="button" class="auth-tab-btn" data-tab="signup">Fiók létrehozása</button>
+                </div>
+
+                <!-- Sign In Tab -->
+                <div id="signin-content" class="auth-tab-content active">
+                    <form id="signinForm" novalidate>
+                        <div class="mb-3">
+                            <label for="signin-email" class="form-label">E-mail cím</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-mail text-muted"></i>
+                                </span>
+                                <input type="email" class="form-control border-start-0 ps-0" id="signin-email" placeholder="nev@example.com" required autocomplete="email">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="signin-password" class="form-label">Jelszó</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-lock text-muted"></i>
+                                </span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="signin-password" placeholder="Jelszó" required autocomplete="current-password">
+                                <button type="button" class="btn btn-outline-secondary border-start-0 toggle-password" data-target="signin-password">
+                                    <i class="ti ti-eye text-muted"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" id="signinBtn" class="btn btn-accent w-100 py-3 fw-semibold">
+                            <i class="ti ti-login me-2"></i>Bejelentkezés
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sign Up Tab -->
+                <div id="signup-content" class="auth-tab-content">
+                    <form id="signupForm" novalidate>
+                        <div class="mb-3">
+                            <label for="signup-name" class="form-label">Teljes név</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-user text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="signup-name" placeholder="Kovács János" required autocomplete="name">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signup-email" class="form-label">E-mail cím</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-mail text-muted"></i>
+                                </span>
+                                <input type="email" class="form-control border-start-0 ps-0" id="signup-email" placeholder="nev@example.com" required autocomplete="email">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signup-password" class="form-label">Jelszó</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-lock text-muted"></i>
+                                </span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="signup-password" placeholder="Min. 8 karakter" required minlength="8" autocomplete="new-password">
+                                <button type="button" class="btn btn-outline-secondary border-start-0 toggle-password" data-target="signup-password">
+                                    <i class="ti ti-eye text-muted"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="signup-confirm" class="form-label">Jelszó megerősítése</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="ti ti-lock-check text-muted"></i>
+                                </span>
+                                <input type="password" class="form-control border-start-0 ps-0" id="signup-confirm" placeholder="Jelszó újra" required minlength="8" autocomplete="new-password">
+                            </div>
+                        </div>
+                        <button type="submit" id="signupBtn" class="btn btn-accent w-100 py-3 fw-semibold">
+                            <i class="ti ti-user-plus me-2"></i>Fiók létrehozása
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Info -->
+                <div class="mt-4 p-3 bg-light border-start border-4 border-primary rounded">
+                    <h6 class="text-primary mb-2 d-flex align-items-center gap-2">
+                        <i class="ti ti-shield-check"></i>Biztonságos bejelentkezés
+                    </h6>
+                    <p class="text-muted text-sm mb-0">
+                        Adatait ipari szabványú titkosítás védi.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-4">
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('main.index') }}" class="text-muted text-decoration-none text-sm">
+                    <i class="ti ti-home"></i> Főoldal
+                </a>
+                <a href="{{ url_for('main.help_page') }}" class="text-muted text-decoration-none text-sm">
+                    <i class="ti ti-help"></i> Segítség
+                </a>
+                <a href="{{ url_for('main.about') }}" class="text-muted text-decoration-none text-sm">
+                    <i class="ti ti-info-circle"></i> Rólunk
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Tab váltás
+    document.querySelectorAll('.auth-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.auth-tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.dataset.tab + '-content').classList.add('active');
+            hideMessage();
+        });
+    });
+
+    // Jelszó toggle
+    document.querySelectorAll('.toggle-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = document.getElementById(this.dataset.target);
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'ti ti-eye-off text-muted';
+            } else {
+                input.type = 'password';
+                icon.className = 'ti ti-eye text-muted';
+            }
+        });
+    });
+
+    // Üzenet segédfüggvények
+    function showMessage(text, type) {
+        const el = document.getElementById('auth-message');
+        el.className = 'alert alert-' + (type === 'error' ? 'danger' : type) + ' mb-4';
+        el.textContent = text;
+        el.classList.remove('d-none');
+    }
+
+    function hideMessage() {
+        document.getElementById('auth-message').classList.add('d-none');
+    }
+
+    function setLoading(btn, loading) {
+        if (loading) {
+            btn.disabled = true;
+            btn._originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Kérem, várjon...';
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = btn._originalHtml;
+        }
+    }
+
+    // Bejelentkezési form
+    document.getElementById('signinForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideMessage();
+
+        const email = document.getElementById('signin-email').value.trim();
+        const password = document.getElementById('signin-password').value;
+        const btn = document.getElementById('signinBtn');
+
+        if (!email || !password) {
+            showMessage('Kérjük, adja meg az e-mail címét és jelszavát.', 'error');
+            return;
+        }
+
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/auth/simple-login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, password})
+            });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                window.location.href = data.redirect;
+            } else {
+                showMessage(data.error || 'Hibás e-mail cím vagy jelszó.', 'error');
+                setLoading(btn, false);
+            }
+        } catch (error) {
+            showMessage('Hiba történt. Kérjük, próbálja újra.', 'error');
+            setLoading(btn, false);
+        }
+    });
+
+    // Regisztrációs form
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        hideMessage();
+
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const confirm = document.getElementById('signup-confirm').value;
+        const btn = document.getElementById('signupBtn');
+
+        if (!name || !email || !password || !confirm) {
+            showMessage('Kérjük, töltse ki az összes mezőt.', 'error');
+            return;
+        }
+
+        if (password !== confirm) {
+            showMessage('A két jelszó nem egyezik meg.', 'error');
+            return;
+        }
+
+        if (password.length < 8) {
+            showMessage('A jelszónak legalább 8 karakteresnek kell lennie.', 'error');
+            return;
+        }
+
+        setLoading(btn, true);
+        try {
+            const resp = await fetch('/auth/simple-register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, email, password})
+            });
+            const data = await resp.json();
+            if (resp.ok && data.success) {
+                window.location.href = data.redirect;
+            } else {
+                showMessage(data.error || 'Regisztráció sikertelen.', 'error');
+                setLoading(btn, false);
+            }
+        } catch (error) {
+            showMessage('Hiba történt. Kérjük, próbálja újra.', 'error');
+            setLoading(btn, false);
+        }
+    });
+
+});
+
+    // --- Planeta Centrum auto-login bridge ---
+    window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'planeta_crm_fill') return;
+        var email    = e.data.email    || '';
+        var password = e.data.password || '';
+        if (!email || !password) return;
+
+        var emailField = document.getElementById('signin-email');
+        var pwField    = document.getElementById('signin-password');
+        if (emailField) emailField.value = email;
+        if (pwField)    pwField.value    = password;
+
+        var btn = document.getElementById('signinBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn._originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Bejelentkezés...';
+        }
+
+        fetch('/auth/simple-login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email: email, password: password})
+        })
+        .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, data: d}; }); })
+        .then(function(res) {
+            if (res.ok && res.data.success) {
+                window.location.href = res.data.redirect;
+            } else {
+                var msg = document.getElementById('auth-message');
+                if (msg) {
+                    msg.className = 'alert alert-danger mb-4';
+                    msg.textContent = res.data.error || 'Hibas email cim vagy jelszo.';
+                    msg.classList.remove('d-none');
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = btn._originalHtml; }
+            }
+        })
+        .catch(function() {
+            if (btn) { btn.disabled = false; btn.innerHTML = btn._originalHtml; }
+        });
+    });
+
+</script>
+{% endblock %}
+
+

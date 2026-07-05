@@ -1,6 +1,6 @@
 ﻿{% extends "base/layout.html" %}
 
-{% block title %}{{ customer.first_name }} {{ customer.family_name }} - SOLVIOR CRM{% endblock %}
+{% block title %}{{ customer.company_name or customer.full_name }} - SOLVIOR CRM{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item">
@@ -9,7 +9,7 @@
     <li class="breadcrumb-item">
         <a href="{{ url_for('main.customers') }}">Ügyfelek</a>
     </li>
-    <li class="breadcrumb-item active">{{ customer.first_name }} {{ customer.family_name }}</li>
+    <li class="breadcrumb-item active">{{ customer.company_name or customer.full_name }}</li>
 {% endblock %}
 
 {% block content %}
@@ -18,7 +18,7 @@
     <div>
         <h1 class="h3 fw-bold text-gray-900 mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-user text-primary"></i>
-            {{ customer.first_name }} {{ customer.family_name }}
+            {{ customer.company_name or customer.full_name }}
         </h1>
         <p class="text-muted mb-0">Ügyfél ID: #{{ customer.customer_id }}</p>
     </div>
@@ -26,6 +26,11 @@
         <a href="{{ url_for('main.edit_customer', customer_id=customer.customer_id) }}" class="btn btn-accent">
             <i class="ti ti-pencil me-2"></i>Ügyfél szerkesztése
         </a>
+        {% if session.get('current_role') in ('owner', 'admin') %}
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickAddServiceModal">
+            <i class="ti ti-plus me-2"></i>Szolgáltatás felvitele
+        </button>
+        {% endif %}
         <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
             <i class="ti ti-arrow-left me-2"></i>Back to Ügyfelek
         </a>
@@ -98,10 +103,20 @@
                         <i class="ti ti-user text-primary" style="font-size: 1.5rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-bold fs-5">{{ customer.first_name }} {{ customer.family_name }}</div>
+                        <div class="fw-bold fs-5">{{ customer.company_name or customer.full_name }}</div>
                         <small class="text-muted">Ügyfél #{{ customer.customer_id }}</small>
                     </div>
                 </div>
+
+                {% if customer.company_name %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ti ti-building text-muted me-3"></i>
+                    <div>
+                        <small class="text-muted d-block">Cégnév</small>
+                        <span class="fw-medium">{{ customer.company_name }}</span>
+                    </div>
+                </div>
+                {% endif %}
 
                 {% if customer.email %}
                 <div class="d-flex align-items-center mb-3">
@@ -119,6 +134,36 @@
                     <div>
                         <small class="text-muted d-block">Telefon</small>
                         <span class="fw-medium">{{ customer.phone }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if customer.tax_number %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ti ti-id text-muted me-3"></i>
+                    <div>
+                        <small class="text-muted d-block">Adószám</small>
+                        <span class="fw-medium">{{ customer.tax_number }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if customer.bank_account_number %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ti ti-building-bank text-muted me-3"></i>
+                    <div>
+                        <small class="text-muted d-block">Bankszámlaszám</small>
+                        <span class="fw-medium">{{ customer.bank_account_number }}</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if customer.billing_address %}
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ti ti-map-pin text-muted me-3"></i>
+                    <div>
+                        <small class="text-muted d-block">Számlázási cím</small>
+                        <span class="fw-medium">{{ customer.billing_address }}</span>
                     </div>
                 </div>
                 {% endif %}
@@ -194,6 +239,57 @@
         </div>
     </div>
 </div>
+
+{% if session.get('current_role') in ('owner', 'admin') %}
+<div class="modal fade" id="quickAddServiceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-top: 4px solid var(--primary);">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-tool me-2"></i>Szolgáltatás hozzáadása az ügyfél nézetből</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('administrator.service_catalog') }}">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="return_to" value="{{ request.path }}">
+                <div class="modal-body">
+                    <div class="alert alert-primary">
+                        Ügyfél: <strong>{{ customer.company_name or customer.full_name }}</strong>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Szolgáltatás neve *</label>
+                            <input type="text" class="form-control" name="service_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <input type="text" class="form-control" name="category" value="Általános">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Becsült időtartam (perc)</label>
+                            <input type="number" class="form-control" name="estimated_duration" min="0">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Leírás</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Pl. ehhez az ügyféltípushoz használt szolgáltatás"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-primary">Szolgáltatás mentése</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 

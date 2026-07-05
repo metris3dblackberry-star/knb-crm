@@ -1411,18 +1411,18 @@ def service_catalog():
                         tenant_id=tenant_id,
                         service_name=data['service_name'],
                         cost=float(data['cost']),
-                        category=sanitize_input(request.form.get('category', 'General')),
+                        category=sanitize_input(request.form.get('category', 'Általános')),
                         description=sanitize_input(request.form.get('description', '')),
                         estimated_duration_minutes=request.form.get('estimated_duration', type=int),
                         is_active=True,
                     )
                     db.session.add(service)
                     db.session.commit()
-                    flash(f'Service "{data["service_name"]}" added!', 'success')
+                    flash(f'Szolgáltatás létrehozva: {data["service_name"]}', 'success')
                 except Exception as e:
                     logger.error(f"Failed to add service: {e}")
                     db.session.rollback()
-                    flash('Failed to add service', 'error')
+                    flash('A szolgáltatás mentése sikertelen.', 'error')
 
         elif action == 'import':
             upload = request.files.get('import_file')
@@ -1449,6 +1449,7 @@ def service_catalog():
                 if service:
                     service.service_name = sanitize_input(request.form.get('service_name', service.service_name))
                     service.category = sanitize_input(request.form.get('category', service.category))
+                    service.description = sanitize_input(request.form.get('description', service.description or '')) or None
                     try:
                         service.cost = float(request.form.get('cost', service.cost))
                     except (ValueError, TypeError):
@@ -1469,8 +1470,10 @@ def service_catalog():
                 if service:
                     service.is_active = not service.is_active
                     db.session.commit()
-                    status = 'activated' if service.is_active else 'deactivated'
-                    flash(f'Service {status}!', 'success')
+                    flash(
+                        'Szolgáltatás aktiválva!' if service.is_active else 'Szolgáltatás deaktiválva!',
+                        'success'
+                    )
 
         return _redirect_back('administrator.service_catalog')
 
@@ -1523,18 +1526,18 @@ def parts_catalog():
                         part_name=data['part_name'],
                         cost=float(data['cost']),
                         sku=sanitize_input(request.form.get('sku', '')) or None,
-                        category=sanitize_input(request.form.get('category', 'General')),
+                        category=sanitize_input(request.form.get('category', 'Általános')),
                         description=sanitize_input(request.form.get('description', '')),
                         supplier=sanitize_input(request.form.get('supplier', '')) or None,
                         is_active=True,
                     )
                     db.session.add(part)
                     db.session.commit()
-                    flash(f'Part "{data["part_name"]}" added!', 'success')
+                    flash(f'Termék létrehozva: {data["part_name"]}', 'success')
                 except Exception as e:
                     logger.error(f"Failed to add part: {e}")
                     db.session.rollback()
-                    flash('Failed to add part', 'error')
+                    flash('A termék mentése sikertelen.', 'error')
 
         elif action == 'import':
             upload = request.files.get('import_file')
@@ -1561,12 +1564,13 @@ def parts_catalog():
                 if part:
                     part.part_name = sanitize_input(request.form.get('part_name', part.part_name))
                     part.category = sanitize_input(request.form.get('category', part.category))
-                    part.supplier = sanitize_input(request.form.get('supplier', ''))
+                    part.supplier = sanitize_input(request.form.get('supplier', '')) or None
+                    part.description = sanitize_input(request.form.get('description', part.description or '')) or None
                     try:
                         part.cost = float(request.form.get('cost', part.cost))
                     except (ValueError, TypeError):
                         pass
-                    part.sku = sanitize_input(request.form.get('sku', ''))
+                    part.sku = sanitize_input(request.form.get('sku', '')) or None
                     db.session.commit()
                     flash('Termék frissítve!', 'success')
 
@@ -1577,8 +1581,10 @@ def parts_catalog():
                 if part:
                     part.is_active = not part.is_active
                     db.session.commit()
-                    status = 'activated' if part.is_active else 'deactivated'
-                    flash(f'Part {status}!', 'success')
+                    flash(
+                        'Termék aktiválva!' if part.is_active else 'Termék deaktiválva!',
+                        'success'
+                    )
 
         return _redirect_back('administrator.parts_catalog')
 

@@ -18,6 +18,18 @@ class TenantService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
+    @staticmethod
+    def build_default_settings() -> dict:
+        """Default tenant settings, including fresh counters for new tenants."""
+        return {
+            'currency': 'HUF',
+            'tax_rate': 0.0,
+            'job_sequence': 0,
+            'invoice_sequence': 0,
+            'work_count': 0,
+            'invoice_count': 0,
+        }
+
     def create_tenant(
         self,
         name: str,
@@ -67,10 +79,7 @@ class TenantService:
                 address=address,
                 status=Tenant.STATUS_TRIAL,
                 trial_ends_at=datetime.utcnow() + timedelta(days=14),
-                settings={
-                    'currency': 'USD',
-                    'tax_rate': 0.0,
-                },
+                settings=self.build_default_settings(),
             )
             db.session.add(tenant)
             db.session.flush()  # get tenant_id

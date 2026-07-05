@@ -999,7 +999,8 @@ def reports():
                 'current_month': current_month_start.strftime('%B %Y'),
                 'last_month': last_month_start.strftime('%B %Y'),
                 'generated_date': today.strftime('%Y-%m-%d')
-            }
+            },
+            'kpis': {}
         }
 
         # Havi bevétel + kiadás az utolsó 6 hónapra
@@ -1073,6 +1074,14 @@ def reports():
             label = date(year, month, 1).strftime('%b')
             monthly_revenue_data.append({'label': label, 'revenue': float(rev), 'expense': float(exp)})
             customer_activity_data.append({'label': label, 'new_customers': new_customers, 'jobs': job_count})
+
+        total_bills = float((billing_stats or {}).get('total_bills', 0) or 0)
+        total_amount = float((billing_stats or {}).get('total_amount', 0) or 0)
+        completed_jobs = float((job_stats or {}).get('completed_jobs', 0) or 0)
+        report_data['kpis'] = {
+            'average_job_value': (total_amount / total_bills) if total_bills > 0 else 0,
+            'average_completed_job_value': (total_amount / completed_jobs) if completed_jobs > 0 else 0,
+        }
 
         return render_template('administrator/reports.html',
                              report_data=report_data,
@@ -1350,12 +1359,24 @@ def invite_team_member():
         flash('No organization selected', 'error')
         return redirect(url_for('main.dashboard'))
 
-    email = sanitize_input(request.form.get('email', ''))
-    role = sanitize_input(request.form.get('role', 'viewer'))
+    email = sanitize_input(request.form.get('email') or request.form.get('invite_email', ''))
+    role = sanitize_input(request.form.get('role') or request.form.get('invite_role', 'viewer'))
     user_id = session.get('user_id')
 
+    role_aliases = {
+        'administrator': 'admin',
+        'adminisztrator': 'admin',
+        'szerelo': 'technician',
+        'megfigyelo': 'viewer',
+    }
+    role = role_aliases.get(role, role)
+
     if not email:
-        flash('Email is required', 'error')
+        flash('Az e-mail cím megadása kötelező.', 'error')
+        return redirect(url_for('administrator.team_members'))
+
+    if role not in ('admin', 'manager', 'technician', 'parts_clerk', 'viewer'):
+        flash('Érvénytelen szerepkör.', 'error')
         return redirect(url_for('administrator.team_members'))
 
     tenant_service = TenantService()
@@ -1367,10 +1388,13 @@ def invite_team_member():
     )
 
     if success:
-        flash(f'Invitation sent to {email}!', 'success')
+        flash(f'Meghívó elküldve: {email}', 'success')
     else:
         for error in errors:
-            flash(error, 'error')
+            if error == 'User not found. They must register first.':
+                flash('Ennek az e-mail címnek még nincs regisztrált felhasználója, ezért nem küldhető meghívó.', 'error')
+            else:
+                flash(error, 'error')
 
     return redirect(url_for('administrator.team_members'))
 

@@ -580,6 +580,7 @@ def simple_register():
         return jsonify({'error': 'Ez az e-mail cím már foglalt.'}), 400
 
     try:
+        from app.services.tenant_service import TenantService
         user = User(
             username=name,
             email=email,
@@ -600,6 +601,7 @@ def simple_register():
             business_type='auto_repair',
             status='active',
             trial_ends_at=dt.datetime.utcnow() + dt.timedelta(days=30),
+            settings=TenantService.build_default_settings(),
         )
         db.session.add(tenant)
         db.session.flush()

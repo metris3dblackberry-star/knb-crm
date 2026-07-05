@@ -8,7 +8,6 @@
 
 {% block admin_content %}
 <div class="container-fluid py-4">
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex align-items-center justify-content-between">
@@ -23,7 +22,6 @@
         </div>
     </div>
 
-    <!-- Invite Form -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card" style="border-top: 3px solid var(--success);">
@@ -32,18 +30,20 @@
                         <i class="ti ti-user-plus text-success"></i>
                         Csapattag meghívása
                     </h5>
-                    <form method="post" action="#">
+                    <form method="post" action="{{ url_for('administrator.invite_team_member') }}">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-5">
                                 <label class="form-label">E-mail cím</label>
-                                <input type="email" class="form-control" name="invite_email" placeholder="kollegaem@pelda.hu" required>
+                                <input type="email" class="form-control" name="invite_email" placeholder="kollega@pelda.hu" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Szerepkör</label>
                                 <select class="form-select" name="invite_role" required>
                                     <option value="">Válasszon szerepkört...</option>
-                                    <option value="administrator">Adminisztrátor</option>
+                                    <option value="admin">Adminisztrátor</option>
+                                    <option value="manager">Menedzser</option>
                                     <option value="technician">Szerelő</option>
+                                    <option value="parts_clerk">Raktáros</option>
                                     <option value="viewer">Megfigyelő</option>
                                 </select>
                             </div>
@@ -54,98 +54,81 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="form-hint mt-3">
+                            Meghívó csak már létező felhasználónak küldhető, így elkerüljük a hibás vagy 404-es meghívásokat.
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Members Table -->
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: white;">
-                    <h5 class="card-title mb-0 d-flex align-items-center gap-2" style="color: white;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-users"></i>
                         Jelenlegi tagok
                     </h5>
+                    <span class="badge bg-primary-lt">{{ members|length }} fő</span>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th>Név</th>
                                     <th>E-mail</th>
                                     <th>Szerepkör</th>
                                     <th>Státusz</th>
-                                    <th>Műveletek</th>
+                                    <th>Meghívva</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for member in members|default([]) %}
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2">
-                                                <i class="ti ti-user text-primary"></i>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="avatar avatar-sm bg-primary-lt text-primary">
+                                                <i class="ti ti-user"></i>
+                                            </span>
+                                            <div>
+                                                <div class="fw-semibold">{{ member.username or member.email }}</div>
+                                                {% if member.is_default %}
+                                                <small class="text-muted">Alapértelmezett hozzáférés</small>
+                                                {% endif %}
                                             </div>
-                                            <strong>{{ member.name|default(member.email) }}</strong>
                                         </div>
                                     </td>
+                                    <td>{{ member.email }}</td>
                                     <td>
-                                        <span class="d-flex align-items-center gap-1">
-                                            <i class="ti ti-mail text-muted"></i>
-                                            {{ member.email }}
+                                        <span class="badge bg-{% if member.role in ['owner', 'admin'] %}primary{% elif member.role == 'manager' %}warning{% elif member.role == 'technician' %}info{% else %}secondary{% endif %}">
+                                            {{ member.role }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{% if member.role == 'administrator' %}primary{% elif member.role == 'technician' %}info{% else %}secondary{% endif %}">
-                                            {{ member.role|title }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {% if member.status|default('active') == 'active' %}
-                                        <span class="badge bg-success">
-                                            <i class="ti ti-circle-check me-1"></i>
-                                            Aktív
-                                        </span>
-                                        {% elif member.status == 'invited' %}
-                                        <span class="badge bg-warning">
-                                            <i class="ti ti-clock me-1"></i>
-                                            Meghívott
-                                        </span>
+                                        {% if member.status == 'active' %}
+                                        <span class="badge bg-success-lt text-success">Aktív</span>
+                                        {% elif member.status == 'pending' %}
+                                        <span class="badge bg-warning-lt text-warning">Meghívott</span>
                                         {% else %}
-                                        <span class="badge bg-danger">
-                                            <i class="ti ti-circle-x me-1"></i>
-                                            Inaktív
-                                        </span>
+                                        <span class="badge bg-danger-lt text-danger">{{ member.status }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="d-flex gap-1">
-                                            <form method="post" action="#" class="d-inline">
-                                                <input type="hidden" name="member_id" value="{{ member.id }}">
-                                                <select class="form-select form-select-sm d-inline-block" name="new_role" onchange="this.form.submit()" style="width: auto;">
-                                                    <option value="administrator" {% if member.role == 'administrator' %}selected{% endif %}>Admin</option>
-                                                    <option value="technician" {% if member.role == 'technician' %}selected{% endif %}>Szerelő</option>
-                                                    <option value="viewer" {% if member.role == 'viewer' %}selected{% endif %}>Megfigyelő</option>
-                                                </select>
-                                            </form>
-                                            <form method="post" action="#" class="d-inline" onsubmit="return confirm('Biztosan eltávolítja ezt a csapattagot?');">
-                                                <input type="hidden" name="remove_member_id" value="{{ member.id }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="ti ti-user-minus"></i>
-                                                </button>
-                                            </form>
-                                        </div>
+                                        {% if member.invited_at %}
+                                        {{ member.invited_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="ti ti-users mb-2 d-block mx-auto" style="font-size: 48px;"></i>
-                                        Még nincs csapattag. Hívjon meg valakit!
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="ti ti-users d-block mb-2" style="font-size: 2rem;"></i>
+                                        Még nincs csapattag.
                                     </td>
                                 </tr>
                                 {% endfor %}

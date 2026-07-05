@@ -38,7 +38,7 @@
             <i class="ti ti-file-invoice me-2"></i>Számla PDF
         </a>
         <a href="{{ url_for('technician.generate_worksheet', job_id=data.job_id) }}" class="btn btn-outline-secondary" target="_blank">
-            <i class="ti ti-clipboard-text me-2"></i>Munkalap PDF
+            <i class="ti ti-clipboard-text me-2"></i>TIG PDF
         </a>
         {% if data.email %}
         <form action="{{ url_for('technician.send_job_email', job_id=data.job_id) }}" method="POST" class="d-inline">
@@ -315,7 +315,7 @@
             <div class="card-header">
                 <h3 class="card-title">
                     <i class="ti ti-notes me-2"></i>
-                    Megjegyzés (munkalapra kerül)
+                    Megjegyzés (TIG-re kerül)
                 </h3>
             </div>
             <div class="card-body">

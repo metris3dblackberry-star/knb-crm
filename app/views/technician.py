@@ -189,7 +189,7 @@ def generate_worksheet(job_id):
     ws_num = f"ML-{datetime.date.today().year}-{job_id:04d}"
     header_data = [[
         Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
-        Paragraph(f'<font color="white" size="10"><b>Munkalap</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+        Paragraph(f'<font color="white" size="10"><b>TIG</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
     header_table = Table(header_data, colWidths=[10*cm, 8*cm])
     header_table.setStyle(TableStyle([
@@ -213,7 +213,7 @@ def generate_worksheet(job_id):
                   customer.phone if customer else '',
                   customer.email if customer else '']
     right_lines = ['<b>Munka adatai</b>',
-                   f'Munkalap sz.: {ws_num}',
+                   f'TIG sz.: {ws_num}',
                    f'Dátum: {job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A"}',
                    f'Státusz: {"Befejezett" if job.completed else "Folyamatban"}']
 
@@ -307,7 +307,7 @@ def generate_worksheet(job_id):
     buffer.seek(0)
     response = make_response(buffer.read())
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=munkalap-{ws_num}.pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=tig-{ws_num}.pdf'
     return response
 
 
@@ -1071,7 +1071,7 @@ def _generate_worksheet_pdf(job_id):
     ws_num = f"ML-{datetime.date.today().year}-{job_id:04d}"
     header_data = [[
         Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
-        Paragraph(f'<font color="white" size="10"><b>Munkalap</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+        Paragraph(f'<font color="white" size="10"><b>TIG</b><br/>{ws_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
     header_table = Table(header_data, colWidths=[10*cm, 8*cm])
     header_table.setStyle(TableStyle([
@@ -1087,7 +1087,7 @@ def _generate_worksheet_pdf(job_id):
     buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
     info_data = [[
         Paragraph(f'<b>Ügyfél adatai</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}', info_style),
-        Paragraph(f'<b>Munka adatai</b><br/>Munkalap sz.: {ws_num}<br/>Dátum: {job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A"}<br/>Státusz: {"Befejezett" if job.completed else "Folyamatban"}', info_style),
+        Paragraph(f'<b>Munka adatai</b><br/>TIG sz.: {ws_num}<br/>Dátum: {job.job_date.strftime("%Y. %m. %d.") if job.job_date else "N/A"}<br/>Státusz: {"Befejezett" if job.completed else "Folyamatban"}', info_style),
     ]]
     info_table = Table(info_data, colWidths=[9*cm, 9*cm])
     info_table.setStyle(TableStyle([
@@ -1224,7 +1224,7 @@ def send_job_email(job_id):
                         'payment_method_types[]': 'card',
                         'line_items[0][price_data][currency]': 'huf',
                         'line_items[0][price_data][product_data][name]': f'{company_name} – {invoice_num}',
-                        'line_items[0][price_data][product_data][description]': f'Munkalap: {ws_num} | Ügyfél: {buyer_name}',
+                        'line_items[0][price_data][product_data][description]': f'TIG: {ws_num} | Ügyfél: {buyer_name}',
                         'line_items[0][price_data][unit_amount]': str(int(total_ft * 100)),
                         'line_items[0][quantity]': '1',
                         'mode': 'payment',
@@ -1273,10 +1273,10 @@ Fizessen kártyával biztonságosan:
 
         body_text = f"""Tisztelt {buyer_name}!
 
-Mellékletben megküldjük az elvégzett munkáról szóló számlát és munkalapot.
+Mellékletben megküldjük az elvégzett munkáról szóló számlát és a TIG-et.
 
 Számlaszám: {invoice_num}
-Munkalap:   {ws_num}
+TIG:   {ws_num}
 Összeg:     {total_str} Ft
 {payment_block_text}
 Köszönjük bizalmát!
@@ -1296,7 +1296,7 @@ Tel: +36 70 408 4988"""
 
   <div style="padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
     <p>Tisztelt <strong>{buyer_name}</strong>!</p>
-    <p>Mellékletben megküldjük az elvégzett munkáról szóló számlát és munkalapot.</p>
+    <p>Mellékletben megküldjük az elvégzett munkáról szóló számlát és a TIG-et.</p>
 
     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
       <tr style="background:#f9fafb;">
@@ -1304,7 +1304,7 @@ Tel: +36 70 408 4988"""
         <td style="padding:10px;border:1px solid #e5e7eb;">{invoice_num}</td>
       </tr>
       <tr>
-        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">Munkalap</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;font-weight:600;">TIG</td>
         <td style="padding:10px;border:1px solid #e5e7eb;">{ws_num}</td>
       </tr>
       <tr style="background:#f0fdf4;">
@@ -1328,12 +1328,12 @@ Tel: +36 70 408 4988"""
             auth=('api', mg_api_key),
             files=[
                 ('attachment', (f'szamla-{invoice_num}.pdf', invoice_bytes, 'application/pdf')),
-                ('attachment', (f'munkalap-{ws_num}.pdf', worksheet_bytes, 'application/pdf')),
+                ('attachment', (f'tig-{ws_num}.pdf', worksheet_bytes, 'application/pdf')),
             ],
             data={
                 'from': f'{company_name} <{from_email}>',
                 'to': customer.email,
-                'subject': f'Számla és munkalap – {invoice_num}',
+                'subject': f'Számla és TIG – {invoice_num}',
                 'text': body_text,
                 'html': body_html,
             }

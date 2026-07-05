@@ -4,6 +4,7 @@ Contains work order management, service and parts addition functionality
 """
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
 from datetime import date, datetime, timedelta
+import unicodedata
 import logging
 from app.services.job_service import JobService
 from app.services.customer_service import CustomerService
@@ -66,6 +67,16 @@ VAT_CODE_OPTIONS = {
     'TAM': {'label': 'TAM', 'rate': 0.0, 'note': 'Tárgyi adómentes ügylet.'},
     'KBAET': {'label': 'KBAET', 'rate': 0.0, 'note': 'Közösségen belüli adómentes termékértékesítés.'},
 }
+
+
+def _safe_download_slug(value: str) -> str:
+    """Build an ASCII-safe filename slug for HTTP headers."""
+    normalized = unicodedata.normalize('NFKD', value or '')
+    ascii_value = normalized.encode('ascii', 'ignore').decode('ascii')
+    safe = ascii_value.lower().replace(' ', '-').replace('/', '-')
+    while '--' in safe:
+        safe = safe.replace('--', '-')
+    return safe.strip('-') or 'dokumentum'
 
 
 def _parse_invoice_date(raw_value: str, fallback: date) -> date:
@@ -1013,7 +1024,7 @@ def generate_invoice(job_id):
 
     response = make_response(buffer.read())
     response.headers['Content-Type'] = 'application/pdf'
-    invoice_slug = invoice_cfg['invoice_type_label'].lower().replace(' ', '-')
+    invoice_slug = _safe_download_slug(invoice_cfg['invoice_type_label'])
     response.headers['Content-Disposition'] = f'inline; filename={invoice_slug}-{invoice_num}.pdf'
     return response
 

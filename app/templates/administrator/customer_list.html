@@ -341,22 +341,41 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ url_for('administrator.service_catalog') }}" method="post">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="return_to" value="{{ request.full_path if request.query_string else request.path }}">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Szolgáltatás neve *</label>
                             <input type="text" class="form-control" name="service_name" required placeholder="Enter service name">
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Service Ár *</label>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános">Általános</option>
+                                <option value="Karbantartás">Karbantartás</option>
+                                <option value="Javítás">Javítás</option>
+                                <option value="Diagnosztika">Diagnosztika</option>
+                                <option value="Karosszéria">Karosszéria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="service_cost" step="0.01" min="0" required placeholder="0.00">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="0.01" min="0" required placeholder="0.00">
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Becsült időtartam (perc)</label>
+                            <input type="number" class="form-control" name="estimated_duration" min="1" placeholder="pl. 60">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Leírás</label>
+                            <textarea class="form-control" name="description" rows="2" placeholder="Rövid leírás"></textarea>
                         </div>
                     </div>
 
-                    <!-- Current Services -->
                     <div class="mt-4">
                         <h6 class="text-muted">Current Services</h6>
                         <div class="table-responsive">
@@ -387,6 +406,23 @@
                     </button>
                 </div>
             </form>
+            <div class="border-top p-3 bg-light">
+                <h6 class="text-muted">Szolgáltatás import XLS/XLSX-ből</h6>
+                <p class="small text-muted mb-2">Ajánlott oszlopok: <code>service_name</code>, <code>cost</code>, <code>category</code>, <code>description</code>, <code>estimated_duration</code>.</p>
+                <form action="{{ url_for('administrator.service_catalog') }}" method="post" enctype="multipart/form-data" class="row g-2">
+                    <input type="hidden" name="action" value="import">
+                    <input type="hidden" name="return_to" value="{{ request.full_path if request.query_string else request.path }}">
+                    <div class="col-12">
+                        <input type="file" class="form-control" name="import_file" accept=".xls,.xlsx" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-accent w-100">
+                            <i class="ti ti-file-import me-1"></i>
+                            Szolgáltatások importálása
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -403,22 +439,47 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ url_for('administrator.parts_catalog') }}" method="post">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="return_to" value="{{ request.full_path if request.query_string else request.path }}">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Termék neve *</label>
                             <input type="text" class="form-control" name="part_name" required placeholder="Enter part name">
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Part Ár *</label>
+                        <div class="col-md-6">
+                            <label class="form-label">Cikkszám</label>
+                            <input type="text" class="form-control" name="sku" placeholder="pl. SKU-001">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Kategória</label>
+                            <select class="form-select" name="category">
+                                <option value="Általános">Általános</option>
+                                <option value="Motor">Motor</option>
+                                <option value="Fékek">Fékek</option>
+                                <option value="Futómű">Futómű</option>
+                                <option value="Elektromos">Elektromos</option>
+                                <option value="Karosszéria">Karosszéria</option>
+                                <option value="Folyadékok">Folyadékok</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ár *</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="part_cost" step="0.01" min="0" required placeholder="0.00">
+                                <span class="input-group-text">Ft</span>
+                                <input type="number" class="form-control" name="cost" step="0.01" min="0" required placeholder="0.00">
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Szállító</label>
+                            <input type="text" class="form-control" name="supplier" placeholder="Szállító neve">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Leírás</label>
+                            <textarea class="form-control" name="description" rows="2" placeholder="Rövid leírás"></textarea>
                         </div>
                     </div>
 
-                    <!-- Current Parts -->
                     <div class="mt-4">
                         <h6 class="text-muted">Current Parts</h6>
                         <div class="table-responsive">
@@ -449,6 +510,23 @@
                     </button>
                 </div>
             </form>
+            <div class="border-top p-3 bg-light">
+                <h6 class="text-muted">Termék import XLS/XLSX-ből</h6>
+                <p class="small text-muted mb-2">Ajánlott oszlopok: <code>part_name</code>, <code>cost</code>, <code>sku</code>, <code>category</code>, <code>supplier</code>.</p>
+                <form action="{{ url_for('administrator.parts_catalog') }}" method="post" enctype="multipart/form-data" class="row g-2">
+                    <input type="hidden" name="action" value="import">
+                    <input type="hidden" name="return_to" value="{{ request.full_path if request.query_string else request.path }}">
+                    <div class="col-12">
+                        <input type="file" class="form-control" name="import_file" accept=".xls,.xlsx" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-outline-warning w-100">
+                            <i class="ti ti-file-import me-1"></i>
+                            Termékek importálása
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

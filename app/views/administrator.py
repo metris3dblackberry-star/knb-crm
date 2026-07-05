@@ -8,6 +8,7 @@ from datetime import date, timedelta
 import logging
 from pathlib import Path
 import os
+from decimal import Decimal, InvalidOperation
 from app.services.customer_service import CustomerService
 from app.services.job_service import JobService
 from app.extensions import db as ext_db
@@ -18,6 +19,7 @@ from app.services.billing_service import BillingService
 from app.utils.decorators import handle_database_errors, log_function_call, validate_pagination
 from app.utils.validators import sanitize_input, validate_positive_integer, validate_service_data, validate_part_data
 from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 # Create blueprint
 administrator_bp = Blueprint('administrator', __name__)
@@ -217,6 +219,242 @@ def _build_document_overview(tenant_root: Path) -> list[dict]:
             'files': files,
         })
     return overview
+
+
+def _redirect_back(default_endpoint: str):
+    return_to = request.form.get('return_to') or request.args.get('return_to')
+    if return_to and return_to.startswith('/'):
+        return redirect(return_to)
+    referrer = request.referrer or ''
+    if referrer.startswith(request.host_url):
+        return redirect(referrer)
+    return redirect(url_for(default_endpoint))
+
+
+def _normalize_import_header(value: str) -> str:
+    normalized = sanitize_input(value).lower()
+    replacements = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ö': 'o', 'ő': 'o',
+        'ú': 'u', 'ü': 'u', 'ű': 'u',
+    }
+    for old, new in replacements.items():
+        normalized = normalized.replace(old, new)
+    for token in (' ', '-', '/', '\\', '.', '(', ')'):
+        normalized = normalized.replace(token, '_')
+    while '__' in normalized:
+        normalized = normalized.replace('__', '_')
+    return normalized.strip('_')
+
+
+def _parse_money_value(raw_value):
+    if raw_value is None:
+        return None
+    if isinstance(raw_value, (int, float, Decimal)):
+        return Decimal(str(raw_value))
+
+    text = sanitize_input(raw_value)
+    if not text:
+        return None
+    text = text.replace('Ft', '').replace('ft', '').replace(' ', '')
+    text = text.replace(',', '.')
+    try:
+        return Decimal(text)
+    except InvalidOperation:
+        return None
+
+
+def _load_import_rows(upload: FileStorage) -> list[dict]:
+    filename = (upload.filename or '').lower()
+    if filename.endswith('.xlsx'):
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(upload, data_only=True)
+        sheet = workbook.active
+        values = list(sheet.iter_rows(values_only=True))
+    elif filename.endswith('.xls'):
+        import xlrd
+
+        workbook = xlrd.open_workbook(file_contents=upload.read())
+        sheet = workbook.sheet_by_index(0)
+        values = [sheet.row_values(row_idx) for row_idx in range(sheet.nrows)]
+    else:
+        raise ValueError('Csak .xls vagy .xlsx fájl importálható.')
+
+    if not values:
+        return []
+
+    headers = [_normalize_import_header(cell or '') for cell in values[0]]
+    rows: list[dict] = []
+    for raw_row in values[1:]:
+        if not any(cell not in (None, '') for cell in raw_row):
+            continue
+        row_data = {}
+        for index, header in enumerate(headers):
+            if not header:
+                continue
+            row_data[header] = raw_row[index] if index < len(raw_row) else None
+        rows.append(row_data)
+    return rows
+
+
+def _import_services_from_upload(upload: FileStorage, tenant_id: int) -> dict:
+    from app.models.service import Service
+    from app.extensions import db
+
+    rows = _load_import_rows(upload)
+    created = 0
+    updated = 0
+    skipped = 0
+    errors: list[str] = []
+
+    header_aliases = {
+        'service_name': ('service_name', 'name', 'service', 'szolgaltatas', 'szolgaltatas_neve'),
+        'cost': ('cost', 'price', 'ar', 'service_cost', 'netto_ar'),
+        'category': ('category', 'kategoria'),
+        'description': ('description', 'leiras', 'megjegyzes'),
+        'estimated_duration_minutes': ('estimated_duration_minutes', 'estimated_duration', 'duration', 'duration_minutes', 'ido', 'ido_perc', 'perc'),
+    }
+
+    for row_number, row in enumerate(rows, start=2):
+        mapped = {}
+        for field_name, aliases in header_aliases.items():
+            for alias in aliases:
+                if alias in row:
+                    mapped[field_name] = row.get(alias)
+                    break
+
+        service_name = sanitize_input(mapped.get('service_name', ''))
+        cost_value = _parse_money_value(mapped.get('cost'))
+        if not service_name:
+            skipped += 1
+            errors.append(f'{row_number}. sor: hiányzó szolgáltatásnév.')
+            continue
+        if cost_value is None:
+            skipped += 1
+            errors.append(f'{row_number}. sor: hibás ár.')
+            continue
+
+        existing = db.session.execute(
+            db.select(Service).where(
+                Service.tenant_id == tenant_id,
+                Service.service_name.ilike(service_name)
+            )
+        ).scalar_one_or_none()
+
+        if existing:
+            existing.cost = cost_value
+            existing.category = sanitize_input(mapped.get('category', existing.category or '')) or existing.category
+            existing.description = sanitize_input(mapped.get('description', existing.description or '')) or existing.description
+            duration = mapped.get('estimated_duration_minutes')
+            if duration not in (None, ''):
+                try:
+                    existing.estimated_duration_minutes = int(float(duration))
+                except (TypeError, ValueError):
+                    pass
+            existing.is_active = True
+            updated += 1
+        else:
+            service = Service(
+                tenant_id=tenant_id,
+                service_name=service_name,
+                cost=cost_value,
+                category=sanitize_input(mapped.get('category', '')) or 'Általános',
+                description=sanitize_input(mapped.get('description', '')),
+                is_active=True,
+            )
+            duration = mapped.get('estimated_duration_minutes')
+            if duration not in (None, ''):
+                try:
+                    service.estimated_duration_minutes = int(float(duration))
+                except (TypeError, ValueError):
+                    pass
+            db.session.add(service)
+            created += 1
+
+    db.session.commit()
+    return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
+
+
+def _import_parts_from_upload(upload: FileStorage, tenant_id: int) -> dict:
+    from app.models.part import Part
+    from app.extensions import db
+
+    rows = _load_import_rows(upload)
+    created = 0
+    updated = 0
+    skipped = 0
+    errors: list[str] = []
+
+    header_aliases = {
+        'part_name': ('part_name', 'name', 'part', 'product', 'termek', 'termek_neve'),
+        'cost': ('cost', 'price', 'ar', 'part_cost', 'netto_ar'),
+        'sku': ('sku', 'cikkszam', 'item_code', 'code'),
+        'category': ('category', 'kategoria'),
+        'supplier': ('supplier', 'szallito'),
+        'description': ('description', 'leiras', 'megjegyzes'),
+    }
+
+    for row_number, row in enumerate(rows, start=2):
+        mapped = {}
+        for field_name, aliases in header_aliases.items():
+            for alias in aliases:
+                if alias in row:
+                    mapped[field_name] = row.get(alias)
+                    break
+
+        part_name = sanitize_input(mapped.get('part_name', ''))
+        cost_value = _parse_money_value(mapped.get('cost'))
+        sku_value = sanitize_input(mapped.get('sku', '')) or None
+        if not part_name:
+            skipped += 1
+            errors.append(f'{row_number}. sor: hiányzó terméknév.')
+            continue
+        if cost_value is None:
+            skipped += 1
+            errors.append(f'{row_number}. sor: hibás ár.')
+            continue
+
+        existing = None
+        if sku_value:
+            existing = db.session.execute(
+                db.select(Part).where(
+                    Part.tenant_id == tenant_id,
+                    Part.sku == sku_value
+                )
+            ).scalar_one_or_none()
+        if not existing:
+            existing = db.session.execute(
+                db.select(Part).where(
+                    Part.tenant_id == tenant_id,
+                    Part.part_name.ilike(part_name)
+                )
+            ).scalar_one_or_none()
+
+        if existing:
+            existing.part_name = part_name
+            existing.cost = cost_value
+            existing.sku = sku_value
+            existing.category = sanitize_input(mapped.get('category', existing.category or '')) or existing.category
+            existing.supplier = sanitize_input(mapped.get('supplier', existing.supplier or '')) or existing.supplier
+            existing.description = sanitize_input(mapped.get('description', existing.description or '')) or existing.description
+            existing.is_active = True
+            updated += 1
+        else:
+            part = Part(
+                tenant_id=tenant_id,
+                part_name=part_name,
+                cost=cost_value,
+                sku=sku_value,
+                category=sanitize_input(mapped.get('category', '')) or 'Általános',
+                supplier=sanitize_input(mapped.get('supplier', '')) or None,
+                description=sanitize_input(mapped.get('description', '')),
+                is_active=True,
+            )
+            db.session.add(part)
+            created += 1
+
+    db.session.commit()
+    return {'created': created, 'updated': updated, 'skipped': skipped, 'errors': errors}
 
 
 def require_admin_login():
@@ -1119,6 +1357,24 @@ def service_catalog():
                     db.session.rollback()
                     flash('Failed to add service', 'error')
 
+        elif action == 'import':
+            upload = request.files.get('import_file')
+            if not upload or not upload.filename:
+                flash('Válassz ki egy import fájlt.', 'error')
+            else:
+                try:
+                    result = _import_services_from_upload(upload, tenant_id)
+                    flash(
+                        f'Szolgáltatás import kész: {result["created"]} új, {result["updated"]} frissített, {result["skipped"]} kihagyott sor.',
+                        'success'
+                    )
+                    for error in result['errors'][:8]:
+                        flash(error, 'warning')
+                except Exception as e:
+                    logger.error(f"Failed to import services: {e}")
+                    db.session.rollback()
+                    flash('A szolgáltatás import sikertelen.', 'error')
+
         elif action == 'edit':
             service_id = request.form.get('service_id', type=int)
             if service_id:
@@ -1149,7 +1405,7 @@ def service_catalog():
                     status = 'activated' if service.is_active else 'deactivated'
                     flash(f'Service {status}!', 'success')
 
-        return redirect(url_for('administrator.service_catalog'))
+        return _redirect_back('administrator.service_catalog')
 
     # GET - load services
     try:
@@ -1213,6 +1469,24 @@ def parts_catalog():
                     db.session.rollback()
                     flash('Failed to add part', 'error')
 
+        elif action == 'import':
+            upload = request.files.get('import_file')
+            if not upload or not upload.filename:
+                flash('Válassz ki egy import fájlt.', 'error')
+            else:
+                try:
+                    result = _import_parts_from_upload(upload, tenant_id)
+                    flash(
+                        f'Termék import kész: {result["created"]} új, {result["updated"]} frissített, {result["skipped"]} kihagyott sor.',
+                        'success'
+                    )
+                    for error in result['errors'][:8]:
+                        flash(error, 'warning')
+                except Exception as e:
+                    logger.error(f"Failed to import parts: {e}")
+                    db.session.rollback()
+                    flash('A termék import sikertelen.', 'error')
+
         elif action == 'edit':
             part_id = request.form.get('part_id', type=int)
             if part_id:
@@ -1239,7 +1513,7 @@ def parts_catalog():
                     status = 'activated' if part.is_active else 'deactivated'
                     flash(f'Part {status}!', 'success')
 
-        return redirect(url_for('administrator.parts_catalog'))
+        return _redirect_back('administrator.parts_catalog')
 
     # GET - load parts
     try:

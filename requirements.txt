@@ -37,3 +37,5 @@ stripe==11.4.1
 bcrypt==4.2.1
 reportlab
 python-pptx
+openpyxl==3.1.5
+xlrd==2.0.1

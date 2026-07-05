@@ -32,7 +32,7 @@
         </button>
         {% endif %}
         <a href="{{ url_for('main.customers') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-2"></i>Back to Ügyfelek
+            <i class="ti ti-arrow-left me-2"></i>Vissza az ügyfelekhez
         </a>
     </div>
 </div>
@@ -69,7 +69,7 @@
                     <span class="badge bg-info-lt me-2"><i class="ti ti-currency-dollar"></i></span>
                     <div class="subheader">Összes bevétel</div>
                 </div>
-                <div class="h1 mb-0">${{ "%.2f"|format(stats.total_revenue|default(0)|float) }}</div>
+                <div class="h1 mb-0">{{ "%.0f"|format(stats.total_revenue|default(0)|float) }} Ft</div>
             </div>
         </div>
     </div>
@@ -80,7 +80,7 @@
                     <span class="badge bg-danger-lt me-2"><i class="ti ti-alert-triangle"></i></span>
                     <div class="subheader">Kifizetetlen összeg</div>
                 </div>
-                <div class="h1 mb-0">${{ "%.2f"|format(stats.unpaid_amount|default(0)|float) }}</div>
+                <div class="h1 mb-0">{{ "%.0f"|format(stats.unpaid_amount|default(0)|float) }} Ft</div>
             </div>
         </div>
     </div>
@@ -202,7 +202,7 @@
                                     #{{ job.job_id }}
                                 </a>
                             </td>
-                            <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</td>
+                            <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else '—' }}</td>
                             <td><span class="fw-semibold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</span></td>
                             <td>
                                 {% if job.completed %}
@@ -232,7 +232,7 @@
             {% else %}
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-file-text"></i></div>
-                <p class="empty-title">No Munkák előzményei</p>
+                <p class="empty-title">Nincs munkaelőzmény</p>
                 <p class="empty-subtitle text-secondary">Ennek az ügyfélnek még nincs rögzített munkája.</p>
             </div>
             {% endif %}

@@ -237,7 +237,7 @@ def customers():
                              search_query=search_query, search_type=search_type)
     except Exception as e:
         logger.error(f"Customer list loading failed: {e}")
-        flash('Failed to load customer list', 'error')
+        flash('Az ügyféllista betöltése sikertelen.', 'error')
         return render_template('customers/list.html', customers=[], search_query='', search_type='both')
 
 
@@ -277,7 +277,7 @@ def create_customer():
             return render_template('customers/form.html', customer=customer_data, action='create')
     except Exception as e:
         logger.error(f"Failed to create customer: {e}", exc_info=True)
-        flash(f'Hiba: {str(e)}', 'error')
+        flash('Az ügyfél létrehozása sikertelen.', 'error')
         return render_template('customers/form.html', customer=customer_data, action='create')
 
 
@@ -288,13 +288,13 @@ def customer_detail(customer_id):
     try:
         customer = customer_service.get_customer_by_id(customer_id)
         if not customer:
-            flash('Customer not found', 'error')
+            flash('Az ügyfél nem található.', 'error')
             return redirect(url_for('main.customers'))
         stats = customer_service.get_customer_statistics(customer_id)
         return render_template('customers/detail.html', customer=customer, stats=stats)
     except Exception as e:
         logger.error(f"Customer detail loading failed: {e}")
-        flash('Failed to load customer details', 'error')
+        flash('Az ügyfél adatainak betöltése sikertelen.', 'error')
         return redirect(url_for('main.customers'))
 
 
@@ -304,12 +304,12 @@ def edit_customer(customer_id):
     try:
         customer = customer_service.get_customer_by_id(customer_id)
         if not customer:
-            flash('Customer not found', 'error')
+            flash('Az ügyfél nem található.', 'error')
             return redirect(url_for('main.customers'))
         return render_template('customers/form.html', customer=customer, action='edit')
     except Exception as e:
         logger.error(f"Failed to load customer edit page: {e}")
-        flash('Failed to load edit page', 'error')
+        flash('A szerkesztő oldal betöltése sikertelen.', 'error')
         return redirect(url_for('main.customers'))
 
 
@@ -335,7 +335,7 @@ def update_customer(customer_id):
             return render_template('customers/form.html', customer=customer, action='edit')
         success, errors, customer = customer_service.update_customer(customer_id, customer_data)
         if success:
-            flash(f'Customer {customer.full_name} updated successfully!', 'success')
+            flash(f'Az ügyfél frissítve: {customer.full_name}', 'success')
             return redirect(url_for('main.customer_detail', customer_id=customer_id))
         else:
             for error in errors:
@@ -344,7 +344,7 @@ def update_customer(customer_id):
             return render_template('customers/form.html', customer=customer, action='edit')
     except Exception as e:
         logger.error(f"Failed to update customer: {e}")
-        flash('Failed to update customer, please try again later', 'error')
+        flash('Az ügyfél frissítése sikertelen, próbálja újra később.', 'error')
         customer = customer_service.get_customer_by_id(customer_id)
         return render_template('customers/form.html', customer=customer, action='edit')
 

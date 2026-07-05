@@ -121,6 +121,10 @@
                         <h3 class="card-title mb-1">{{ section.key }} - {{ section.label }}</h3>
                         <div class="text-muted small">{{ section.files|length }} feltöltött fájl</div>
                     </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-success-lt">{{ section.completed_count }} kész</span>
+                        <span class="badge bg-warning-lt">{{ section.missing_count }} hiányzik</span>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
@@ -128,17 +132,29 @@
                             <div class="border rounded p-3 bg-light">
                                 <div class="fw-semibold mb-2">Elvárt tartalom</div>
                                 <ul class="mb-0 ps-3">
-                                    {% for item in section.required_items %}
-                                    <li>{{ item }}</li>
+                                    {% for item in section.required_item_status %}
+                                    <li class="{% if item.uploaded %}text-success{% else %}text-muted{% endif %}">
+                                        {{ item.label }}
+                                        {% if item.uploaded %}
+                                        <i class="ti ti-circle-check ms-1"></i>
+                                        {% else %}
+                                        <i class="ti ti-alert-circle ms-1"></i>
+                                        {% endif %}
+                                    </li>
                                     {% endfor %}
                                 </ul>
                                 {% if section.subfolders %}
                                 <div class="fw-semibold mt-3 mb-2">Almappák</div>
-                                {% for subfolder_name, subfolder_items in section.subfolders.items() %}
+                                {% for subfolder_name, subfolder_items in section.subfolder_item_status.items() %}
                                 <div class="small mb-2"><strong>{{ subfolder_name }}</strong></div>
                                 <ul class="mb-0 ps-3">
                                     {% for subitem in subfolder_items %}
-                                    <li>{{ subitem }}</li>
+                                    <li class="{% if subitem.uploaded %}text-success{% else %}text-muted{% endif %}">
+                                        {{ subitem.label }}
+                                        {% if subitem.uploaded %}
+                                        <i class="ti ti-circle-check ms-1"></i>
+                                        {% endif %}
+                                    </li>
                                     {% endfor %}
                                 </ul>
                                 {% endfor %}
@@ -164,9 +180,17 @@
                                             <td><span class="badge bg-secondary-lt">{{ file.folder }}</span></td>
                                             <td>{{ file.size_kb }} KB</td>
                                             <td class="text-end">
-                                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('administrator.download_document', relative_path=file.relative_path) }}" target="_blank">
-                                                    <i class="ti ti-eye me-1"></i>Megnyit
-                                                </a>
+                                                <div class="d-inline-flex gap-1">
+                                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('administrator.download_document', relative_path=file.relative_path) }}" target="_blank">
+                                                        <i class="ti ti-eye me-1"></i>Megnyit
+                                                    </a>
+                                                    <form method="post" action="{{ url_for('administrator.delete_document', relative_path=file.relative_path) }}" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Biztosan törlöd ezt a dokumentumot?')">
+                                                            <i class="ti ti-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </td>
                                         </tr>
                                         {% endfor %}

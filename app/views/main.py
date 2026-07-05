@@ -253,10 +253,13 @@ def create_customer():
     customer_data = {
         'first_name': sanitize_input(request.form.get('first_name', '')),
         'family_name': sanitize_input(request.form.get('family_name', '')),
+        'company_name': sanitize_input(request.form.get('company_name', '')),
         'email': sanitize_input(request.form.get('email', '')),
         'phone': sanitize_input(request.form.get('phone', '')),
         'tenant_id': tenant_id,
-        'tax_number': sanitize_input(request.form.get('tax_number', ''))
+        'tax_number': sanitize_input(request.form.get('tax_number', '')),
+        'bank_account_number': sanitize_input(request.form.get('bank_account_number', '')),
+        'billing_address': sanitize_input(request.form.get('billing_address', '')),
     }
     try:
         validation_result = validate_customer_data(customer_data)
@@ -316,9 +319,12 @@ def update_customer(customer_id):
     customer_data = {
         'first_name': sanitize_input(request.form.get('first_name', '')),
         'family_name': sanitize_input(request.form.get('family_name', '')),
+        'company_name': sanitize_input(request.form.get('company_name', '')),
         'email': sanitize_input(request.form.get('email', '')),
         'phone': sanitize_input(request.form.get('phone', '')),
-        'tax_number': sanitize_input(request.form.get('tax_number', ''))
+        'tax_number': sanitize_input(request.form.get('tax_number', '')),
+        'bank_account_number': sanitize_input(request.form.get('bank_account_number', '')),
+        'billing_address': sanitize_input(request.form.get('billing_address', '')),
     }
     try:
         validation_result = validate_customer_data(customer_data)

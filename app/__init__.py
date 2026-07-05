@@ -14,6 +14,17 @@ from app.utils.error_handler import ErrorHandler, LoggerConfig
 from app.utils.security import SecurityConfig, CSRFProtection
 
 
+def _run_safe_startup_migrations():
+    migrations = [
+        "ALTER TABLE customer ADD COLUMN IF NOT EXISTS company_name VARCHAR(120)",
+        "ALTER TABLE customer ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(34)",
+        "ALTER TABLE customer ADD COLUMN IF NOT EXISTS billing_address VARCHAR(255)",
+    ]
+    for sql in migrations:
+        db.session.execute(db.text(sql))
+    db.session.commit()
+
+
 def create_app(config_name=None):
     """Application Factory Function"""
     # Load the repo-local .env before reading config so the app can reuse
@@ -133,6 +144,7 @@ def init_extensions(app):
             pass
 
         db.create_all()  # checkfirst=True by default, never drops existing tables
+        _run_safe_startup_migrations()
 
     # Initialize Neon Auth service
     from app.services.auth_service import neon_auth

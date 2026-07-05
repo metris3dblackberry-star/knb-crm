@@ -24,9 +24,12 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
     )
     first_name: Mapped[Optional[str]] = mapped_column(String(25), nullable=True)
     family_name: Mapped[str] = mapped_column(String(25), nullable=False)
+    company_name: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     email: Mapped[str] = mapped_column(String(320), nullable=False)
     phone: Mapped[str] = mapped_column(String(30), nullable=False)
     tax_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    bank_account_number: Mapped[Optional[str]] = mapped_column(String(34), nullable=True)
+    billing_address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Relationships
     jobs: Mapped[List["Job"]] = relationship("Job", back_populates="customer_rel", lazy="dynamic")
@@ -35,6 +38,8 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
     @property
     def full_name(self) -> str:
         """Get full name"""
+        if self.company_name and self.company_name.strip():
+            return self.company_name.strip()
         first = self.first_name or ''
         family = self.family_name or ''
         return f"{first} {family}".strip()
@@ -118,8 +123,8 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
         """Validate customer data"""
         errors = []
 
-        if not self.family_name or not self.family_name.strip():
-            errors.append("A vezetéknév megadása kötelező")
+        if not ((self.family_name and self.family_name.strip()) or (self.company_name and self.company_name.strip())):
+            errors.append("Legalább vezetéknév vagy cégnév megadása kötelező")
 
         if not self.email or not self.email.strip():
             errors.append("Az e-mail cím megadása kötelező")

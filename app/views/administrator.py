@@ -156,6 +156,13 @@ DOCUMENT_LIBRARY = [
 ]
 
 
+def _normalize_document_token(value: str) -> str:
+    normalized = _normalize_import_header(value)
+    for token in ('pdf', 'doc', 'docx', 'xlsx', 'xls', 'png', 'jpg', 'jpeg'):
+        normalized = normalized.replace(f'_{token}_', '_').replace(f'_{token}', '')
+    return normalized.strip('_')
+
+
 def _document_root_for_tenant(tenant: Tenant) -> Path:
     base_root = Path(current_app.instance_path) / 'company_documents'
     tenant_root = base_root / f"tenant_{tenant.tenant_id}_{secure_filename(tenant.slug or tenant.name)}"
@@ -199,11 +206,13 @@ def _build_document_overview(tenant_root: Path) -> list[dict]:
     for section in DOCUMENT_LIBRARY:
         section_root = tenant_root / section['key']
         files = []
+        uploaded_tokens = set()
         if section_root.exists():
             for file_path in sorted(section_root.rglob('*')):
                 if not file_path.is_file():
                     continue
                 relative_path = file_path.relative_to(tenant_root).as_posix()
+                uploaded_tokens.add(_normalize_document_token(file_path.stem))
                 files.append({
                     'name': file_path.name,
                     'relative_path': relative_path,
@@ -211,11 +220,32 @@ def _build_document_overview(tenant_root: Path) -> list[dict]:
                     'size_kb': round(file_path.stat().st_size / 1024, 1),
                     'updated_at': file_path.stat().st_mtime,
                 })
+        required_item_status = []
+        for item in section['items']:
+            token = _normalize_document_token(item)
+            required_item_status.append({
+                'label': item,
+                'uploaded': any(token and token in uploaded for uploaded in uploaded_tokens),
+            })
+
+        subfolder_item_status = {}
+        for subfolder_name, subfolder_items in section.get('subfolders', {}).items():
+            subfolder_item_status[subfolder_name] = []
+            for item in subfolder_items:
+                token = _normalize_document_token(item)
+                subfolder_item_status[subfolder_name].append({
+                    'label': item,
+                    'uploaded': any(token and token in uploaded for uploaded in uploaded_tokens),
+                })
         overview.append({
             'key': section['key'],
             'label': section['label'],
             'required_items': section['items'],
             'subfolders': section.get('subfolders', {}),
+            'required_item_status': required_item_status,
+            'subfolder_item_status': subfolder_item_status,
+            'completed_count': sum(1 for item in required_item_status if item['uploaded']),
+            'missing_count': sum(1 for item in required_item_status if not item['uploaded']),
             'files': files,
         })
     return overview
@@ -646,6 +676,34 @@ def download_document(relative_path: str):
         abort(404)
 
     return send_from_directory(requested_path.parent, requested_path.name, as_attachment=False)
+
+
+@administrator_bp.route('/documents/delete/<path:relative_path>', methods=['POST'])
+@log_function_call
+def delete_document(relative_path: str):
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    tenant_id = session.get('current_tenant_id') or getattr(g, 'current_tenant_id', None)
+    tenant = ext_db.session.get(Tenant, tenant_id) if tenant_id else None
+    if not tenant:
+        abort(404)
+
+    tenant_root = _ensure_document_library(tenant)
+    requested_path = (tenant_root / relative_path).resolve()
+    if tenant_root.resolve() not in requested_path.parents and requested_path != tenant_root.resolve():
+        abort(403)
+    if not requested_path.exists() or not requested_path.is_file():
+        abort(404)
+
+    try:
+        requested_path.unlink()
+        flash('Dokumentum törölve.', 'success')
+    except Exception as e:
+        logger.error(f'Failed to delete document {relative_path}: {e}')
+        flash('A dokumentum törlése nem sikerült.', 'error')
+    return redirect(url_for('administrator.document_center'))
 
 
 @administrator_bp.route('/customers')
@@ -1193,10 +1251,19 @@ def org_settings():
                 except ValueError:
                     pass
             settings['currency'] = request.form.get('currency', 'HUF')
+            settings['invoice_payment_method'] = request.form.get('invoice_payment_method', 'TRANSFER')
+            settings['invoice_type'] = request.form.get('invoice_type', 'NORMAL')
+            settings['default_vat_code'] = request.form.get('default_vat_code', '27')
+            try:
+                settings['payment_terms_days'] = max(0, int(request.form.get('payment_terms_days', 14)))
+            except ValueError:
+                settings['payment_terms_days'] = 14
             for field in ['tax_id', 'eu_tax_id', 'bank_account', 'company_reg']:
                 val = request.form.get(field, '').strip()
                 if val:
                     settings[field] = val
+                else:
+                    settings.pop(field, None)
             tenant.settings = settings
             flag_modified(tenant, 'settings')
 
@@ -1776,6 +1843,9 @@ def db_migrate():
 
     migrations = [
         ("notes oszlop (job)", "ALTER TABLE job ADD COLUMN IF NOT EXISTS notes TEXT"),
+        ("company_name oszlop (customer)", "ALTER TABLE customer ADD COLUMN IF NOT EXISTS company_name VARCHAR(120)"),
+        ("bank_account_number oszlop (customer)", "ALTER TABLE customer ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(34)"),
+        ("billing_address oszlop (customer)", "ALTER TABLE customer ADD COLUMN IF NOT EXISTS billing_address VARCHAR(255)"),
     ]
 
     for name, sql in migrations:

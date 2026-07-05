@@ -73,8 +73,18 @@
                     </td>
                     <td class="text-center">
                         <div class="d-flex gap-1 justify-content-center">
-                            <a href="{{ url_for('technician.generate_invoice', job_id=job.job_id) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Számla PDF"><i class="ti ti-file-invoice"></i></a>
-                            <a href="{{ url_for('technician.generate_worksheet', job_id=job.job_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" title="TIG PDF"><i class="ti ti-clipboard-text"></i></a>
+                            <div class="btn-group">
+                                <a href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='NORMAL') }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer" title="Számla PDF"><i class="ti ti-file-invoice"></i></a>
+                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="visually-hidden">Számlatípus választás</span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='NORMAL') }}" target="_blank" rel="noopener noreferrer">Számla</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='ADVANCE') }}" target="_blank" rel="noopener noreferrer">Előlegszámla</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='PAYMENT_REQUEST') }}" target="_blank" rel="noopener noreferrer">Díjbekérő</a>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('technician.generate_worksheet', job_id=job.job_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer" title="TIG PDF új fülön"><i class="ti ti-clipboard-text"></i></a>
                             {% if job.customer_rel and job.customer_rel.email %}
                             <form method="POST" action="{{ url_for('technician.send_job_email', job_id=job.job_id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

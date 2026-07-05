@@ -115,6 +115,48 @@
                                     <option value="AUD" {% if org.settings and org.settings.get('currency') == 'AUD' %}selected{% endif %}>AUD - Ausztrál dollár</option>
                                 </select>
                             </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-receipt-2 me-1"></i>
+                                    Alapértelmezett számlatípus
+                                </label>
+                                <select class="form-select" name="invoice_type">
+                                    <option value="NORMAL" {% if org.settings and org.settings.get('invoice_type', 'NORMAL') == 'NORMAL' %}selected{% endif %}>Számla</option>
+                                    <option value="ADVANCE" {% if org.settings and org.settings.get('invoice_type') == 'ADVANCE' %}selected{% endif %}>Előlegszámla</option>
+                                    <option value="PAYMENT_REQUEST" {% if org.settings and org.settings.get('invoice_type') == 'PAYMENT_REQUEST' %}selected{% endif %}>Díjbekérő</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-credit-card me-1"></i>
+                                    Alapértelmezett fizetési mód
+                                </label>
+                                <select class="form-select" name="invoice_payment_method">
+                                    <option value="TRANSFER" {% if org.settings and org.settings.get('invoice_payment_method', 'TRANSFER') == 'TRANSFER' %}selected{% endif %}>Átutalás</option>
+                                    <option value="CASH" {% if org.settings and org.settings.get('invoice_payment_method') == 'CASH' %}selected{% endif %}>Készpénz</option>
+                                    <option value="CARD" {% if org.settings and org.settings.get('invoice_payment_method') == 'CARD' %}selected{% endif %}>Bankkártya</option>
+                                    <option value="OTHER" {% if org.settings and org.settings.get('invoice_payment_method') == 'OTHER' %}selected{% endif %}>Egyéb</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-percentage-33 me-1"></i>
+                                    Alapértelmezett ÁFA-kód
+                                </label>
+                                <select class="form-select" name="default_vat_code">
+                                    {% set default_vat = org.settings.get('default_vat_code', '27') if org.settings else '27' %}
+                                    {% for code, label in [('27', '27%'), ('5', '5%'), ('FFAF', 'FFAF'), ('FAD', 'FAD'), ('EUA', 'EUA'), ('AAM', 'AAM'), ('TAM', 'TAM'), ('KBAET', 'KBAET')] %}
+                                    <option value="{{ code }}" {% if default_vat == code %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="ti ti-calendar-due me-1"></i>
+                                    Fizetési határidő (nap)
+                                </label>
+                                <input type="number" class="form-control" name="payment_terms_days" min="0" max="365" value="{{ org.settings.get('payment_terms_days', 14) if org.settings else 14 }}">
+                            </div>
                             <div class="col-12">
                                 <hr class="my-2">
                                 <button type="submit" class="btn btn-primary">
@@ -145,7 +187,7 @@
                         </li>
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>
-                            Az adókulcs minden új munkára vonatkozik
+                            Az alapértelmezett számlatípus, fizetési mód és ÁFA-kód a PDF-eket is érinti
                         </li>
                         <li class="py-1 d-flex align-items-start gap-2">
                             <i class="ti ti-check text-success mt-1" style="flex-shrink: 0;"></i>

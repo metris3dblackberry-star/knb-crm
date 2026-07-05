@@ -3,7 +3,7 @@ Technician Routes Blueprint
 Contains work order management, service and parts addition functionality
 """
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import logging
 from app.services.job_service import JobService
 from app.services.customer_service import CustomerService
@@ -40,7 +40,90 @@ def _load_unicode_font():
             return 'DejaVuSans', 'DejaVuSans'
     except Exception:
         pass
+
     return 'Helvetica', 'Helvetica-Bold'
+
+INVOICE_TYPE_LABELS = {
+    'NORMAL': 'Számla',
+    'ADVANCE': 'Előlegszámla',
+    'PAYMENT_REQUEST': 'Díjbekérő',
+}
+
+PAYMENT_METHOD_LABELS = {
+    'TRANSFER': 'Átutalás',
+    'CASH': 'Készpénz',
+    'CARD': 'Bankkártya',
+    'OTHER': 'Egyéb',
+}
+
+VAT_CODE_OPTIONS = {
+    '27': {'label': '27%', 'rate': 27.0, 'note': ''},
+    '5': {'label': '5%', 'rate': 5.0, 'note': ''},
+    'FFAF': {'label': 'FFAF', 'rate': 0.0, 'note': 'ÁFA-n kívüli vagy speciális megítélésű ügylet.'},
+    'FAD': {'label': 'FAD', 'rate': 0.0, 'note': 'Fordított adózás alkalmazva.'},
+    'EUA': {'label': 'EUA', 'rate': 0.0, 'note': 'EU-n belüli vagy egyéb különös adózási jogcím.'},
+    'AAM': {'label': 'AAM', 'rate': 0.0, 'note': 'Alanyi adómentes ügylet.'},
+    'TAM': {'label': 'TAM', 'rate': 0.0, 'note': 'Tárgyi adómentes ügylet.'},
+    'KBAET': {'label': 'KBAET', 'rate': 0.0, 'note': 'Közösségen belüli adómentes termékértékesítés.'},
+}
+
+
+def _parse_invoice_date(raw_value: str, fallback: date) -> date:
+    try:
+        return date.fromisoformat((raw_value or '').strip())
+    except ValueError:
+        return fallback
+
+
+def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
+    default_issue = job.job_date or date.today()
+    issue_date = _parse_invoice_date(request.args.get('issue_date', ''), default_issue)
+    performance_date = _parse_invoice_date(request.args.get('performance_date', ''), job.job_date or issue_date)
+    try:
+        payment_terms_days = max(0, int(request.args.get('payment_terms_days') or settings.get('payment_terms_days', 14)))
+    except ValueError:
+        payment_terms_days = 14
+    due_date = _parse_invoice_date(request.args.get('due_date', ''), issue_date + timedelta(days=payment_terms_days))
+
+    invoice_type = (request.args.get('invoice_type') or settings.get('invoice_type', 'NORMAL')).upper()
+    if invoice_type not in INVOICE_TYPE_LABELS:
+        invoice_type = 'NORMAL'
+
+    payment_method = (request.args.get('payment_method') or settings.get('invoice_payment_method', 'TRANSFER')).upper()
+    if payment_method not in PAYMENT_METHOD_LABELS:
+        payment_method = 'TRANSFER'
+
+    vat_code = (request.args.get('vat_code') or settings.get('default_vat_code', '27')).upper()
+    if vat_code not in VAT_CODE_OPTIONS:
+        vat_code = '27'
+
+    buyer_name = ''
+    buyer_address = ''
+    buyer_tax_number = ''
+    buyer_bank_account = ''
+    if customer:
+        buyer_name = (getattr(customer, 'company_name', '') or customer.full_name or '').strip()
+        buyer_address = (getattr(customer, 'billing_address', '') or '').strip()
+        buyer_tax_number = (getattr(customer, 'tax_number', '') or '').strip()
+        buyer_bank_account = (getattr(customer, 'bank_account_number', '') or '').strip()
+
+    return {
+        'invoice_type': invoice_type,
+        'invoice_type_label': INVOICE_TYPE_LABELS[invoice_type],
+        'payment_method': payment_method,
+        'payment_method_label': PAYMENT_METHOD_LABELS[payment_method],
+        'vat_code': vat_code,
+        'vat_label': VAT_CODE_OPTIONS[vat_code]['label'],
+        'vat_rate': VAT_CODE_OPTIONS[vat_code]['rate'],
+        'vat_note': VAT_CODE_OPTIONS[vat_code]['note'],
+        'issue_date': issue_date,
+        'performance_date': performance_date,
+        'due_date': due_date,
+        'buyer_name': buyer_name or 'Magánszemély',
+        'buyer_address': buyer_address,
+        'buyer_tax_number': buyer_tax_number,
+        'buyer_bank_account': buyer_bank_account,
+    }
 
 def require_technician_login():
     """Check technician login status"""
@@ -760,6 +843,7 @@ def generate_invoice(job_id):
 
     # Customer info
     customer = job.customer_rel
+    invoice_cfg = _get_invoice_config(job, tenant, customer, settings)
     services = job.get_services()
     parts = job.get_parts()
 
@@ -786,7 +870,7 @@ def generate_invoice(job_id):
     # Header background
     header_data = [[
         Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
-        Paragraph(f'<font color="white" size="10"><b>Számla</b><br/>{invoice_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+        Paragraph(f'<font color="white" size="10"><b>{invoice_cfg["invoice_type_label"]}</b><br/>{invoice_num}<br/>{invoice_cfg["issue_date"].strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
     header_table = Table(header_data, colWidths=[10*cm, 8*cm])
     header_table.setStyle(TableStyle([
@@ -814,13 +898,14 @@ def generate_invoice(job_id):
     ]
     seller_text = '<br/>'.join([l for l in seller_lines if l])
 
-    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
     buyer_lines = [
         '<b>Vev\u0151</b>',
-        buyer_name,
+        invoice_cfg['buyer_name'],
+        invoice_cfg['buyer_address'],
         customer.phone if customer else '',
         customer.email if customer else '',
-        f'Adószám: {customer.tax_number}' if customer and getattr(customer, 'tax_number', None) else '',
+        f'Adószám: {invoice_cfg["buyer_tax_number"]}' if invoice_cfg['buyer_tax_number'] else '',
+        f'Számlaszám: {invoice_cfg["buyer_bank_account"]}' if invoice_cfg['buyer_bank_account'] else '',
     ]
     buyer_text = '<br/>'.join([l for l in buyer_lines if l])
 
@@ -840,14 +925,28 @@ def generate_invoice(job_id):
     story.append(info_table)
     story.append(Spacer(1, 0.5*cm))
 
+    meta_style = ParagraphStyle('meta', fontSize=9, leading=14, fontName=unicode_font)
+    meta_text = '<br/>'.join([
+        f'<b>Teljesítés:</b> {invoice_cfg["performance_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Kiállítás:</b> {invoice_cfg["issue_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Fizetési határidő:</b> {invoice_cfg["due_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Fizetési mód:</b> {invoice_cfg["payment_method_label"]}',
+        f'<b>ÁFA-kód:</b> {invoice_cfg["vat_label"]}',
+    ])
+    story.append(Paragraph(meta_text, meta_style))
+    if invoice_cfg['vat_note']:
+        story.append(Spacer(1, 0.2*cm))
+        story.append(Paragraph(f'<font color="#b45309"><b>Megjegyzés:</b> {invoice_cfg["vat_note"]}</font>', meta_style))
+    story.append(Spacer(1, 0.4*cm))
+
     # Items table header
-    tax_rate = float(settings.get('tax_rate', 27))
+    tax_rate = invoice_cfg['vat_rate']
     header_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
     items_data = [[
         Paragraph('Tétel', header_style),
         Paragraph('Menny.', header_style),
         Paragraph('Nettó', header_style),
-        Paragraph(f'ÁFA {int(tax_rate)}%', header_style),
+        Paragraph(f'ÁFA {invoice_cfg["vat_label"]}', header_style),
         Paragraph('Bruttó', header_style),
     ]]
 
@@ -914,25 +1013,20 @@ def generate_invoice(job_id):
 
     response = make_response(buffer.read())
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=szamla-{invoice_num}.pdf'
+    invoice_slug = invoice_cfg['invoice_type_label'].lower().replace(' ', '-')
+    response.headers['Content-Disposition'] = f'inline; filename={invoice_slug}-{invoice_num}.pdf'
     return response
 
 
 def _generate_invoice_pdf(job_id):
     """Generate invoice PDF as bytes (reused by email sender)"""
     from io import BytesIO
-    from flask import current_app
-    import importlib, sys
-
-    # Reuse the existing generate_invoice logic but return bytes
     from app.models.job import Job
     from app.extensions import db
     job = db.session.get(Job, job_id)
     if not job:
         return None, None
 
-    # Build PDF using same code path — call the view and capture buffer
-    # We'll duplicate the buffer logic here cleanly
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.lib.units import cm
@@ -948,6 +1042,7 @@ def _generate_invoice_pdf(job_id):
     tenant = Tenant.find_by_id(tenant_id)
     settings = tenant.settings or {} if tenant else {}
     customer = job.customer_rel
+    invoice_cfg = _get_invoice_config(job, tenant, customer, settings)
     services = job.get_services()
     parts = job.get_parts()
     all_items = [{'name': s['service_name'], 'qty': s['qty'], 'net': s['cost']} for s in services] + \
@@ -968,7 +1063,7 @@ def _generate_invoice_pdf(job_id):
     invoice_num = f"SL-{datetime.date.today().year}-{job_id:04d}"
     header_data = [[
         Paragraph(f'<font color="white" size="22"><b>{tenant.name if tenant else "K&amp;B Autójavító"}</b></font>', styles['Normal']),
-        Paragraph(f'<font color="white" size="10"><b>Számla</b><br/>{invoice_num}<br/>{datetime.date.today().strftime("%Y. %m. %d.")}</font>', styles['Normal'])
+        Paragraph(f'<font color="white" size="10"><b>{invoice_cfg["invoice_type_label"]}</b><br/>{invoice_num}<br/>{invoice_cfg["issue_date"].strftime("%Y. %m. %d.")}</font>', styles['Normal'])
     ]]
     header_table = Table(header_data, colWidths=[10*cm, 8*cm])
     header_table.setStyle(TableStyle([
@@ -982,9 +1077,8 @@ def _generate_invoice_pdf(job_id):
 
     info_style = ParagraphStyle('info', fontSize=9, leading=14, fontName=unicode_font)
     seller = settings.get('seller_name', tenant.name if tenant else 'PLANÉTA CENTRUM Kft.')
-    left = f'<b>Eladó</b><br/>{seller}<br/>{settings.get("reg_num","")}<br/>{settings.get("address","")}<br/>Adószám: {settings.get("tax_number","")}<br/>Bankszámlaszám: {settings.get("bank_account","")}'
-    buyer_name = f"{customer.first_name} {customer.family_name}" if customer else "N/A"
-    right = f'<b>Vevő</b><br/>{buyer_name}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}'
+    left = f'<b>Eladó</b><br/>{seller}<br/>{settings.get("company_reg","")}<br/>{tenant.address if tenant else ""}<br/>Adószám: {settings.get("tax_id","")}<br/>Bankszámlaszám: {settings.get("bank_account","")}'
+    right = f'<b>Vevő</b><br/>{invoice_cfg["buyer_name"]}<br/>{invoice_cfg["buyer_address"]}<br/>{customer.phone if customer else ""}<br/>{customer.email if customer else ""}<br/>{"Adószám: " + invoice_cfg["buyer_tax_number"] if invoice_cfg["buyer_tax_number"] else ""}<br/>{"Számlaszám: " + invoice_cfg["buyer_bank_account"] if invoice_cfg["buyer_bank_account"] else ""}'
     info_data = [[Paragraph(left, info_style), Paragraph(right, info_style)]]
     info_table = Table(info_data, colWidths=[9*cm, 9*cm])
     info_table.setStyle(TableStyle([
@@ -995,10 +1089,23 @@ def _generate_invoice_pdf(job_id):
     story.append(info_table)
     story.append(Spacer(1, 0.5*cm))
 
+    meta_text = '<br/>'.join([
+        f'<b>Teljesítés:</b> {invoice_cfg["performance_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Kiállítás:</b> {invoice_cfg["issue_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Fizetési határidő:</b> {invoice_cfg["due_date"].strftime("%Y. %m. %d.")}',
+        f'<b>Fizetési mód:</b> {invoice_cfg["payment_method_label"]}',
+        f'<b>ÁFA-kód:</b> {invoice_cfg["vat_label"]}',
+    ])
+    story.append(Paragraph(meta_text, info_style))
+    if invoice_cfg['vat_note']:
+        story.append(Spacer(1, 0.2*cm))
+        story.append(Paragraph(f'<font color="#b45309"><b>Megjegyzés:</b> {invoice_cfg["vat_note"]}</font>', info_style))
+    story.append(Spacer(1, 0.4*cm))
+
     th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
     cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
-    VAT = 0.27
-    rows = [[Paragraph(h, th_style) for h in ['Tétel', 'Menny.', 'Nettó', 'ÁFA 27%', 'Bruttó']]]
+    VAT = invoice_cfg['vat_rate'] / 100
+    rows = [[Paragraph(h, th_style) for h in ['Tétel', 'Menny.', 'Nettó', f'ÁFA {invoice_cfg["vat_label"]}', 'Bruttó']]]
     grand_net = grand_brutto = 0
     for item in all_items:
         net = item['net'] * item['qty']
@@ -1024,7 +1131,7 @@ def _generate_invoice_pdf(job_id):
     story.append(Spacer(1, 0.5*cm))
     footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))
-    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else 'STAR LABS Kft.'}', footer_style))
+    story.append(Paragraph(f'Powered by RepairOS · {tenant.name if tenant else "STAR LABS Kft."}', footer_style))
     doc.build(story)
     buffer.seek(0)
     return buffer.read(), invoice_num

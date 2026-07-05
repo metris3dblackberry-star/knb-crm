@@ -50,10 +50,16 @@
                                    value="{{ customer.first_name if customer else '' }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-medium">Vezetéknév <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="family_name" required
-                                   placeholder="Vezetéknév"
-                                   value="{{ customer.family_name if customer else '' }}">
+                            <label class="form-label fw-medium">Vezetéknév</label>
+                            <input type="text" class="form-control" name="family_name"
+                                    placeholder="Vezetéknév"
+                                    value="{{ customer.family_name if customer else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Cégnév</label>
+                            <input type="text" class="form-control" name="company_name"
+                                   placeholder="pl. Metris3D Kft."
+                                   value="{{ customer.company_name if customer else '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-medium">E-mail <span class="text-danger">*</span></label>
@@ -70,8 +76,19 @@
                         <div class="col-md-6">
                             <label class="form-label fw-medium">Adószám</label>
                             <input type="text" class="form-control" name="tax_number"
-                                   placeholder="pl. 12345678-1-42"
-                                   value="{{ customer.tax_number if customer else '' }}">
+                                    placeholder="pl. 12345678-1-42"
+                                    value="{{ customer.tax_number if customer else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Bankszámlaszám</label>
+                            <input type="text" class="form-control" name="bank_account_number"
+                                   placeholder="pl. 12345678-12345678-12345678"
+                                   value="{{ customer.bank_account_number if customer else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Számlázási cím</label>
+                            <textarea class="form-control" name="billing_address" rows="2"
+                                      placeholder="pl. 1221 Budapest, Minta utca 12.">{{ customer.billing_address if customer else '' }}</textarea>
                         </div>
                     </div>
 

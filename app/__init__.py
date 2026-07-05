@@ -34,6 +34,12 @@ def create_app(config_name=None):
     config = get_config(config_name)
     app.config.from_object(config)
 
+    if os.environ.get('EMBED_ALLOWED_ORIGINS') or os.environ.get('EMBED_ALLOWED_ORIGIN'):
+        app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+        app.config['SESSION_COOKIE_SECURE'] = True
+        app.config['REMEMBER_COOKIE_SAMESITE'] = 'None'
+        app.config['REMEMBER_COOKIE_SECURE'] = True
+
     # Validate configuration
     if hasattr(config, 'validate_config'):
         config.validate_config()

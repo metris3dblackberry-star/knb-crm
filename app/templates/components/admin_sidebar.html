@@ -55,6 +55,11 @@
             <i class="ti ti-building-warehouse sidebar-icon"></i>
             <span class="sidebar-label">Készlet</span>
         </a>
+        <a href="{{ url_for('administrator.document_center') }}"
+           class="sidebar-link {% if request.endpoint and 'document_center' in request.endpoint %}active{% endif %}">
+            <i class="ti ti-folders sidebar-icon"></i>
+            <span class="sidebar-label">Dokumentumtár</span>
+        </a>
 
         <!-- Organization -->
         <div class="sidebar-section-title">Szervezet</div>

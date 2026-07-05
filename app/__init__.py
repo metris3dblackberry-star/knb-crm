@@ -2,17 +2,25 @@
 Automotive Repair Management System
 Flask Application Factory and Initialization
 """
+import os
+from pathlib import Path
+
 from flask import Flask
+from dotenv import load_dotenv
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config.base import get_config
 from app.extensions import db
 from app.utils.error_handler import ErrorHandler, LoggerConfig
 from app.utils.security import SecurityConfig, CSRFProtection
-import os
 
 
 def create_app(config_name=None):
     """Application Factory Function"""
+    # Load the repo-local .env before reading config so the app can reuse
+    # the same DATABASE_URL / auth settings it was originally configured with.
+    project_root = Path(__file__).resolve().parent.parent
+    load_dotenv(project_root / ".env", override=False)
+
     app = Flask(__name__)
 
     # Trust reverse proxy headers (Heroku/Cloudflare)

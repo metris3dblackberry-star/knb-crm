@@ -2,6 +2,7 @@
 Security Management Module
 Provides CSRF protection, password hashing, input validation, SQL injection prevention
 """
+import os
 import secrets
 import hashlib
 import hmac
@@ -14,6 +15,23 @@ from flask import session, request, abort
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _get_embed_allowed_origins() -> list[str]:
+    raw = os.environ.get('EMBED_ALLOWED_ORIGINS') or os.environ.get('EMBED_ALLOWED_ORIGIN', '')
+    values = [item.strip() for item in raw.split(',') if item.strip()]
+
+    request_origin = request.host_url.rstrip('/')
+    if not values and request_origin.startswith('http://127.0.0.1:5101'):
+        values = ['http://127.0.0.1:5100']
+    if not values and request_origin.startswith('http://localhost:5101'):
+        values = ['http://127.0.0.1:5100']
+
+    deduped: list[str] = []
+    for value in values:
+        if value not in deduped:
+            deduped.append(value)
+    return deduped
 
 
 class CSRFProtection:
@@ -234,4 +252,10 @@ class SecurityConfig:
         """Apply security headers"""
         for header, value in cls.SECURITY_HEADERS.items():
             response.headers[header] = value
+
+        allowed_origins = _get_embed_allowed_origins()
+        if allowed_origins:
+            response.headers.pop('X-Frame-Options', None)
+            origins = ' '.join(allowed_origins)
+            response.headers['Content-Security-Policy'] = f"frame-ancestors 'self' {origins}"
         return response

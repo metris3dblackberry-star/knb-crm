@@ -3,17 +3,21 @@ Administrator Routes Blueprint
 Contains customer management, billing management, overdue bill handling,
 organization settings, team management, service/parts catalog, and inventory
 """
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session, g
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, session, g, current_app, send_from_directory, abort
 from datetime import date, timedelta
 import logging
+from pathlib import Path
+import os
 from app.services.customer_service import CustomerService
 from app.services.job_service import JobService
 from app.extensions import db as ext_db
 from app.models.job import Job as AdminJob, JobService as JobServiceModel, JobPart
+from app.models.tenant import Tenant
 from sqlalchemy import and_, or_, exists
 from app.services.billing_service import BillingService
 from app.utils.decorators import handle_database_errors, log_function_call, validate_pagination
 from app.utils.validators import sanitize_input, validate_positive_integer, validate_service_data, validate_part_data
+from werkzeug.utils import secure_filename
 
 # Create blueprint
 administrator_bp = Blueprint('administrator', __name__)
@@ -23,6 +27,196 @@ logger = logging.getLogger(__name__)
 customer_service = CustomerService()
 job_service = JobService()
 billing_service = BillingService()
+
+DOCUMENT_LIBRARY = [
+    {
+        'key': '01_Ceg_dokumentumok',
+        'label': 'Cég alapdokumentumok',
+        'items': [
+            'Cégkivonat',
+            'Alapító okirat',
+            'Adószám igazolás',
+            'Bankszámlaszerződés',
+            'Kamarai regisztráció',
+        ],
+    },
+    {
+        'key': '02_Dolgozok',
+        'label': 'Dolgozók',
+        'items': [
+            'Munkaszerződés',
+            'NAV bejelentés (T1041)',
+            'Orvosi alkalmassági',
+            'Személyi okmányok másolata',
+            'Munkaköri leírás',
+            'Oktatási papírok',
+        ],
+    },
+    {
+        'key': '03_Munkaido',
+        'label': 'Munkaidő és jelenlét',
+        'items': [
+            'Jelenléti ívek (havonta)',
+            'Munkaidő nyilvántartás',
+            'Szabadság nyilvántartás',
+        ],
+    },
+    {
+        'key': '04_Munkavedelem',
+        'label': 'Munkavédelem',
+        'items': [
+            'Munkavédelmi szabályzat',
+            'Kockázatértékelés',
+            'Védőeszköz szabályzat',
+            'Baleseti napló',
+        ],
+        'subfolders': {
+            'Oktatasok': [
+                'Oktatási jegyzőkönyvek',
+                'Jelenléti ívek',
+            ],
+        },
+    },
+    {
+        'key': '05_Tuzvedelem',
+        'label': 'Tűzvédelem',
+        'items': [
+            'Tűzvédelmi szabályzat',
+            'Tűzoltó készülék ellenőrzések',
+            'Oktatási dokumentumok',
+        ],
+    },
+    {
+        'key': '06_Szakmai',
+        'label': 'Szakmai (villanyszerelés)',
+        'items': [
+            'Végzettségek',
+            'Jogosultságok',
+            'Felülvizsgálói papírok',
+        ],
+        'subfolders': {
+            'Jegyzokonyvek': [
+                'Érintésvédelem',
+                'EPH',
+                'Mérési jegyzőkönyvek',
+            ],
+        },
+    },
+    {
+        'key': '07_Eszkozok',
+        'label': 'Eszközök és járművek',
+        'items': [
+            'Eszköz nyilvántartás',
+            'Mérőműszerek hitelesítése',
+            'Védőfelszerelések nyilvántartása',
+            'Forgalmi',
+            'Biztosítás',
+            'Cégautó dokumentumok',
+        ],
+    },
+    {
+        'key': '08_Konyveles',
+        'label': 'Könyvelés / NAV',
+        'items': [
+            'Számlák (bejövő/kimenő)',
+            'ÁFA bevallások',
+            'Bérpapírok',
+            'Járulék befizetések',
+        ],
+    },
+    {
+        'key': '09_Szerzodesek',
+        'label': 'Szerződések és munkák',
+        'items': [
+            'Vállalkozási szerződések',
+            'Árajánlatok',
+            'Teljesítési igazolások',
+        ],
+    },
+    {
+        'key': '10_Epitesi_dok',
+        'label': 'Építési dokumentáció',
+        'items': [
+            'E-napló export',
+            'Műszaki dokumentáció',
+            'Alvállalkozói szerződések',
+        ],
+    },
+    {
+        'key': '11_Biztositasok',
+        'label': 'Biztosítások',
+        'items': [
+            'Felelősségbiztosítás',
+            'Kötvények',
+            'Befizetések',
+        ],
+    },
+]
+
+
+def _document_root_for_tenant(tenant: Tenant) -> Path:
+    base_root = Path(current_app.instance_path) / 'company_documents'
+    tenant_root = base_root / f"tenant_{tenant.tenant_id}_{secure_filename(tenant.slug or tenant.name)}"
+    tenant_root.mkdir(parents=True, exist_ok=True)
+    return tenant_root
+
+
+def _ensure_document_library(tenant: Tenant) -> Path:
+    tenant_root = _document_root_for_tenant(tenant)
+    for section in DOCUMENT_LIBRARY:
+        section_root = tenant_root / section['key']
+        section_root.mkdir(parents=True, exist_ok=True)
+        for subfolder in section.get('subfolders', {}):
+            (section_root / subfolder).mkdir(parents=True, exist_ok=True)
+    return tenant_root
+
+
+def _safe_segment(value: str, fallback: str) -> str:
+    cleaned = secure_filename((value or '').strip())
+    return cleaned or fallback
+
+
+def _resolve_upload_folder(tenant_root: Path, section_key: str, employee_name: str, project_name: str, accounting_period: str) -> Path:
+    target = tenant_root / section_key
+    if section_key == '02_Dolgozok':
+        target = target / _safe_segment(employee_name, 'Dolgozo')
+    elif section_key == '08_Konyveles' and accounting_period:
+        period = accounting_period.strip().replace('\\', '/')
+        parts = [secure_filename(part) for part in period.split('/') if part.strip()]
+        for part in parts:
+            if part:
+                target = target / part
+    elif section_key == '09_Szerzodesek' and project_name:
+        target = target / _safe_segment(project_name, 'Projekt')
+    target.mkdir(parents=True, exist_ok=True)
+    return target
+
+
+def _build_document_overview(tenant_root: Path) -> list[dict]:
+    overview: list[dict] = []
+    for section in DOCUMENT_LIBRARY:
+        section_root = tenant_root / section['key']
+        files = []
+        if section_root.exists():
+            for file_path in sorted(section_root.rglob('*')):
+                if not file_path.is_file():
+                    continue
+                relative_path = file_path.relative_to(tenant_root).as_posix()
+                files.append({
+                    'name': file_path.name,
+                    'relative_path': relative_path,
+                    'folder': file_path.parent.relative_to(tenant_root).as_posix(),
+                    'size_kb': round(file_path.stat().st_size / 1024, 1),
+                    'updated_at': file_path.stat().st_mtime,
+                })
+        overview.append({
+            'key': section['key'],
+            'label': section['label'],
+            'required_items': section['items'],
+            'subfolders': section.get('subfolders', {}),
+            'files': files,
+        })
+    return overview
 
 
 def require_admin_login():
@@ -110,6 +304,110 @@ def dashboard():
                              recent_jobs=[],
                              overdue_bills=[],
                              current_date=date.today())
+
+
+@administrator_bp.route('/documents', methods=['GET', 'POST'])
+@log_function_call
+def document_center():
+    """Company document center with predefined compliance folders."""
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    tenant_id = session.get('current_tenant_id') or getattr(g, 'current_tenant_id', None)
+    tenant = ext_db.session.get(Tenant, tenant_id) if tenant_id else None
+    if not tenant:
+        flash('Szervezet nem található a dokumentumtárhoz.', 'error')
+        return redirect(url_for('administrator.dashboard'))
+
+    tenant_root = _ensure_document_library(tenant)
+
+    if request.method == 'POST':
+        action = request.form.get('action', 'upload')
+
+        if action == 'create_folder':
+            section_key = sanitize_input(request.form.get('section_key', ''))
+            employee_name = sanitize_input(request.form.get('employee_name', ''))
+            project_name = sanitize_input(request.form.get('project_name', ''))
+            accounting_year = sanitize_input(request.form.get('accounting_year', ''))
+            accounting_month = sanitize_input(request.form.get('accounting_month', ''))
+
+            if section_key not in {section['key'] for section in DOCUMENT_LIBRARY}:
+                flash('Ismeretlen dokumentum szekció.', 'error')
+                return redirect(url_for('administrator.document_center'))
+
+            accounting_period = ''
+            if section_key == '08_Konyveles' and accounting_year and accounting_month:
+                accounting_period = f'{accounting_year}/{accounting_month.zfill(2)}'
+
+            _resolve_upload_folder(
+                tenant_root,
+                section_key,
+                employee_name=employee_name,
+                project_name=project_name,
+                accounting_period=accounting_period,
+            )
+            flash('A kért almappa létrejött.', 'success')
+            return redirect(url_for('administrator.document_center'))
+
+        section_key = sanitize_input(request.form.get('section_key', ''))
+        employee_name = sanitize_input(request.form.get('employee_name', ''))
+        project_name = sanitize_input(request.form.get('project_name', ''))
+        accounting_period = sanitize_input(request.form.get('accounting_period', ''))
+        document_label = sanitize_input(request.form.get('document_label', ''))
+        upload = request.files.get('file')
+
+        if section_key not in {section['key'] for section in DOCUMENT_LIBRARY}:
+            flash('Ismeretlen dokumentum szekció.', 'error')
+            return redirect(url_for('administrator.document_center'))
+        if not upload or not upload.filename:
+            flash('Válassz ki egy feltöltendő fájlt.', 'error')
+            return redirect(url_for('administrator.document_center'))
+
+        target_folder = _resolve_upload_folder(
+            tenant_root,
+            section_key,
+            employee_name=employee_name,
+            project_name=project_name,
+            accounting_period=accounting_period,
+        )
+
+        original_name = secure_filename(upload.filename)
+        prefix = _safe_segment(document_label, '')
+        filename = f'{prefix}_{original_name}' if prefix else original_name
+        destination = target_folder / filename
+        upload.save(destination)
+        flash('Dokumentum sikeresen feltöltve.', 'success')
+        return redirect(url_for('administrator.document_center'))
+
+    document_sections = _build_document_overview(tenant_root)
+    return render_template(
+        'administrator/documents.html',
+        document_sections=document_sections,
+        tenant=tenant,
+    )
+
+
+@administrator_bp.route('/documents/download/<path:relative_path>')
+@log_function_call
+def download_document(relative_path: str):
+    redirect_response = require_admin_login()
+    if redirect_response:
+        return redirect_response
+
+    tenant_id = session.get('current_tenant_id') or getattr(g, 'current_tenant_id', None)
+    tenant = ext_db.session.get(Tenant, tenant_id) if tenant_id else None
+    if not tenant:
+        abort(404)
+
+    tenant_root = _ensure_document_library(tenant)
+    requested_path = (tenant_root / relative_path).resolve()
+    if tenant_root.resolve() not in requested_path.parents and requested_path != tenant_root.resolve():
+        abort(403)
+    if not requested_path.exists() or not requested_path.is_file():
+        abort(404)
+
+    return send_from_directory(requested_path.parent, requested_path.name, as_attachment=False)
 
 
 @administrator_bp.route('/customers')

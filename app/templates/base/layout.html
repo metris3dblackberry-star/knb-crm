@@ -15,7 +15,7 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/SOLVIOR CRM.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/solvior.png') }}">
 
     <!-- Tabler CSS -->
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" rel="stylesheet">
@@ -37,7 +37,7 @@
         <div class="container-xl">
             <!-- Brand Logo -->
             <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='images/SOLVIOR CRM.png') }}" alt='SOLVIOR CRM' style="height: 30px; width: auto; margin-right: 8px;">
+                <img src="{{ url_for('static', filename='images/solvior.png') }}" alt='SOLVIOR CRM' style="height: 30px; width: auto; margin-right: 8px;">
                 <span>{%  if current_tenant %} &middot; {{ current_tenant.name | safe }}{% endif %}</span>
             </a>
 
@@ -284,7 +284,7 @@
             <!-- Main footer row -->
             <div class="row align-items-center py-2">
                 <div class="col-lg-auto d-flex align-items-center mb-2 mb-lg-0">
-                    <img src="{{ url_for('static', filename='images/SOLVIOR CRM.png') }}" alt='SOLVIOR CRM' style="height: 20px; width: auto; margin-right: 6px;">
+                    <img src="{{ url_for('static', filename='images/solvior.png') }}" alt='SOLVIOR CRM' style="height: 20px; width: auto; margin-right: 6px;">
                     <span>SOLVIOR CRM &copy; <script>document.write(new Date().getFullYear())</script>. All rights reserved.</span>
                 </div>
                 <div class="col-lg-auto ms-lg-auto d-flex align-items-center gap-3 mb-2 mb-lg-0">
@@ -386,9 +386,6 @@
                     dropdown.classList.add('show');
                 }
             });
-
-            function escapeHtml(text) 
-
 
             function escapeHtml(text) {
                 const div = document.createElement('div');

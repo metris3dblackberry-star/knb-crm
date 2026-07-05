@@ -1,0 +1,191 @@
+{% extends "base/layout_with_sidebar.html" %}
+{% block title %}Dokumentumtár - SOLVIOR CRM{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{{ url_for('administrator.dashboard') }}">Admin</a></li>
+<li class="breadcrumb-item active">Dokumentumtár</li>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                <div>
+                    <h1 class="h3 mb-1 d-flex align-items-center gap-2">
+                        <i class="ti ti-folders text-primary"></i>
+                        CRM Dokumentumtár
+                    </h1>
+                    <p class="text-muted mb-0">Előre felépített céges megfelelőségi mappastruktúra a(z) {{ tenant.name }} szervezethez.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-5">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="ti ti-folder-plus me-2"></i>Almappa létrehozása</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="row g-3">
+                        <input type="hidden" name="action" value="create_folder">
+                        <div class="col-12">
+                            <label class="form-label">Szekció</label>
+                            <select class="form-select" name="section_key" required>
+                                {% for section in document_sections %}
+                                <option value="{{ section.key }}">{{ section.key }} - {{ section.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Dolgozó neve</label>
+                            <input class="form-control" type="text" name="employee_name" placeholder="pl. Kovacs_Janos">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Projekt neve</label>
+                            <input class="form-control" type="text" name="project_name" placeholder="pl. Projekt_X">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Könyvelési év</label>
+                            <input class="form-control" type="text" name="accounting_year" placeholder="2026">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Hónap</label>
+                            <input class="form-control" type="text" name="accounting_month" placeholder="01">
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="ti ti-plus me-1"></i>Almappa létrehozása
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-7">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="ti ti-upload me-2"></i>Dokumentum feltöltése</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="row g-3">
+                        <input type="hidden" name="action" value="upload">
+                        <div class="col-md-6">
+                            <label class="form-label">Szekció</label>
+                            <select class="form-select" name="section_key" required>
+                                {% for section in document_sections %}
+                                <option value="{{ section.key }}">{{ section.key }} - {{ section.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dokumentum címke</label>
+                            <input class="form-control" type="text" name="document_label" placeholder="pl. Cegkivonat_2026">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Dolgozó almappa</label>
+                            <input class="form-control" type="text" name="employee_name" placeholder="Kovacs_Janos">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Projekt almappa</label>
+                            <input class="form-control" type="text" name="project_name" placeholder="Projekt_X">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Könyvelési útvonal</label>
+                            <input class="form-control" type="text" name="accounting_period" placeholder="2026/01">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Fájl</label>
+                            <input class="form-control" type="file" name="file" required>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-success" type="submit">
+                                <i class="ti ti-device-floppy me-1"></i>Feltöltés
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for section in document_sections %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-2">
+                    <div>
+                        <h3 class="card-title mb-1">{{ section.key }} - {{ section.label }}</h3>
+                        <div class="text-muted small">{{ section.files|length }} feltöltött fájl</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="border rounded p-3 bg-light">
+                                <div class="fw-semibold mb-2">Elvárt tartalom</div>
+                                <ul class="mb-0 ps-3">
+                                    {% for item in section.required_items %}
+                                    <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% if section.subfolders %}
+                                <div class="fw-semibold mt-3 mb-2">Almappák</div>
+                                {% for subfolder_name, subfolder_items in section.subfolders.items() %}
+                                <div class="small mb-2"><strong>{{ subfolder_name }}</strong></div>
+                                <ul class="mb-0 ps-3">
+                                    {% for subitem in subfolder_items %}
+                                    <li>{{ subitem }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-lg-8">
+                            {% if section.files %}
+                            <div class="table-responsive">
+                                <table class="table table-vcenter card-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fájl</th>
+                                            <th>Mappa</th>
+                                            <th>Méret</th>
+                                            <th class="text-end">Művelet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for file in section.files %}
+                                        <tr>
+                                            <td class="fw-semibold">{{ file.name }}</td>
+                                            <td><span class="badge bg-secondary-lt">{{ file.folder }}</span></td>
+                                            <td>{{ file.size_kb }} KB</td>
+                                            <td class="text-end">
+                                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('administrator.download_document', relative_path=file.relative_path) }}" target="_blank">
+                                                    <i class="ti ti-eye me-1"></i>Megnyit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="empty">
+                                <div class="empty-icon"><i class="ti ti-file-off"></i></div>
+                                <p class="empty-title">Még nincs feltöltött dokumentum</p>
+                                <p class="empty-subtitle text-muted">A felső űrlappal rögtön fel tudod tölteni az első fájlt ebbe a szekcióba.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

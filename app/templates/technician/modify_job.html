@@ -1,324 +1,226 @@
-﻿{% extends "base/layout.html" %}
-{% block title %}
-Munka szerkesztése #{{ data.job_id }} - SOLVIOR CRM
-{% endblock %}
+{% extends "base/layout.html" %}
+
+{% block title %}Munka szerkesztése #{{ data.job_id }}{% endblock %}
 
 {% block content %}
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex align-items-center justify-content-between">
-                <div>
-                    <h1 class="h3 mb-0">
-                        <i class="ti ti-tool text-primary me-2"></i>
-                        Munka szerkesztése #{{ data.job_id }}
-                    </h1>
-                    <p class="text-muted mb-0">Update job details, add services and parts</p>
-                </div>
-                <div>
-                    <a href="{{ url_for('technician.current_jobs') }}" class="btn btn-outline-primary">
-                        <i class="ti ti-arrow-left me-1"></i>
-                        Vissza a munkáhozs
-                    </a>
-                </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Munka szerkesztése #{{ data.job_id }}</h1>
+        <p class="text-muted mb-0">Tételek módosítása, törlése és tételszintű ÁFA-kezelés.</p>
+    </div>
+    <a href="{{ url_for('technician.job_detail', job_id=data.job_id) }}" class="btn btn-outline-secondary">
+        <i class="ti ti-arrow-left me-1"></i>Vissza
+    </a>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ügyfél</div>
+                <div class="fw-semibold fs-5">{{ data.first_name }} {{ data.family_name }}</div>
+                <div class="text-muted small mt-3">Munka dátuma</div>
+                <div>{{ data.job_date }}</div>
             </div>
         </div>
     </div>
-
-    <!-- Job Státusz Alert -->
-    {% if data.completed %}
-    <div class="alert alert-success border-0 shadow-sm mb-4">
-        <div class="d-flex">
-            <i class="ti ti-circle-check text-success me-2"></i>
-            <div>
-                <strong>Job Befejezett</strong>
-                <p class="mb-0">This job has been marked as completed. No further modifications are allowed.</p>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Állapot</div>
+                <div class="mt-1">
+                    {% if job_completed %}
+                    <span class="badge bg-success">Befejezett</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">Folyamatban</span>
+                    {% endif %}
+                </div>
+                <div class="text-muted small mt-3">Végösszeg</div>
+                <div class="fw-semibold fs-4 text-success">{{ "%.0f"|format(data.total_cost|float) }} Ft</div>
             </div>
         </div>
     </div>
-    {% endif %}
+</div>
 
-    <!-- Ügyfél & Munka adatai Card -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-user-circle me-2"></i>
-                        Ügyfél & Munka adatai
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Ügyfél</label>
-                                <div class="info-value">
-                                    <i class="ti ti-user me-2 text-primary"></i>
-                                    {{ data.first_name }} {{ data.family_name }}
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <label class="info-label">Ügyfél ID</label>
-                                <div class="info-value">
-                                    <i class="ti ti-hash me-2 text-secondary"></i>
-                                    {{ data.customer_id }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Munka dátuma</label>
-                                <div class="info-value">
-                                    <i class="ti ti-calendar-event me-2 text-primary"></i>
-                                    {{ data.job_date }}
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <label class="info-label">Végösszeg</label>
-                                <div class="info-value">
-                                    <i class="ti ti-currency-dollar me-2 text-success"></i>
-                                    {{ "%.0f"|format(data.total_cost|float) }} Ft
-                                </div>
-                            </div>
-                        </div>
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Szolgáltatások</h3>
+            </div>
+            <div class="card-body">
+                {% if not job_completed %}
+                <form method="POST" action="{{ url_for('technician.add_service_to_job', job_id=data.job_id) }}" class="row g-2 align-items-end mb-4">
+                    <div class="col-12">
+                        <label class="form-label">Szolgáltatás</label>
+                        <select class="form-select" name="service_id" required>
+                            <option value="">Válasszon szolgáltatást...</option>
+                            {% for service in all_services %}
+                            <option value="{{ service.service_id }}">{{ service.service_name }} - {{ "%.0f"|format(service.cost|float) }} Ft</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Completion Státusz</label>
-                                <div class="info-value">
-                                    {% if data.completed %}
-                                        <span class="badge bg-success">
-                                            <i class="ti ti-circle-check me-1"></i>
-                                            Befejezett
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-warning">
-                                            <i class="ti ti-clock me-1"></i>
-                                            Folyamatban
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Payment Státusz</label>
-                                <div class="info-value">
-                                    {% if data.paid %}
-                                        <span class="badge bg-success">
-                                            <i class="ti ti-credit-card me-1"></i>
-                                            Fizetve
-                                        </span>
-                                    {% else %}
-                                        <span class="badge bg-danger">
-                                            <i class="ti ti-alert-triangle me-1"></i>
-                                            Kifizetetlen
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Mennyiség</label>
+                        <input type="number" name="quantity" class="form-control" min="1" value="1" required>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ÁFA</label>
+                        <select name="vat_code" class="form-select">
+                            {% for code, item in vat_options.items() %}
+                            <option value="{{ code }}">{{ item.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Szolgáltatás hozzáadása</button>
+                    </div>
+                </form>
+                {% endif %}
 
-    <!-- Szolgáltatáss and Terméks Section -->
-    <div class="row">
-        <!-- Szolgáltatás hozzáadása Card -->
-        <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-settings me-2"></i>
-                        Szolgáltatáss Management
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <!-- Szolgáltatás hozzáadása Form -->
-                    <div class="mb-4">
-                        <h6 class="text-primary mb-3">
-                            <i class="ti ti-circle-plus me-2"></i>
-                            Add New Szolgáltatás
-                        </h6>
-                        <form method="POST" action="{{ url_for('add_service_to_job', job_id=data.job_id) }}">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Szolgáltatás Type</label>
-                                    <select class="form-select" name="service_id" required {% if job_completed %}disabled{% endif %}>
-                                        <option value="">Válasszon szolgáltatást...</option>
-                                        {% for service in all_services %}
-                                            <option value="{{ service.service_id }}">
-                                                {{ service.service_name }} - {{ "%.0f"|format(service.cost|float) }} Ft
-                                            </option>
-                                        {% endfor %}
+                {% if services %}
+                <div class="table-responsive">
+                    <table class="table table-vcenter">
+                        <thead>
+                            <tr>
+                                <th>Szolgáltatás</th>
+                                <th>Mennyiség</th>
+                                <th>ÁFA</th>
+                                <th class="text-end">Részösszeg</th>
+                                {% if not job_completed %}<th></th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in services %}
+                            {% set service_form_id = 'service-form-' ~ service.service_id %}
+                            <tr>
+                                <td class="fw-semibold">{{ service.service_name }}</td>
+                                {% if not job_completed %}
+                                <td>
+                                    <input type="number" name="quantity" form="{{ service_form_id }}" class="form-control form-control-sm" min="1" value="{{ service.qty }}" style="width:88px">
+                                </td>
+                                <td>
+                                    <input type="hidden" name="csrf_token" form="{{ service_form_id }}" value="{{ csrf_token() }}">
+                                    <select name="vat_code" form="{{ service_form_id }}" class="form-select form-select-sm" style="min-width:110px">
+                                            {% for code, item in vat_options.items() %}
+                                            <option value="{{ code }}" {% if service.vat_code == code %}selected{% endif %}>{{ item.label }}</option>
+                                            {% endfor %}
                                     </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Mennyiség</label>
-                                    <input type="number" name="service_qty" class="form-control" min="1" value="1" required {% if job_completed %}disabled{% endif %}>
-                                </div>
-                                <div class="col-6 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-info w-100" {% if job_completed %}disabled{% endif %}>
-                                        <i class="ti ti-plus me-1"></i>
-                                        Szolgáltatás hozzáadása
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Jelenlegi szolgáltatások -->
-                    <div>
-                        <h6 class="text-secondary mb-3">
-                            <i class="ti ti-list-check me-2"></i>
-                            Jelenlegi szolgáltatások
-                        </h6>
-                        {% if services %}
-                            <div class="list-group">
-                                {% for service in services %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ service.service_name }}</h6>
-                                            <small class="text-muted">Mennyiség: {{ service.qty }}</small>
-                                        </div>
-                                        <span class="badge bg-info rounded-pill">{{ service.qty }}</span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="ti ti-settings text-muted" style="font-size: 2rem;"></i>
-                                <p class="text-muted mt-2">No services added yet</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                                </td>
+                                <td class="text-end">{{ "%.0f"|format(service.total_cost|float) }} Ft</td>
+                                <td class="text-end">
+                                    <form id="{{ service_form_id }}" method="POST" action="{{ url_for('technician.update_service_on_job', job_id=data.job_id, service_id=service.service_id) }}"></form>
+                                    <button type="submit" form="{{ service_form_id }}" class="btn btn-sm btn-outline-primary">Mentés</button>
+                                    <form method="POST" action="{{ url_for('technician.remove_service_from_job', job_id=data.job_id, service_id=service.service_id) }}" class="d-inline-block ms-2" onsubmit="return confirm('Biztosan törlöd ezt a szolgáltatást?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Törlés</button>
+                                    </form>
+                                </td>
+                                {% else %}
+                                <td>{{ service.qty }}</td>
+                                <td>{{ vat_options.get(service.vat_code, vat_options['27']).label }}</td>
+                                <td class="text-end">{{ "%.0f"|format(service.total_cost|float) }} Ft</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <p class="text-muted mb-0">Még nincs hozzáadott szolgáltatás.</p>
+                {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Termék hozzáadásas Card -->
-        <div class="col-lg-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-puzzle me-2"></i>
-                        Terméks Management
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <!-- Termék hozzáadása Form -->
-                    <div class="mb-4">
-                        <h6 class="text-primary mb-3">
-                            <i class="ti ti-circle-plus me-2"></i>
-                            Add New Termék
-                        </h6>
-                        <form method="POST" action="{{ url_for('add_part_to_job', job_id=data.job_id) }}">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Termék Type</label>
-                                    <select class="form-select" name="part_id" required {% if job_completed %}disabled{% endif %}>
-                                        <option value="">Válasszon Termékt...</option>
-                                        {% for part in all_parts %}
-                                            <option value="{{ part.part_id }}">
-                                                {{ part.part_name }} - {{ "%.0f"|format(part.cost|float) }} Ft
-                                            </option>
-                                        {% endfor %}
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Termékek</h3>
+            </div>
+            <div class="card-body">
+                {% if not job_completed %}
+                <form method="POST" action="{{ url_for('technician.add_part_to_job', job_id=data.job_id) }}" class="row g-2 align-items-end mb-4">
+                    <div class="col-12">
+                        <label class="form-label">Termék</label>
+                        <select class="form-select" name="part_id" required>
+                            <option value="">Válasszon terméket...</option>
+                            {% for part in all_parts %}
+                            <option value="{{ part.part_id }}">{{ part.part_name }} - {{ "%.0f"|format(part.cost|float) }} Ft</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Mennyiség</label>
+                        <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ÁFA</label>
+                        <select name="vat_code" class="form-select">
+                            {% for code, item in vat_options.items() %}
+                            <option value="{{ code }}">{{ item.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">Termék hozzáadása</button>
+                    </div>
+                </form>
+                {% endif %}
+
+                {% if parts %}
+                <div class="table-responsive">
+                    <table class="table table-vcenter">
+                        <thead>
+                            <tr>
+                                <th>Termék</th>
+                                <th>Mennyiség</th>
+                                <th>ÁFA</th>
+                                <th class="text-end">Részösszeg</th>
+                                {% if not job_completed %}<th></th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for part in parts %}
+                            {% set part_form_id = 'part-form-' ~ part.part_id %}
+                            <tr>
+                                <td class="fw-semibold">{{ part.part_name }}</td>
+                                {% if not job_completed %}
+                                <td>
+                                    <input type="number" name="quantity" form="{{ part_form_id }}" class="form-control form-control-sm" min="1" value="{{ part.qty }}" style="width:88px">
+                                </td>
+                                <td>
+                                    <input type="hidden" name="csrf_token" form="{{ part_form_id }}" value="{{ csrf_token() }}">
+                                    <select name="vat_code" form="{{ part_form_id }}" class="form-select form-select-sm" style="min-width:110px">
+                                            {% for code, item in vat_options.items() %}
+                                            <option value="{{ code }}" {% if part.vat_code == code %}selected{% endif %}>{{ item.label }}</option>
+                                            {% endfor %}
                                     </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label">Mennyiség</label>
-                                    <input type="number" name="part_qty" class="form-control" min="1" value="1" required {% if job_completed %}disabled{% endif %}>
-                                </div>
-                                <div class="col-6 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-success w-100" {% if job_completed %}disabled{% endif %}>
-                                        <i class="ti ti-plus me-1"></i>
-                                        Termék hozzáadása
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Jelenlegi Termékek -->
-                    <div>
-                        <h6 class="text-secondary mb-3">
-                            <i class="ti ti-list-check me-2"></i>
-                            Jelenlegi Termékek
-                        </h6>
-                        {% if parts %}
-                            <div class="list-group">
-                                {% for part in parts %}
-                                <div class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ part.part_name }}</h6>
-                                            <small class="text-muted">Mennyiség: {{ part.qty }}</small>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill">{{ part.qty }}</span>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="text-center py-4">
-                                <i class="ti ti-puzzle text-muted" style="font-size: 2rem;"></i>
-                                <p class="text-muted mt-2">No parts added yet</p>
-                            </div>
-                        {% endif %}
-                    </div>
+                                </td>
+                                <td class="text-end">{{ "%.0f"|format(part.total_cost|float) }} Ft</td>
+                                <td class="text-end">
+                                    <form id="{{ part_form_id }}" method="POST" action="{{ url_for('technician.update_part_on_job', job_id=data.job_id, part_id=part.part_id) }}"></form>
+                                    <button type="submit" form="{{ part_form_id }}" class="btn btn-sm btn-outline-primary">Mentés</button>
+                                    <form method="POST" action="{{ url_for('technician.remove_part_from_job', job_id=data.job_id, part_id=part.part_id) }}" class="d-inline-block ms-2" onsubmit="return confirm('Biztosan törlöd ezt a terméket?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Törlés</button>
+                                    </form>
+                                </td>
+                                {% else %}
+                                <td>{{ part.qty }}</td>
+                                <td>{{ vat_options.get(part.vat_code, vat_options['27']).label }}</td>
+                                <td class="text-end">{{ "%.0f"|format(part.total_cost|float) }} Ft</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <p class="text-muted mb-0">Még nincs hozzáadott termék.</p>
+                {% endif %}
             </div>
         </div>
     </div>
-
-    <!-- Complete Job Section -->
-    {% if not data.completed %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-circle-check me-2"></i>
-                        Complete Job
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="alert alert-warning border-0 mb-3">
-                                <div class="d-flex">
-                                    <i class="ti ti-alert-triangle me-2"></i>
-                                    <div>
-                                        <strong>Important Notice</strong>
-                                        <p class="mb-0">Once this job is marked as completed, no further modifications can be made. Please ensure all services and parts have been added before completing.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <p class="text-muted mb-0">
-                                Current total cost: <strong>{{ "%.0f"|format(data.total_cost|float) }} Ft</strong>
-                            </p>
-                        </div>
-                        <div class="col-md-4 text-md-end">
-                            <form action="{{ url_for('technician.complete_job', job_id=data['job_id']) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-warning btn-lg" onclick="return confirm('Biztosan befejezettnek jelöli ezt a munkát? This action cannot be undone.')">
-                                    <i class="ti ti-circle-check me-2"></i>
-                                    Mark as Befejezett
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+</div>
 {% endblock %}
-
-
-

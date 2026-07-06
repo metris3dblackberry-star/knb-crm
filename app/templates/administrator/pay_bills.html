@@ -1,5 +1,5 @@
 {% extends "base/layout.html" %}
-{% block title %}Befejezett munkák – Számlázás{% endblock %}
+{% block title %}Befejezett munkák - számlázás{% endblock %}
 
 {% block breadcrumb_items %}
     <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Műszerfal</a></li>
@@ -11,9 +11,9 @@
     <div>
         <h1 class="h3 fw-bold mb-2 d-flex align-items-center gap-2">
             <i class="ti ti-file-invoice text-primary"></i>
-            Befejezett munkák – Számlázás
+            Befejezett munkák - számlázás
         </h1>
-        <p class="text-muted mb-0">Befejezett munkák számláinak kezelése és kiküldése</p>
+        <p class="text-muted mb-0">Számlagenerálás, határidők és fizetettség kezelése.</p>
     </div>
 </div>
 
@@ -35,7 +35,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title"><i class="ti ti-list me-2"></i>Befejezett munkák</h3>
+        <h3 class="card-title"><i class="ti ti-list me-2"></i>Kifizetetlen és számlázható munkák</h3>
         <div class="card-actions"><span class="text-muted">{{ unpaid_bills|length }} munka</span></div>
     </div>
 
@@ -47,54 +47,74 @@
                     <th>Munka #</th>
                     <th>Ügyfél</th>
                     <th>Dátum</th>
+                    <th>Fizetési határidő</th>
+                    <th>Jelzés</th>
                     <th class="text-end">Összeg</th>
-                    <th>Fizetés</th>
+                    <th>Státusz</th>
                     <th class="text-center">Műveletek</th>
                 </tr>
             </thead>
             <tbody>
                 {% for job in unpaid_bills %}
+                {% set due_date = due_dates.get(job.job_id) %}
+                {% set days_left = (due_date - today).days if due_date else none %}
                 <tr>
                     <td><a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="fw-semibold">#{{ job.job_id }}</a></td>
                     <td>
                         {% if job.customer_rel %}
                         <div class="fw-semibold">{{ job.customer_rel.first_name }} {{ job.customer_rel.family_name }}</div>
                         <small class="text-muted">{{ job.customer_rel.email or '' }}</small>
-                        {% else %}<span class="text-muted">N/A</span>{% endif %}
+                        {% else %}
+                        <span class="text-muted">N/A</span>
+                        {% endif %}
                     </td>
                     <td>{{ job.job_date.strftime('%Y. %m. %d.') if job.job_date else 'N/A' }}</td>
+                    <td>
+                        {% if due_date %}
+                        {{ due_date.strftime('%Y. %m. %d.') }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if days_left is not none and days_left < 0 %}
+                        <span class="badge bg-danger">Lejárt {{ (days_left * -1) }} napja</span>
+                        {% elif days_left is not none and days_left <= 3 %}
+                        <span class="badge bg-warning text-dark">Hamarosan lejár</span>
+                        {% else %}
+                        <span class="badge bg-success-lt">{{ payment_terms_days }} napos határidő</span>
+                        {% endif %}
+                    </td>
                     <td class="text-end fw-semibold text-success">{{ "%.0f"|format(job.total_cost|float) }} Ft</td>
                     <td>
                         {% if job.paid %}
-                        <span class="badge bg-success"><i class="ti ti-circle-check me-1"></i>Fizetve</span>
+                        <span class="badge bg-success">Fizetve</span>
                         {% else %}
-                        <span class="badge bg-warning"><i class="ti ti-clock me-1"></i>Kifizetetlen</span>
+                        <span class="badge bg-warning text-dark">Kifizetetlen</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
                         <div class="d-flex gap-1 justify-content-center">
                             <div class="btn-group">
-                                <a href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='NORMAL') }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer" title="Számla PDF"><i class="ti ti-file-invoice"></i></a>
+                                <a href="{{ url_for('technician.invoice_setup', job_id=job.job_id) }}" class="btn btn-sm btn-outline-primary" title="Számla konfigurálása">
+                                    <i class="ti ti-file-invoice"></i>
+                                </a>
                                 <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                                     <span class="visually-hidden">Számlatípus választás</span>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='NORMAL') }}" target="_blank" rel="noopener noreferrer">Számla</a>
-                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='ADVANCE') }}" target="_blank" rel="noopener noreferrer">Előlegszámla</a>
-                                    <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=job.job_id, invoice_type='PAYMENT_REQUEST') }}" target="_blank" rel="noopener noreferrer">Díjbekérő</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=job.job_id, invoice_type='NORMAL') }}">Számla</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=job.job_id, invoice_type='ADVANCE') }}">Előlegszámla</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=job.job_id, invoice_type='PAYMENT_REQUEST') }}">Díjbekérő</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=job.job_id, invoice_type='CORRECTION') }}">Helyesbítő számla</a>
+                                    <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=job.job_id, invoice_type='CANCELLATION') }}">Sztornó számla</a>
                                 </div>
                             </div>
                             <a href="{{ url_for('technician.generate_worksheet', job_id=job.job_id) }}" class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener noreferrer" title="TIG PDF új fülön"><i class="ti ti-clipboard-text"></i></a>
-                            {% if job.customer_rel and job.customer_rel.email %}
-                            <form method="POST" action="{{ url_for('technician.send_job_email', job_id=job.job_id) }}" class="d-inline">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="Küldés emailben"><i class="ti ti-mail"></i></button>
-                            </form>
-                            {% endif %}
                             {% if not job.paid %}
                             <form method="POST" action="{{ url_for('administrator.pay_single_bill', job_id=job.job_id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-success" title="Fizetettenek jelöl"><i class="ti ti-credit-card"></i></button>
+                                <button type="submit" class="btn btn-sm btn-success" title="Fizetettnek jelöl"><i class="ti ti-credit-card"></i></button>
                             </form>
                             {% endif %}
                         </div>
@@ -107,8 +127,8 @@
     {% else %}
     <div class="empty">
         <div class="empty-icon"><i class="ti ti-file-invoice"></i></div>
-        <p class="empty-title">Nincs befejezett munka</p>
-        <p class="empty-subtitle text-secondary">Még nincs befejezettnek jelölt munkamegrendelés.</p>
+        <p class="empty-title">Nincs számlázható munka</p>
+        <p class="empty-subtitle text-secondary">Jelenleg nincs befejezett, kifizetetlen munka.</p>
     </div>
     {% endif %}
 </div>

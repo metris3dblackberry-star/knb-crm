@@ -112,6 +112,7 @@
                                 <select class="form-select" name="currency">
                                     <option value="HUF" {% if org.settings and org.settings.get('currency', 'HUF') == 'HUF' %}selected{% endif %}>HUF - Magyar forint</option>
                                     <option value="EUR" {% if org.settings and org.settings.get('currency') == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                                    <option value="USD" {% if org.settings and org.settings.get('currency') == 'USD' %}selected{% endif %}>USD - Amerikai dollár</option>
                                     <option value="AUD" {% if org.settings and org.settings.get('currency') == 'AUD' %}selected{% endif %}>AUD - Ausztrál dollár</option>
                                 </select>
                             </div>
@@ -145,7 +146,7 @@
                                 </label>
                                 <select class="form-select" name="default_vat_code">
                                     {% set default_vat = org.settings.get('default_vat_code', '27') if org.settings else '27' %}
-                                    {% for code, label in [('27', '27%'), ('5', '5%'), ('FFAF', 'FFAF'), ('FAD', 'FAD'), ('EUA', 'EUA'), ('AAM', 'AAM'), ('TAM', 'TAM'), ('KBAET', 'KBAET')] %}
+                                    {% for code, label in [('0', '0%'), ('5', '5%'), ('18', '18%'), ('27', '27%'), ('FFAF', 'FFAF'), ('FAD', 'FAD'), ('EUA', 'EUA'), ('EUE', 'EUE'), ('AAM', 'AAM'), ('TAM', 'TAM'), ('KBAET', 'KBAET'), ('EAM', 'EAM')] %}
                                     <option value="{{ code }}" {% if default_vat == code %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
                                 </select>

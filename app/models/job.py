@@ -20,6 +20,7 @@ class JobService(db.Model):
     job_id: Mapped[int] = mapped_column(ForeignKey('job.job_id', onupdate='CASCADE'), primary_key=True)
     service_id: Mapped[int] = mapped_column(ForeignKey('service.service_id', onupdate='CASCADE'), primary_key=True)
     qty: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    vat_code: Mapped[str] = mapped_column(String(16), nullable=False, default='27')
 
     # Relationships
     job: Mapped["Job"] = relationship("Job", back_populates="job_services")
@@ -39,6 +40,7 @@ class JobPart(db.Model):
     job_id: Mapped[int] = mapped_column(ForeignKey('job.job_id', onupdate='CASCADE'), primary_key=True)
     part_id: Mapped[int] = mapped_column(ForeignKey('part.part_id', onupdate='CASCADE'), primary_key=True)
     qty: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    vat_code: Mapped[str] = mapped_column(String(16), nullable=False, default='27')
 
     # Relationships
     job: Mapped["Job"] = relationship("Job", back_populates="job_parts")
@@ -124,7 +126,7 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         """Get unpaid jobs, optionally filtered by customer name"""
         from app.models.customer import Customer
 
-        filters = [cls.paid == False]
+        filters = [cls.paid == False, cls.completed == True]
         tenant_id = cls._get_current_tenant_id()
         if tenant_id:
             filters.append(cls.tenant_id == tenant_id)
@@ -165,8 +167,10 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         """Get services for this job"""
         return [
             {
+                'service_id': js.service_id,
                 'service_name': js.service.service_name,
                 'qty': js.qty,
+                'vat_code': js.vat_code or '27',
                 'cost': float(js.service.cost),
                 'total_cost': float(js.total_cost)
             }
@@ -177,15 +181,17 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         """Get parts for this job"""
         return [
             {
+                'part_id': jp.part_id,
                 'part_name': jp.part.part_name,
                 'qty': jp.qty,
+                'vat_code': jp.vat_code or '27',
                 'cost': float(jp.part.cost),
                 'total_cost': float(jp.total_cost)
             }
             for jp in self.job_parts
         ]
 
-    def add_service(self, service_id: int, quantity: int) -> bool:
+    def add_service(self, service_id: int, quantity: int, vat_code: str = '27') -> bool:
         """Add a service to this job, or increase qty if already exists"""
         if self.completed:
             raise ValueError("Cannot modify a completed job")
@@ -201,13 +207,13 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
 
         if existing:
             db.session.execute(
-                db.text("UPDATE job_service SET qty=qty+:qty WHERE job_id=:job_id AND service_id=:service_id"),
-                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
+                db.text("UPDATE job_service SET qty=qty+:qty, vat_code=:vat_code WHERE job_id=:job_id AND service_id=:service_id"),
+                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity, 'vat_code': vat_code}
             )
         else:
             db.session.execute(
-                db.text("INSERT INTO job_service (job_id, service_id, qty) VALUES (:job_id, :service_id, :qty)"),
-                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity}
+                db.text("INSERT INTO job_service (job_id, service_id, qty, vat_code) VALUES (:job_id, :service_id, :qty, :vat_code)"),
+                {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity, 'vat_code': vat_code}
             )
         db.session.flush()
         db.session.expire(self)
@@ -215,7 +221,7 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
         db.session.commit()
         return True
 
-    def add_part(self, part_id: int, quantity: int) -> bool:
+    def add_part(self, part_id: int, quantity: int, vat_code: str = '27') -> bool:
         """Add a part to this job, or increase qty if already exists"""
         if self.completed:
             raise ValueError("Cannot modify a completed job")
@@ -231,14 +237,94 @@ class Job(db.Model, BaseModelMixin, TenantScopedMixin):
 
         if existing:
             db.session.execute(
-                db.text("UPDATE job_part SET qty=qty+:qty WHERE job_id=:job_id AND part_id=:part_id"),
-                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
+                db.text("UPDATE job_part SET qty=qty+:qty, vat_code=:vat_code WHERE job_id=:job_id AND part_id=:part_id"),
+                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity, 'vat_code': vat_code}
             )
         else:
             db.session.execute(
-                db.text("INSERT INTO job_part (job_id, part_id, qty) VALUES (:job_id, :part_id, :qty)"),
-                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity}
+                db.text("INSERT INTO job_part (job_id, part_id, qty, vat_code) VALUES (:job_id, :part_id, :qty, :vat_code)"),
+                {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity, 'vat_code': vat_code}
             )
+        db.session.flush()
+        db.session.expire(self)
+        self._update_total_cost()
+        db.session.commit()
+        return True
+
+    def update_service_entry(self, service_id: int, quantity: int, vat_code: str = '27') -> bool:
+        """Update quantity and VAT code for an existing service line."""
+        if self.completed:
+            raise ValueError("Cannot modify a completed job")
+        if quantity <= 0:
+            raise ValueError("Quantity must be greater than 0")
+
+        result = db.session.execute(
+            db.text("""
+                UPDATE job_service
+                SET qty = :qty, vat_code = :vat_code
+                WHERE job_id = :job_id AND service_id = :service_id
+            """),
+            {'job_id': self.job_id, 'service_id': service_id, 'qty': quantity, 'vat_code': vat_code}
+        )
+        if result.rowcount == 0:
+            raise ValueError("Service line not found")
+        db.session.flush()
+        db.session.expire(self)
+        self._update_total_cost()
+        db.session.commit()
+        return True
+
+    def update_part_entry(self, part_id: int, quantity: int, vat_code: str = '27') -> bool:
+        """Update quantity and VAT code for an existing part line."""
+        if self.completed:
+            raise ValueError("Cannot modify a completed job")
+        if quantity <= 0:
+            raise ValueError("Quantity must be greater than 0")
+
+        result = db.session.execute(
+            db.text("""
+                UPDATE job_part
+                SET qty = :qty, vat_code = :vat_code
+                WHERE job_id = :job_id AND part_id = :part_id
+            """),
+            {'job_id': self.job_id, 'part_id': part_id, 'qty': quantity, 'vat_code': vat_code}
+        )
+        if result.rowcount == 0:
+            raise ValueError("Part line not found")
+        db.session.flush()
+        db.session.expire(self)
+        self._update_total_cost()
+        db.session.commit()
+        return True
+
+    def remove_service_entry(self, service_id: int) -> bool:
+        """Delete a service line from the job."""
+        if self.completed:
+            raise ValueError("Cannot modify a completed job")
+
+        result = db.session.execute(
+            db.text("DELETE FROM job_service WHERE job_id=:job_id AND service_id=:service_id"),
+            {'job_id': self.job_id, 'service_id': service_id}
+        )
+        if result.rowcount == 0:
+            raise ValueError("Service line not found")
+        db.session.flush()
+        db.session.expire(self)
+        self._update_total_cost()
+        db.session.commit()
+        return True
+
+    def remove_part_entry(self, part_id: int) -> bool:
+        """Delete a part line from the job."""
+        if self.completed:
+            raise ValueError("Cannot modify a completed job")
+
+        result = db.session.execute(
+            db.text("DELETE FROM job_part WHERE job_id=:job_id AND part_id=:part_id"),
+            {'job_id': self.job_id, 'part_id': part_id}
+        )
+        if result.rowcount == 0:
+            raise ValueError("Part line not found")
         db.session.flush()
         db.session.expire(self)
         self._update_total_cost()

@@ -1,0 +1,141 @@
+{% extends "base/layout.html" %}
+
+{% block title %}Számlakonfiguráció - Munka #{{ job.job_id }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Számlakonfiguráció</h1>
+        <p class="text-muted mb-0">A PDF megnyitása előtt itt testre szabhatod az adott számlát.</p>
+    </div>
+    <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="btn btn-outline-secondary">Vissza</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('technician.generate_invoice', job_id=job.job_id) }}" class="row g-3" id="crmInvoiceSetupForm">
+            <div class="col-md-4">
+                <label class="form-label">Számlatípus</label>
+                <select name="invoice_type" id="invoiceTypeSelect" class="form-select">
+                    {% for code, label in invoice_types.items() %}
+                    <option value="{{ code }}" {% if invoice_cfg.invoice_type == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Pénznem</label>
+                <select name="currency" class="form-select">
+                    {% for code, item in currencies.items() %}
+                    <option value="{{ code }}" {% if invoice_cfg.currency == code %}selected{% endif %}>{{ code }} - {{ item.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Alapértelmezett ÁFA</label>
+                <select name="vat_code" class="form-select">
+                    {% for code, item in vat_options.items() %}
+                    <option value="{{ code }}" {% if invoice_cfg.vat_code == code %}selected{% endif %}>{{ item.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fizetési mód</label>
+                <select name="payment_method" class="form-select">
+                    {% for code, label in payment_methods.items() %}
+                    <option value="{{ code }}" {% if invoice_cfg.payment_method == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Kiállítás dátuma</label>
+                <input type="date" name="issue_date" class="form-control" value="{{ invoice_cfg.issue_date.isoformat() }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Teljesítés dátuma</label>
+                <input type="date" name="performance_date" class="form-control" value="{{ invoice_cfg.performance_date.isoformat() }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fizetési határidő</label>
+                <input type="date" name="due_date" class="form-control" value="{{ invoice_cfg.due_date.isoformat() }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fizetési határidő napokban</label>
+                <input type="number" min="0" max="365" name="payment_terms_days" class="form-control" value="{{ (invoice_cfg.due_date - invoice_cfg.issue_date).days }}">
+            </div>
+            <div class="col-md-4 correction-only d-none">
+                <label class="form-label">Eredeti számlaszám</label>
+                <input type="text" name="original_invoice" class="form-control remember-field" data-remember-key="crm_original_invoice" list="crmOriginalInvoiceHistory" value="{{ invoice_cfg.original_invoice or '' }}">
+                <datalist id="crmOriginalInvoiceHistory"></datalist>
+            </div>
+            <div class="col-md-8 correction-only d-none">
+                <label class="form-label">Módosítás oka</label>
+                <input type="text" name="correction_reason" class="form-control remember-field" data-remember-key="crm_correction_reason" list="crmCorrectionReasonHistory" value="{{ invoice_cfg.correction_reason or '' }}">
+                <datalist id="crmCorrectionReasonHistory"></datalist>
+            </div>
+            <div class="col-12">
+                <div class="alert alert-info mb-0">
+                    A tételszintű ÁFA a munka szerkesztése oldalon állítható. Az itt kiválasztott ÁFA csak alapértelmezettként szolgál az új tételekhez és a megjelenítéshez.
+                </div>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a href="{{ url_for('technician.job_detail', job_id=job.job_id) }}" class="btn btn-outline-secondary">Mégse</a>
+                <button type="submit" class="btn btn-primary">Számla megnyitása</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const form = document.getElementById('crmInvoiceSetupForm');
+    const invoiceType = document.getElementById('invoiceTypeSelect');
+    const correctionFields = Array.from(document.querySelectorAll('.correction-only'));
+    const rememberFields = Array.from(document.querySelectorAll('.remember-field'));
+
+    function syncCorrectionFields() {
+        const show = invoiceType && ['CORRECTION', 'CANCELLATION'].includes(invoiceType.value);
+        correctionFields.forEach((item) => item.classList.toggle('d-none', !show));
+    }
+
+    function hydrateHistory(input) {
+        const key = input.dataset.rememberKey;
+        const listId = input.getAttribute('list');
+        const list = listId ? document.getElementById(listId) : null;
+        if (!key || !list) return;
+        let values = [];
+        try {
+            values = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch (error) {
+            values = [];
+        }
+        list.innerHTML = values.map((value) => `<option value="${String(value).replace(/"/g, '&quot;')}"></option>`).join('');
+    }
+
+    function saveHistory(input) {
+        const key = input.dataset.rememberKey;
+        const value = (input.value || '').trim();
+        if (!key || !value) return;
+        let values = [];
+        try {
+            values = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch (error) {
+            values = [];
+        }
+        values = [value, ...values.filter((item) => item !== value)].slice(0, 12);
+        localStorage.setItem(key, JSON.stringify(values));
+    }
+
+    rememberFields.forEach(hydrateHistory);
+    syncCorrectionFields();
+
+    if (invoiceType) {
+        invoiceType.addEventListener('change', syncCorrectionFields);
+    }
+    if (form) {
+        form.addEventListener('submit', () => rememberFields.forEach(saveHistory));
+    }
+})();
+</script>
+{% endblock %}

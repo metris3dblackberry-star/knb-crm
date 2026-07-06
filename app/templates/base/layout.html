@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,19 +109,19 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'technician' in request.endpoint and 'new' in request.endpoint %}active{% endif %}" href="{{ url_for('technician.new_job') }}">
                                     <i class="ti ti-circle-plus me-1"></i>
-                                    <span>New Job</span>
+                                <span>Új munka</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'technician' in request.endpoint and 'services' in request.endpoint %}active{% endif %}" href="{{ url_for('technician.services') }}">
                                     <i class="ti ti-tool me-1"></i>
-                                    <span>Services</span>
+                                <span>Szolgáltatások</span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint and 'technician' in request.endpoint and 'parts' in request.endpoint %}active{% endif %}" href="{{ url_for('technician.parts') }}">
                                     <i class="ti ti-package me-1"></i>
-                                    <span>Parts</span>
+                                <span>Termékek</span>
                                 </a>
                             </li>
                         {% endif %}
@@ -166,14 +166,14 @@
                                 {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><h6 class="dropdown-header">Notifications</h6></li>
+                                <li><h6 class="dropdown-header">Értesítések</h6></li>
                                 {% if overdue_bills_count|default(0) > 0 %}
                                 <li><a class="dropdown-item" href="{% if session.current_role in ('owner', 'admin') %}{{ url_for('administrator.overdue_bills') }}{% else %}#{% endif %}">
                                     <div class="d-flex">
                                         <i class="ti ti-alert-triangle text-warning me-2"></i>
                                         <div>
-                                            <div class="fw-semibold">Overdue Payments</div>
-                                            <small class="text-secondary">{{ overdue_bills_count }} bill{{ 's' if overdue_bills_count != 1 }} overdue</small>
+                                            <div class="fw-semibold">Lejárt számlák</div>
+                                            <small class="text-secondary">{{ overdue_bills_count }} számla lejárt</small>
                                         </div>
                                     </div>
                                 </a></li>
@@ -183,17 +183,17 @@
                                     <div class="d-flex">
                                         <i class="ti ti-credit-card text-info me-2"></i>
                                         <div>
-                                            <div class="fw-semibold">Unpaid Bills</div>
-                                            <small class="text-secondary">{{ unpaid_bills_count }} bill{{ 's' if unpaid_bills_count != 1 }} awaiting payment</small>
+                                            <div class="fw-semibold">Kifizetetlen számlák</div>
+                                            <small class="text-secondary">{{ unpaid_bills_count }} számla vár fizetésre</small>
                                         </div>
                                     </div>
                                 </a></li>
                                 {% endif %}
                                 {% if notification_count|default(0) == 0 %}
-                                <li><span class="dropdown-item text-secondary">No new notifications</span></li>
+                                <li><span class="dropdown-item text-secondary">Nincs új értesítés</span></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-center" href="{{ url_for('main.dashboard') }}">View dashboard</a></li>
+                                <li><a class="dropdown-item text-center" href="{{ url_for('main.dashboard') }}">Műszerfal megnyitása</a></li>
                             </ul>
                         </li>
 
@@ -203,7 +203,8 @@
                                 <span class="avatar avatar-sm bg-white-lt me-2"><i class="ti ti-user"></i></span>
                                 <div class="d-none d-md-block lh-sm">
                                     <div class="fw-semibold">{{ session.user_id }}</div>
-                                    <small class="text-white-50">{{ session.current_role|title }}</small>
+                                    {% set role_labels = {'owner': 'Tulajdonos', 'admin': 'Adminisztrátor', 'manager': 'Menedzser', 'technician': 'Szerelő', 'parts_clerk': 'Raktáros', 'viewer': 'Megfigyelő'} %}
+                                    <small class="text-white-50">{{ role_labels.get(session.current_role, session.current_role) }}</small>
                                 </div>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -220,7 +221,7 @@
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="#" onclick="document.querySelector('.org-switcher-btn')?.click(); return false;">
-                                        <i class="ti ti-switch-horizontal me-2"></i>Switch Organization
+                                        <i class="ti ti-switch-horizontal me-2"></i>Szervezetváltás
                                     </a>
                                 </li>
                                 {% endif %}

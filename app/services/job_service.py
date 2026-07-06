@@ -84,7 +84,7 @@ class JobService:
             self.logger.error(f"Failed to get job details (ID: {job_id}): {e}")
             return {}
 
-    def add_service_to_job(self, job_id: int, service_id: int, quantity: int) -> Tuple[bool, List[str]]:
+    def add_service_to_job(self, job_id: int, service_id: int, quantity: int, vat_code: str = '27') -> Tuple[bool, List[str]]:
         """
         Add service to job
 
@@ -111,7 +111,7 @@ class JobService:
             if not service:
                 return False, ["Szolgáltatás nem található"]
 
-            job.add_service(service_id, quantity)
+            job.add_service(service_id, quantity, vat_code)
             self.logger.info(f"Added service {service.service_name} to job {job_id}")
             return True, []
 
@@ -123,7 +123,7 @@ class JobService:
             db.session.expire_all()
             return False, ["Rendszerhiba, próbáld újra"]
 
-    def add_part_to_job(self, job_id: int, part_id: int, quantity: int) -> Tuple[bool, List[str]]:
+    def add_part_to_job(self, job_id: int, part_id: int, quantity: int, vat_code: str = '27') -> Tuple[bool, List[str]]:
         """
         Add part to job
 
@@ -150,7 +150,7 @@ class JobService:
             if not part:
                 return False, ["Termék nem található"]
 
-            job.add_part(part_id, quantity)
+            job.add_part(part_id, quantity, vat_code)
             self.logger.info(f"Added part {part.part_name} to job {job_id}")
             return True, []
 
@@ -158,6 +158,70 @@ class JobService:
             return False, [str(e)]
         except Exception as e:
             self.logger.error(f"Failed to add part: {e}")
+            db.session.rollback()
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
+
+    def update_service_on_job(self, job_id: int, service_id: int, quantity: int, vat_code: str = '27') -> Tuple[bool, List[str]]:
+        """Update an existing service line on a job."""
+        try:
+            job = self.get_job_by_id(job_id)
+            if not job:
+                return False, ["Job does not exist"]
+            job.update_service_entry(service_id, quantity, vat_code)
+            return True, []
+        except ValueError as e:
+            return False, [str(e)]
+        except Exception as e:
+            self.logger.error(f"Failed to update service on job: {e}")
+            db.session.rollback()
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
+
+    def update_part_on_job(self, job_id: int, part_id: int, quantity: int, vat_code: str = '27') -> Tuple[bool, List[str]]:
+        """Update an existing part line on a job."""
+        try:
+            job = self.get_job_by_id(job_id)
+            if not job:
+                return False, ["Job does not exist"]
+            job.update_part_entry(part_id, quantity, vat_code)
+            return True, []
+        except ValueError as e:
+            return False, [str(e)]
+        except Exception as e:
+            self.logger.error(f"Failed to update part on job: {e}")
+            db.session.rollback()
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
+
+    def remove_service_from_job(self, job_id: int, service_id: int) -> Tuple[bool, List[str]]:
+        """Remove a service line from a job."""
+        try:
+            job = self.get_job_by_id(job_id)
+            if not job:
+                return False, ["Job does not exist"]
+            job.remove_service_entry(service_id)
+            return True, []
+        except ValueError as e:
+            return False, [str(e)]
+        except Exception as e:
+            self.logger.error(f"Failed to remove service from job: {e}")
+            db.session.rollback()
+            db.session.expire_all()
+            return False, ["Rendszerhiba, próbáld újra"]
+
+    def remove_part_from_job(self, job_id: int, part_id: int) -> Tuple[bool, List[str]]:
+        """Remove a part line from a job."""
+        try:
+            job = self.get_job_by_id(job_id)
+            if not job:
+                return False, ["Job does not exist"]
+            job.remove_part_entry(part_id)
+            return True, []
+        except ValueError as e:
+            return False, [str(e)]
+        except Exception as e:
+            self.logger.error(f"Failed to remove part from job: {e}")
             db.session.rollback()
             db.session.expire_all()
             return False, ["Rendszerhiba, próbáld újra"]

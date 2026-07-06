@@ -48,6 +48,16 @@ INVOICE_TYPE_LABELS = {
     'NORMAL': 'Számla',
     'ADVANCE': 'Előlegszámla',
     'PAYMENT_REQUEST': 'Díjbekérő',
+    'CORRECTION': 'Helyesbítő számla',
+    'CANCELLATION': 'Sztornó számla',
+}
+
+INVOICE_TYPE_ALIASES = {
+    'FINAL': 'NORMAL',
+    'PROFORMA': 'PAYMENT_REQUEST',
+    'MODIFICATION': 'CORRECTION',
+    'STORNO': 'CANCELLATION',
+    'CANCEL': 'CANCELLATION',
 }
 
 PAYMENT_METHOD_LABELS = {
@@ -57,15 +67,25 @@ PAYMENT_METHOD_LABELS = {
     'OTHER': 'Egyéb',
 }
 
+SUPPORTED_CURRENCIES = {
+    'HUF': {'label': 'Ft', 'prefix': '', 'suffix': 'Ft', 'decimals': 0},
+    'EUR': {'label': '€', 'prefix': '€', 'suffix': '', 'decimals': 2},
+    'USD': {'label': '$', 'prefix': '$', 'suffix': '', 'decimals': 2},
+}
+
 VAT_CODE_OPTIONS = {
+    '0': {'label': '0%', 'rate': 0.0, 'note': ''},
     '27': {'label': '27%', 'rate': 27.0, 'note': ''},
+    '18': {'label': '18%', 'rate': 18.0, 'note': ''},
     '5': {'label': '5%', 'rate': 5.0, 'note': ''},
     'FFAF': {'label': 'FFAF', 'rate': 0.0, 'note': 'ÁFA-n kívüli vagy speciális megítélésű ügylet.'},
     'FAD': {'label': 'FAD', 'rate': 0.0, 'note': 'Fordított adózás alkalmazva.'},
     'EUA': {'label': 'EUA', 'rate': 0.0, 'note': 'EU-n belüli vagy egyéb különös adózási jogcím.'},
+    'EUE': {'label': 'EUE', 'rate': 0.0, 'note': 'EU-n kívüli export vagy egyéb speciális ügylet.'},
     'AAM': {'label': 'AAM', 'rate': 0.0, 'note': 'Alanyi adómentes ügylet.'},
     'TAM': {'label': 'TAM', 'rate': 0.0, 'note': 'Tárgyi adómentes ügylet.'},
     'KBAET': {'label': 'KBAET', 'rate': 0.0, 'note': 'Közösségen belüli adómentes termékértékesítés.'},
+    'EAM': {'label': 'EAM', 'rate': 0.0, 'note': 'Egyéb adómentes ügylet.'},
 }
 
 
@@ -86,6 +106,20 @@ def _parse_invoice_date(raw_value: str, fallback: date) -> date:
         return fallback
 
 
+def _format_money(amount: float, currency_code: str) -> str:
+    cfg = SUPPORTED_CURRENCIES.get(currency_code, SUPPORTED_CURRENCIES['HUF'])
+    decimals = cfg['decimals']
+    if decimals == 0:
+        value = f"{amount:,.0f}".replace(',', ' ')
+    else:
+        value = f"{amount:,.2f}".replace(',', ' ').replace('.', ',')
+    if cfg['prefix']:
+        return f"{cfg['prefix']}{value}"
+    if cfg['suffix']:
+        return f"{value} {cfg['suffix']}"
+    return value
+
+
 def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
     default_issue = job.job_date or date.today()
     issue_date = _parse_invoice_date(request.args.get('issue_date', ''), default_issue)
@@ -97,6 +131,7 @@ def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
     due_date = _parse_invoice_date(request.args.get('due_date', ''), issue_date + timedelta(days=payment_terms_days))
 
     invoice_type = (request.args.get('invoice_type') or settings.get('invoice_type', 'NORMAL')).upper()
+    invoice_type = INVOICE_TYPE_ALIASES.get(invoice_type, invoice_type)
     if invoice_type not in INVOICE_TYPE_LABELS:
         invoice_type = 'NORMAL'
 
@@ -107,6 +142,10 @@ def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
     vat_code = (request.args.get('vat_code') or settings.get('default_vat_code', '27')).upper()
     if vat_code not in VAT_CODE_OPTIONS:
         vat_code = '27'
+
+    currency = (request.args.get('currency') or settings.get('currency', 'HUF')).upper()
+    if currency not in SUPPORTED_CURRENCIES:
+        currency = 'HUF'
 
     buyer_name = ''
     buyer_address = ''
@@ -127,6 +166,8 @@ def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
         'vat_label': VAT_CODE_OPTIONS[vat_code]['label'],
         'vat_rate': VAT_CODE_OPTIONS[vat_code]['rate'],
         'vat_note': VAT_CODE_OPTIONS[vat_code]['note'],
+        'currency': currency,
+        'currency_label': SUPPORTED_CURRENCIES[currency]['label'],
         'issue_date': issue_date,
         'performance_date': performance_date,
         'due_date': due_date,
@@ -134,6 +175,8 @@ def _get_invoice_config(job, tenant, customer, settings: dict) -> dict:
         'buyer_address': buyer_address,
         'buyer_tax_number': buyer_tax_number,
         'buyer_bank_account': buyer_bank_account,
+        'original_invoice': (request.args.get('original_invoice') or '').strip(),
+        'correction_reason': (request.args.get('correction_reason') or '').strip(),
     }
 
 def require_technician_login():
@@ -426,8 +469,16 @@ def modify_job(job_id):
             flash('Cannot modify completed work order', 'warning')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        return render_template('technician/modify_job.html',
-                             job_details=job_details)
+        return render_template(
+            'technician/modify_job.html',
+            data=job_details.get('job_info', {}),
+            services=job_details.get('services', []),
+            parts=job_details.get('parts', []),
+            all_services=job_details.get('all_services', []),
+            all_parts=job_details.get('all_parts', []),
+            job_completed=job_details.get('job_completed', False),
+            vat_options=VAT_CODE_OPTIONS,
+        )
 
     except Exception as e:
         logger.error(f"Failed to load work order modification page (ID: {job_id}): {e}")
@@ -446,6 +497,7 @@ def add_service_to_job(job_id):
     try:
         service_id = request.form.get('service_id', type=int)
         quantity = request.form.get('quantity', type=int) or 1
+        vat_code = (request.form.get('vat_code') or '27').upper()
 
         if not service_id or service_id <= 0:
             flash('Válassz érvényes szolgáltatást!', 'error')
@@ -455,7 +507,7 @@ def add_service_to_job(job_id):
             flash('Érvényes mennyiséget adj meg!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        success, errors = job_service.add_service_to_job(job_id, service_id, quantity)
+        success, errors = job_service.add_service_to_job(job_id, service_id, quantity, vat_code)
 
         if success:
             flash('Szolgáltatás hozzáadva!', 'success')
@@ -482,16 +534,17 @@ def add_part_to_job(job_id):
     try:
         part_id = request.form.get('part_id', type=int)
         quantity = request.form.get('quantity', type=int) or 1
+        vat_code = (request.form.get('vat_code') or '27').upper()
 
         if not part_id or part_id <= 0:
-            flash('Válassz érvényes Termékt!', 'error')
+            flash('Válassz érvényes terméket!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
         if not quantity or quantity <= 0:
             flash('Érvényes mennyiséget adj meg!', 'error')
             return redirect(url_for('technician.job_detail', job_id=job_id))
 
-        success, errors = job_service.add_part_to_job(job_id, part_id, quantity)
+        success, errors = job_service.add_part_to_job(job_id, part_id, quantity, vat_code)
 
         if success:
             flash('Termék hozzáadva!', 'success')
@@ -503,8 +556,80 @@ def add_part_to_job(job_id):
 
     except Exception as e:
         logger.error(f"Failed to add part: {e}")
-        flash('Hiba az Termék hozzáadásakor', 'error')
+        flash('Hiba a termék hozzáadásakor', 'error')
         return redirect(url_for('technician.job_detail', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/service/<int:service_id>/update', methods=['POST'])
+@handle_database_errors
+def update_service_on_job(job_id, service_id):
+    """Update quantity and VAT for an existing service line."""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+
+    quantity = request.form.get('quantity', type=int) or 1
+    vat_code = (request.form.get('vat_code') or '27').upper()
+    success, errors = job_service.update_service_on_job(job_id, service_id, quantity, vat_code)
+    if success:
+        flash('Szolgáltatás frissítve!', 'success')
+    else:
+        for error in errors:
+            flash(error, 'error')
+    return redirect(url_for('technician.modify_job', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/part/<int:part_id>/update', methods=['POST'])
+@handle_database_errors
+def update_part_on_job(job_id, part_id):
+    """Update quantity and VAT for an existing part line."""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+
+    quantity = request.form.get('quantity', type=int) or 1
+    vat_code = (request.form.get('vat_code') or '27').upper()
+    success, errors = job_service.update_part_on_job(job_id, part_id, quantity, vat_code)
+    if success:
+        flash('Termék frissítve!', 'success')
+    else:
+        for error in errors:
+            flash(error, 'error')
+    return redirect(url_for('technician.modify_job', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/service/<int:service_id>/delete', methods=['POST'])
+@handle_database_errors
+def remove_service_from_job(job_id, service_id):
+    """Delete a service line from a job."""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+
+    success, errors = job_service.remove_service_from_job(job_id, service_id)
+    if success:
+        flash('Szolgáltatás törölve!', 'success')
+    else:
+        for error in errors:
+            flash(error, 'error')
+    return redirect(url_for('technician.modify_job', job_id=job_id))
+
+
+@technician_bp.route('/jobs/<int:job_id>/part/<int:part_id>/delete', methods=['POST'])
+@handle_database_errors
+def remove_part_from_job(job_id, part_id):
+    """Delete a part line from a job."""
+    redirect_response = require_technician_login()
+    if redirect_response:
+        return redirect_response
+
+    success, errors = job_service.remove_part_from_job(job_id, part_id)
+    if success:
+        flash('Termék törölve!', 'success')
+    else:
+        for error in errors:
+            flash(error, 'error')
+    return redirect(url_for('technician.modify_job', job_id=job_id))
 
 
 @technician_bp.route('/jobs/<int:job_id>/complete', methods=['POST'])
@@ -821,6 +946,36 @@ def api_get_job_status(job_id):
         return jsonify({'error': 'Failed to get status'}), 500
 
 
+@technician_bp.route('/jobs/<int:job_id>/invoice/setup')
+def invoice_setup(job_id):
+    """Render invoice configuration screen before PDF generation."""
+    from app.models.job import Job
+    from app.models.tenant import Tenant
+    from app.extensions import db
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        flash('Munka nem található', 'error')
+        return redirect(url_for('technician.current_jobs'))
+
+    tenant_id = session.get('current_tenant_id') or 1
+    tenant = Tenant.find_by_id(tenant_id)
+    settings = tenant.settings or {} if tenant else {}
+    customer = job.customer_rel
+    invoice_cfg = _get_invoice_config(job, tenant, customer, settings)
+
+    return render_template(
+        'technician/invoice_setup.html',
+        job=job,
+        customer=customer,
+        invoice_cfg=invoice_cfg,
+        invoice_types=INVOICE_TYPE_LABELS,
+        payment_methods=PAYMENT_METHOD_LABELS,
+        vat_options=VAT_CODE_OPTIONS,
+        currencies=SUPPORTED_CURRENCIES,
+    )
+
+
 @technician_bp.route('/jobs/<int:job_id>/invoice')
 def generate_invoice(job_id):
     """Generate PDF invoice for a job"""
@@ -948,16 +1103,21 @@ def generate_invoice(job_id):
     if invoice_cfg['vat_note']:
         story.append(Spacer(1, 0.2*cm))
         story.append(Paragraph(f'<font color="#b45309"><b>Megjegyzés:</b> {invoice_cfg["vat_note"]}</font>', meta_style))
+    if invoice_cfg['original_invoice']:
+        story.append(Spacer(1, 0.2*cm))
+        story.append(Paragraph(f'<b>Eredeti számla:</b> {invoice_cfg["original_invoice"]}', meta_style))
+    if invoice_cfg['correction_reason']:
+        story.append(Spacer(1, 0.15*cm))
+        story.append(Paragraph(f'<b>Módosítás oka:</b> {invoice_cfg["correction_reason"]}', meta_style))
     story.append(Spacer(1, 0.4*cm))
 
-    # Items table header
-    tax_rate = invoice_cfg['vat_rate']
+    currency = invoice_cfg['currency']
     header_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
     items_data = [[
         Paragraph('Tétel', header_style),
         Paragraph('Menny.', header_style),
         Paragraph('Nettó', header_style),
-        Paragraph(f'ÁFA {invoice_cfg["vat_label"]}', header_style),
+        Paragraph('ÁFA', header_style),
         Paragraph('Bruttó', header_style),
     ]]
 
@@ -965,30 +1125,32 @@ def generate_invoice(job_id):
     brutto_total = 0
     cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
     for svc in services:
+        vat_cfg = VAT_CODE_OPTIONS.get((svc.get('vat_code') or invoice_cfg['vat_code']).upper(), VAT_CODE_OPTIONS['27'])
         netto = float(svc['cost']) * int(svc['qty'])
-        afa = netto * tax_rate / 100
+        afa = netto * vat_cfg['rate'] / 100
         brutto = netto + afa
         brutto_total += brutto
         items_data.append([
-            Paragraph(svc['service_name'], cell_style),
+            Paragraph(f"{svc['service_name']} ({vat_cfg['label']})", cell_style),
             Paragraph(f"{svc['qty']} db", cell_style),
-            Paragraph(f"{int(netto):,} Ft".replace(',', ' '), cell_style),
-            Paragraph(f"{int(afa):,} Ft".replace(',', ' '), cell_style),
-            Paragraph(f"{int(brutto):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(_format_money(netto, currency), cell_style),
+            Paragraph(_format_money(afa, currency), cell_style),
+            Paragraph(_format_money(brutto, currency), cell_style),
         ])
 
     # Add parts
     for part in parts:
+        vat_cfg = VAT_CODE_OPTIONS.get((part.get('vat_code') or invoice_cfg['vat_code']).upper(), VAT_CODE_OPTIONS['27'])
         netto = float(part['cost']) * int(part['qty'])
-        afa = netto * tax_rate / 100
+        afa = netto * vat_cfg['rate'] / 100
         brutto = netto + afa
         brutto_total += brutto
         items_data.append([
-            Paragraph(part['part_name'], cell_style),
+            Paragraph(f"{part['part_name']} ({vat_cfg['label']})", cell_style),
             Paragraph(f"{part['qty']} db", cell_style),
-            Paragraph(f"{int(netto):,} Ft".replace(',', ' '), cell_style),
-            Paragraph(f"{int(afa):,} Ft".replace(',', ' '), cell_style),
-            Paragraph(f"{int(brutto):,} Ft".replace(',', ' '), cell_style),
+            Paragraph(_format_money(netto, currency), cell_style),
+            Paragraph(_format_money(afa, currency), cell_style),
+            Paragraph(_format_money(brutto, currency), cell_style),
         ])
 
     items_table = Table(items_data, colWidths=[7*cm, 2*cm, 3*cm, 3*cm, 3*cm])
@@ -1007,7 +1169,7 @@ def generate_invoice(job_id):
     # Total
     total_style = ParagraphStyle('total', fontSize=12, fontName=unicode_font_bold, alignment=TA_RIGHT)
     total_data = [[
-        Paragraph(f'<b>Bruttó összesen: {int(brutto_total):,} Ft</b>'.replace(',', ' '), total_style)
+        Paragraph(f'<b>Bruttó összesen: {_format_money(brutto_total, currency)}</b>', total_style)
     ]]
     total_table = Table(total_data, colWidths=[18*cm])
     total_table.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'RIGHT'), ('PADDING', (0,0), (-1,-1), 8)]))
@@ -1056,8 +1218,10 @@ def _generate_invoice_pdf(job_id):
     invoice_cfg = _get_invoice_config(job, tenant, customer, settings)
     services = job.get_services()
     parts = job.get_parts()
-    all_items = [{'name': s['service_name'], 'qty': s['qty'], 'net': s['cost']} for s in services] + \
-                [{'name': p['part_name'], 'qty': p['qty'], 'net': p['cost']} for p in parts]
+    all_items = (
+        [{'name': s['service_name'], 'qty': s['qty'], 'net': s['cost'], 'vat_code': s.get('vat_code', invoice_cfg['vat_code'])} for s in services] +
+        [{'name': p['part_name'], 'qty': p['qty'], 'net': p['cost'], 'vat_code': p.get('vat_code', invoice_cfg['vat_code'])} for p in parts]
+    )
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4,
@@ -1111,22 +1275,32 @@ def _generate_invoice_pdf(job_id):
     if invoice_cfg['vat_note']:
         story.append(Spacer(1, 0.2*cm))
         story.append(Paragraph(f'<font color="#b45309"><b>Megjegyzés:</b> {invoice_cfg["vat_note"]}</font>', info_style))
+    if invoice_cfg['original_invoice']:
+        story.append(Spacer(1, 0.2*cm))
+        story.append(Paragraph(f'<b>Eredeti számla:</b> {invoice_cfg["original_invoice"]}', info_style))
+    if invoice_cfg['correction_reason']:
+        story.append(Spacer(1, 0.15*cm))
+        story.append(Paragraph(f'<b>Módosítás oka:</b> {invoice_cfg["correction_reason"]}', info_style))
     story.append(Spacer(1, 0.4*cm))
 
     th_style = ParagraphStyle('th', fontSize=9, textColor=white, fontName=unicode_font_bold)
     cell_style = ParagraphStyle('cell', fontSize=9, fontName=unicode_font)
-    VAT = invoice_cfg['vat_rate'] / 100
-    rows = [[Paragraph(h, th_style) for h in ['Tétel', 'Menny.', 'Nettó', f'ÁFA {invoice_cfg["vat_label"]}', 'Bruttó']]]
+    currency = invoice_cfg['currency']
+    rows = [[Paragraph(h, th_style) for h in ['Tétel', 'Menny.', 'Nettó', 'ÁFA', 'Bruttó']]]
     grand_net = grand_brutto = 0
     for item in all_items:
         net = item['net'] * item['qty']
-        vat_amt = round(net * VAT)
+        vat_cfg = VAT_CODE_OPTIONS.get((item.get('vat_code') or invoice_cfg['vat_code']).upper(), VAT_CODE_OPTIONS['27'])
+        vat_amt = round(net * (vat_cfg['rate'] / 100))
         brutto = net + vat_amt
         grand_net += net; grand_brutto += brutto
-        rows.append([Paragraph(item['name'], cell_style), Paragraph(f"{item['qty']} db", cell_style),
-                     Paragraph(f"{net:,.0f} Ft".replace(',', ' '), cell_style),
-                     Paragraph(f"{vat_amt:,.0f} Ft".replace(',', ' '), cell_style),
-                     Paragraph(f"{brutto:,.0f} Ft".replace(',', ' '), cell_style)])
+        rows.append([
+            Paragraph(f"{item['name']} ({vat_cfg['label']})", cell_style),
+            Paragraph(f"{item['qty']} db", cell_style),
+            Paragraph(_format_money(net, currency), cell_style),
+            Paragraph(_format_money(vat_amt, currency), cell_style),
+            Paragraph(_format_money(brutto, currency), cell_style),
+        ])
     t = Table(rows, colWidths=[7*cm, 2*cm, 3*cm, 2.5*cm, 3.5*cm])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), primary_color),
@@ -1138,7 +1312,7 @@ def _generate_invoice_pdf(job_id):
     story.append(t)
     story.append(Spacer(1, 0.4*cm))
     total_style = ParagraphStyle('total', fontSize=12, fontName=unicode_font_bold, alignment=TA_RIGHT)
-    story.append(Paragraph(f'<b>Bruttó összesen: {grand_brutto:,.0f} Ft</b>'.replace(',', ' '), total_style))
+    story.append(Paragraph(f'<b>Bruttó összesen: {_format_money(grand_brutto, currency)}</b>', total_style))
     story.append(Spacer(1, 0.5*cm))
     footer_style = ParagraphStyle('footer', fontSize=8, textColor=colors.HexColor('#94a3b8'), alignment=TA_CENTER, fontName=unicode_font)
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#e2e8f0')))

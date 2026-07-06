@@ -108,14 +108,14 @@ class Customer(db.Model, BaseModelMixin, TenantScopedMixin):
     def get_unpaid_jobs(self) -> List["Job"]:
         """Get customer's unpaid orders"""
         from app.models.job import Job
-        return self.jobs.filter(Job.paid == False).order_by(Job.job_date.asc()).all()
+        return self.jobs.filter(Job.paid == False, Job.completed == True).order_by(Job.job_date.asc()).all()
 
     def get_total_unpaid_amount(self) -> float:
         """Get customer's total unpaid amount"""
         from app.models.job import Job
         result = db.session.execute(
             db.select(db.func.coalesce(db.func.sum(Job.total_cost), 0))
-            .where(and_(Job.customer == self.customer_id, Job.paid == False))
+            .where(and_(Job.customer == self.customer_id, Job.paid == False, Job.completed == True))
         ).scalar()
         return float(result or 0)
 

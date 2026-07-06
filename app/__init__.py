@@ -19,6 +19,8 @@ def _run_safe_startup_migrations():
         "ALTER TABLE customer ADD COLUMN IF NOT EXISTS company_name VARCHAR(120)",
         "ALTER TABLE customer ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(34)",
         "ALTER TABLE customer ADD COLUMN IF NOT EXISTS billing_address VARCHAR(255)",
+        "ALTER TABLE job_service ADD COLUMN IF NOT EXISTS vat_code VARCHAR(16) DEFAULT '27'",
+        "ALTER TABLE job_part ADD COLUMN IF NOT EXISTS vat_code VARCHAR(16) DEFAULT '27'",
     ]
     for sql in migrations:
         db.session.execute(db.text(sql))

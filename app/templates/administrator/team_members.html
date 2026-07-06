@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block admin_content %}
+{% set role_labels = {'owner': 'Tulajdonos', 'admin': 'Adminisztrátor', 'manager': 'Menedzser', 'technician': 'Szerelő', 'parts_clerk': 'Raktáros', 'viewer': 'Megfigyelő'} %}
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-12">
@@ -37,9 +38,9 @@
                                 <input type="email" class="form-control" name="invite_email" placeholder="kollega@pelda.hu" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Szerepkör</label>
+                                <label class="form-label">Munkakör</label>
                                 <select class="form-select" name="invite_role" required>
-                                    <option value="">Válasszon szerepkört...</option>
+                                    <option value="">Válasszon munkakört...</option>
                                     <option value="admin">Adminisztrátor</option>
                                     <option value="manager">Menedzser</option>
                                     <option value="technician">Szerelő</option>
@@ -80,7 +81,7 @@
                                 <tr>
                                     <th>Név</th>
                                     <th>E-mail</th>
-                                    <th>Szerepkör</th>
+                                    <th>Munkakör</th>
                                     <th>Státusz</th>
                                     <th>Meghívva</th>
                                 </tr>
@@ -104,7 +105,7 @@
                                     <td>{{ member.email }}</td>
                                     <td>
                                         <span class="badge bg-{% if member.role in ['owner', 'admin'] %}primary{% elif member.role == 'manager' %}warning{% elif member.role == 'technician' %}info{% else %}secondary{% endif %}">
-                                            {{ member.role }}
+                                            {{ role_labels.get(member.role, member.role) }}
                                         </span>
                                     </td>
                                     <td>

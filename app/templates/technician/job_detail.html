@@ -35,16 +35,18 @@
         </form>
         {% endif %}
         <div class="btn-group">
-            <a href="{{ url_for('technician.generate_invoice', job_id=data.job_id, invoice_type='NORMAL') }}" class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer">
-                <i class="ti ti-file-invoice me-2"></i>Számla PDF
+            <a href="{{ url_for('technician.invoice_setup', job_id=data.job_id) }}" class="btn btn-outline-primary">
+                <i class="ti ti-file-invoice me-2"></i>Számla beállítása
             </a>
             <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="visually-hidden">Számlatípus választás</span>
             </button>
             <div class="dropdown-menu dropdown-menu-end">
-                <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=data.job_id, invoice_type='NORMAL') }}" target="_blank" rel="noopener noreferrer">Számla</a>
-                <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=data.job_id, invoice_type='ADVANCE') }}" target="_blank" rel="noopener noreferrer">Előlegszámla</a>
-                <a class="dropdown-item" href="{{ url_for('technician.generate_invoice', job_id=data.job_id, invoice_type='PAYMENT_REQUEST') }}" target="_blank" rel="noopener noreferrer">Díjbekérő</a>
+                <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=data.job_id, invoice_type='NORMAL') }}">Számla</a>
+                <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=data.job_id, invoice_type='ADVANCE') }}">Előlegszámla</a>
+                <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=data.job_id, invoice_type='PAYMENT_REQUEST') }}">Díjbekérő</a>
+                <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=data.job_id, invoice_type='CORRECTION') }}">Helyesbítő számla</a>
+                <a class="dropdown-item" href="{{ url_for('technician.invoice_setup', job_id=data.job_id, invoice_type='CANCELLATION') }}">Sztornó számla</a>
             </div>
         </div>
         <a href="{{ url_for('technician.generate_worksheet', job_id=data.job_id) }}" class="btn btn-outline-secondary" target="_blank" rel="noopener noreferrer">
@@ -233,6 +235,14 @@
                         <label class="form-label mb-1">Menny.</label>
                         <input type="number" name="quantity" class="form-control" value="1" min="1" required>
                     </div>
+                    <div class="col-auto" style="width:130px">
+                        <label class="form-label mb-1">ÁFA</label>
+                        <select name="vat_code" class="form-select">
+                            {% for code, label in [('0', '0%'), ('5', '5%'), ('18', '18%'), ('27', '27%'), ('FFAF', 'FFAF'), ('FAD', 'FAD'), ('EUA', 'EUA'), ('EUE', 'EUE'), ('AAM', 'AAM'), ('TAM', 'TAM'), ('KBAET', 'KBAET'), ('EAM', 'EAM')] %}
+                            <option value="{{ code }}" {% if code == '27' %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <div class="col-auto">
                         <button type="submit" class="btn btn-accent">
                             <i class="ti ti-plus me-1"></i>Hozzáad
@@ -280,7 +290,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end fw-bold">Termékek Total:</td>
+                            <td colspan="3" class="text-end fw-bold">Termékek összesen:</td>
                             <td class="text-end fw-bold text-success">{{ "%.0f"|format(parts_total.value) }} Ft</td>
                         </tr>
                     </tfoot>
@@ -289,8 +299,8 @@
             {% else %}
             <div class="empty">
                 <div class="empty-icon"><i class="ti ti-package"></i></div>
-                <p class="empty-title">No Termékek</p>
-                <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá Termékt.</p>
+                <p class="empty-title">Nincsenek termékek</p>
+                <p class="empty-subtitle text-secondary">Ehhez a munkához még nem adtak hozzá terméket.</p>
             </div>
             {% endif %}
 
@@ -300,7 +310,7 @@
                     <div class="col">
                         <label class="form-label mb-1">Termék hozzáadása</label>
                         <select name="part_id" class="form-select" required>
-                            <option value="">-- Válassz Termékt --</option>
+                            <option value="">-- Válasszon terméket --</option>
                             {% for p in all_parts %}
                             <option value="{{ p.part_id }}">{{ p.part_name }} — {{ "%.0f"|format(p.cost|float) }} Ft</option>
                             {% endfor %}
@@ -309,6 +319,14 @@
                     <div class="col-auto" style="width:90px">
                         <label class="form-label mb-1">Menny.</label>
                         <input type="number" name="quantity" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="col-auto" style="width:130px">
+                        <label class="form-label mb-1">ÁFA</label>
+                        <select name="vat_code" class="form-select">
+                            {% for code, label in [('0', '0%'), ('5', '5%'), ('18', '18%'), ('27', '27%'), ('FFAF', 'FFAF'), ('FAD', 'FAD'), ('EUA', 'EUA'), ('EUE', 'EUE'), ('AAM', 'AAM'), ('TAM', 'TAM'), ('KBAET', 'KBAET'), ('EAM', 'EAM')] %}
+                            <option value="{{ code }}" {% if code == '27' %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="col-auto">
                         <button type="submit" class="btn btn-primary">

@@ -15,14 +15,14 @@
                 <div>
                     <h1 class="h3 mb-0 d-flex align-items-center gap-2">
                         <i class="ti ti-credit-card text-primary"></i>
-                        Számlázás Management
+                        Számlázás kezelése
                     </h1>
                     <p class="text-muted mb-0">Számlák és fizetések megtekintése és kezelése</p>
                 </div>
                 <!-- Számlatípus gombok -->
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalProforma">
-                        <i class="ti ti-file-description me-1"></i>Proforma számla
+                        <i class="ti ti-file-description me-1"></i>Díjbekérő
                     </button>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalVegszamla">
                         <i class="ti ti-file-invoice me-1"></i>Végszámla
@@ -396,17 +396,17 @@ function openInvoice(type) {
     if (type === 'proforma') {
         jobId = document.getElementById('proformaJobId').value;
         if (!jobId) { alert('Válassz munkát!'); return; }
-        url = base + jobId + '/invoice?invoice_type=proforma&due_date=' + document.getElementById('proformaDue').value;
+        url = base + jobId + '/invoice/setup?invoice_type=PAYMENT_REQUEST&due_date=' + document.getElementById('proformaDue').value;
     } else if (type === 'final') {
         jobId = document.getElementById('vegszamlaJobId').value;
         if (!jobId) { alert('Válassz munkát!'); return; }
-        url = base + jobId + '/invoice?invoice_type=final&payment_method=' + document.getElementById('vegszamlaPayment').value + '&due_date=' + document.getElementById('vegszamlaDue').value;
+        url = base + jobId + '/invoice/setup?invoice_type=NORMAL&payment_method=' + document.getElementById('vegszamlaPayment').value + '&due_date=' + document.getElementById('vegszamlaDue').value;
     } else if (type === 'correction') {
         jobId = document.getElementById('helyesbitoJobId').value;
         const orig = document.getElementById('originalInvoice').value;
         const reason = document.getElementById('correctionReason').value;
         if (!jobId || !orig) { alert('Töltsd ki a kötelező mezőket!'); return; }
-        url = base + jobId + '/invoice?invoice_type=correction&original_invoice=' + encodeURIComponent(orig) + '&correction_reason=' + encodeURIComponent(reason);
+        url = base + jobId + '/invoice/setup?invoice_type=CORRECTION&original_invoice=' + encodeURIComponent(orig) + '&correction_reason=' + encodeURIComponent(reason);
     }
     window.open(url, '_blank');
 }

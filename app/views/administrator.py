@@ -878,6 +878,13 @@ def pay_bills():
     try:
         customer_name = sanitize_input(request.args.get('customer', ''))
         completed_jobs = billing_service.get_completed_jobs()
+        tenant = Tenant.find_by_id(session.get('current_tenant_id') or 1)
+        settings = tenant.settings or {} if tenant else {}
+        payment_terms_days = max(0, int(settings.get('payment_terms_days', 14) or 14))
+        due_dates = {
+            job.job_id: (job.job_date + timedelta(days=payment_terms_days)) if job.job_date else None
+            for job in completed_jobs
+        }
 
         # Filter by customer name if provided
         if customer_name and customer_name != 'Choose...':
@@ -895,7 +902,10 @@ def pay_bills():
         return render_template('administrator/pay_bills.html',
                              unpaid_bills=completed_jobs,
                              customer_name=customer_name,
-                             customer_names=customer_names)
+                             customer_names=customer_names,
+                             payment_terms_days=payment_terms_days,
+                             due_dates=due_dates,
+                             today=date.today())
 
     except Exception as e:
         logger.error(f"Payment processing page loading failed: {e}")
@@ -903,7 +913,10 @@ def pay_bills():
         return render_template('administrator/pay_bills.html',
                              unpaid_bills=[],
                              customer_name='',
-                             customer_names=[])
+                             customer_names=[],
+                             payment_terms_days=14,
+                             due_dates={},
+                             today=date.today())
 
 
 @administrator_bp.route('/customers/<int:customer_id>/pay', methods=['POST'])
